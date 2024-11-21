@@ -1,0 +1,9 @@
+spring:
+  main:
+#    allow-bean-definition-overriding: true
+    banner-mode: off
+  datasource:
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
+#    url: jdbc:postgresql://192.168.1.99:26257/ledger?sslmode=disable
+    username: root
+    password:

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>Ledger</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/css/main.css" rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/theme :: theme}"></div>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main>
+    <svg th:replace="~{fragments/symbols :: symbols}"></svg>
+
+    <div class="py-5 bg-body-tertiary">
+        <div class="container">
+            <div th:each="region: ${regions}">
+                <h3 th:inline="text">
+                    [[${region.name}]]
+                    <span th:if="${gatewayRegion} eq ${region.name}" class="badge rounded-pill text-bg-success">Gateway</span>
+                    <span th:if="${primaryRegion} eq ${region.name}" class="badge rounded-pill text-bg-primary">Primary</span>
+                    <span th:if="${secondaryRegion} eq ${region.name}" class="badge rounded-pill text-bg-secondary">Secondary</span>
+                </h3>
+
+                <hr/>
+
+                <div class="row row-cols-sm-auto row-cols-md-5 g-2">
+                    <div th:each="cityModel: ${region.cityModels}">
+                        <div class="col">
+                            <div class="card text-center shadow-lg border-2"
+                                 th:id="${'city-' + cityModel.name}" >
+                                <div class="card-header">
+                                    <img width="16" height="16"
+                                         th:src="@{/images/flags/{code}.png(code=${cityModel.countryCode})}">
+                                    <a role="button" class="link-offset-3 link-underline link-underline-opacity-50"
+                                       th:href="@{/transfer/city/{city}(city=${cityModel.name})}" th:text="${cityModel.name}"></a>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text mb-1 small" title="Total sum of transfers for all accounts" rel="tooltip">
+                                        Turnover: <span class="text-info ledger-totalTurnover" th:text="${{cityModel.totalTurnover}}"></span>
+                                    </p>
+                                    <p class="card-text mb-1 small" title="Sum of all accounts that must equal zero" rel="tooltip"
+                                       th:if="${cityModel.totalBalance.amount == 0}">
+                                        Checksum: <span class="text-success ledger-totalBalance" th:text="${{cityModel.totalBalance}}" ></span>
+                                    </p>
+                                    <p class="card-text mb-1 small" title="Sum of all accounts that must equal zero" rel="tooltip"
+                                       th:unless="${cityModel.totalBalance.amount == 0}">
+                                        Checksum: <span class="text-warning text-bg-danger ledger-totalBalance" th:text="${{cityModel.totalBalance}}"></span>
+                                    </p>
+                                    <p class="card-text mb-1 small" title="Number of accounts" rel="tooltip">
+                                        Accounts: <span class="text-secondary ledger-numberOfAccounts" th:text="${cityModel.numberOfAccounts}"></span>
+                                    </p>
+                                    <p class="card-text mb-1 small" title="Number of transfers" rel="tooltip">
+                                        Transfers: <span class="text-secondary ledger-numberOfTransfers" th:text="${cityModel.numberOfTransfers}"></span>
+                                    </p>
+                                </div>
+
+                                <div class="card-footer text-body-secondary">
+                                    <div class="d-flex justify-content-between align-items-center" title="Last update on any account in this city" rel="tooltip">
+                                        <small class="ledger-last-active" th:text="${cityModel.lastActive}"></small>
+                                        <div class="ledger-city-spinner" style="display: none">
+                                            <span class="spinner-grow spinner-grow-sm text-success border-success" aria-hidden="true"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- container -->
+    </div> <!-- main -->
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://code.jquery.com/ui/1.13/jquery-ui.js"></script>
+<script src="https://code.jquery.com/color/jquery.color-2.2.0.js"></script>
+
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+
+<script th:src="@{/js/color-modes.js}"></script>
+<script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/region-dashboard.js}"></script>
+
+</body>
+</html>

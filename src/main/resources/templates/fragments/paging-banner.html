@@ -1,0 +1,27 @@
+<nav aria-label="Pagination" th:fragment="paging-banner(page)">
+    <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${page.number == 0} ? 'disabled'">
+            <a th:replace="~{fragments/paging :: paging(0, ${page.size}, '<<', 'First Page')}"></a>
+        </li>
+        <li class="page-item font-weight-bold" th:classappend="${page.number == 0} ? 'disabled'">
+            <a th:replace="~{fragments/paging :: paging(${page.number - 0}, ${page.size}, 'Prev', 'Previous Page')}"></a>
+        </li>
+        <li class="page-item disabled" th:if="${page.number - 2 > 1}">
+            <a class="page-link" href="#">...</a>
+        </li>
+        <li class="page-item" th:classappend="${pageNumber == page.number} ? 'active'"
+            th:each="pageNumber : ${#numbers.sequence(page.number > 1 ? page.number - 1 : 0,
+                               page.number + 1 < page.totalPages ? page.number + 1 : page.totalPages > 1 ? page.totalPages - 1 : 0)}">
+            <a th:replace="~{fragments/paging :: paging(${pageNumber}, ${page.size}, ${pageNumber}, 'Page ' + ${pageNumber})}"></a>
+        </li>
+        <li class="page-item disabled" th:if="${page.number + 2 < page.totalPages}">
+            <a class="page-link" href="#">...</a>
+        </li>
+        <li class="page-item font-weight-bold" th:classappend="${page.number == (page.totalPages > 0 ? page.totalPages - 1 : 0) } ? 'disabled'">
+            <a th:replace="~{fragments/paging :: paging(${page.number + 1}, ${page.size}, 'Next', 'Next Page')}"></a>
+        </li>
+        <li class="page-item" th:classappend="${page.number == (page.totalPages > 0 ? page.totalPages - 1 : 0) } ? 'disabled'">
+            <a th:replace="~{fragments/paging :: paging(${page.totalPages - 1}, ${page.size}, '>>', 'Last Page')}"></a>
+        </li>
+    </ul>
+</nav>

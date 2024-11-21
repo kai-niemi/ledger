@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>Ledger</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/css/main.css" rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/theme :: theme}"></div>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main>
+    <svg th:replace="~{fragments/symbols :: symbols}"></svg>
+
+    <div class="py-2 rounded bg-body-tertiary">
+        <div class="container-xl">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                The current pagination implementation use limit/offset that results in full tables scans.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <h3>Transfers</h3>
+            <div class="table-responsive-xl">
+                <table class="table table-striped table-bordered table-hover table-sm caption-top">
+                    <caption th:unless="${city}" th:text="'List of transfers'"></caption>
+                    <caption th:if="${city}" th:text="'List of transfers for ' + ${city}"></caption>
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Id</th>
+                        <th>City</th>
+                        <th>Type</th>
+                        <th>Transfer Date</th>
+                        <th>Booking Date</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="transfer: ${transferPage.content}">
+                        <td th:text="${transfer.id}"></td>
+                        <td th:text="${transfer.city}"></td>
+                        <td th:text="${transfer.transferType}"></td>
+                        <td th:text="${transfer.transferDate}"></td>
+                        <td th:text="${transfer.bookingDate}"></td>
+                        <td class="text-center py-1">
+                            <a class="btn btn-outline-success"
+                               th:href="@{/transfer/{id}(id=${transfer.id})}">
+                                Details <span class="badge text-bg-warning" th:text="${transferItems}">0</span>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <nav th:if="${transferPage.totalPages > 0}"
+                     th:replace="~{fragments/paging-banner :: paging-banner(${transferPage})}">
+                </nav>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://code.jquery.com/ui/1.13/jquery-ui.js"></script>
+<script src="https://code.jquery.com/color/jquery.color-2.2.0.js"></script>
+
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+
+<script th:src="@{/js/color-modes.js}"></script>
+<script th:src="@{/js/main.js}"></script>
+
+</body>
+</html>

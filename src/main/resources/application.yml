@@ -1,0 +1,595 @@
+##############################################
+# Spring boot properties
+# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+#
+# See README.md for available Spring Profiles
+##############################################
+spring:
+  config:
+    # Import user overrides
+    import: optional:file:./config/
+  output:
+    ansi:
+      enabled: always
+  profiles:
+    active: default
+  #############################
+  shell:
+    command:
+      stacktrace:
+        enabled: true
+      version:
+        enabled: true
+        showBuildName: true
+        showGitBranch: true
+    script:
+      enabled: true
+    interactive:
+      enabled: true
+    noninteractive:
+      enabled: false
+    history:
+      name: .log/ledger.history
+  #############################
+  thymeleaf:
+    cache: true
+    mode: HTML
+  #############################
+  mvc:
+    problemdetails:
+      enabled: true
+  #############################
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 0
+          no-cache: true
+          no-store: true
+  #############################
+  flyway:
+    enabled: true
+    locations: classpath:db/crdb,classpath:db/common
+    connect-retries: 15
+    clean-on-validation-error: true
+    baseline-on-migrate: true
+    clean-disabled: false
+  #############################
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        connection:
+          provider_disables_autocommit: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+          batch_size: 128
+          fetch_size: 128
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        hql:
+          bulk_id_strategy: org.hibernate.hql.spi.id.inline.CteValuesListBulkIdStrategy
+        cache:
+          use_minimal_puts: true
+          use_second_level_cache: false
+  #############################
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
+    username: root
+    password:
+    name: ledger
+    hikari:
+      pool-name: ledger-pool
+      connection-init-sql: SELECT 1
+      initialization-fail-timeout: -1
+      connection-timeout: 5000
+      validation-timeout: 20000
+      max-lifetime: 180000
+      idle-timeout: 60000
+      maximum-pool-size: 256
+      minimum-idle: 0
+      transaction-isolation: TRANSACTION_SERIALIZABLE
+      data-source-properties:
+        reWriteBatchedInserts: true
+        application_name: Ledger
+  # Enable JDK21 virtual threads
+  threads:
+    virtual:
+      enabled: true
+#############################
+logging:
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:%-5p}) [%-11t] %clr([%-36logger{35}]){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file: "%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:%5p} [%t] %logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+  file:
+    name: .log/ledger.log
+  logback:
+    rollingpolicy:
+      max-history: 3
+#############################
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: caches,health,info,conditions,shutdown,env,flyway,heapdump,threaddump,metrics,scheduledtasks
+#############################
+server:
+  port: 9090
+  error:
+    whitelabel:
+      enabled: false
+    path: /error
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
+    include-binding-errors: always
+
+############################################################################################
+# Ledger Application Configuration
+#
+# This file overrides the application configuration properties.
+# For the application properties this file overrides, see: src/resources/application.yml.
+# For all other spring boot container properties, see:
+# https://docs.spring.io/spring-boot/appendix/application-properties/index.html
+############################################################################################
+
+application:
+  ## Use pre-emptive locks when reading with the intent to write.
+  # WARNING: It's imperative for correctness in READ_COMMITTED to set this to true.
+  # If set to false, you may see lost update (P4) anomalies under READ_COMMITTED.
+  # Under serializable (1SR), correctness is never compromised and locking may
+  # help to reduce contention.
+  using-locks: true
+  ## Enable idempotency check for each transfer request (one extra point read).
+  idempotency-check: false
+  ## Ledger is I/O bound and uses JDK21 virtual threads rather than thread pools.
+  task-executor:
+    # A negative value denotes an unbounded amount of concurrent tasks.
+    # For best performance on high-end machines, leave this value as-is.
+    concurrency-limit: -1
+  ## Sample period for time-series data points in graphs
+  sample-period-seconds: 300
+  ## Default account plan settings
+  account-plan:
+    # Number of accounts per city
+    accounts-per-city: 5_000
+    # Initial balance for user asset accounts (in local currency)
+    initial-balance: 5000.00
+
+  ## Include only the specified regions (all if omitted)
+#  visible-regions: eu-north-1,us-east-1
+
+  ## Region to city mappings
+  # A region name SHOULD match an existing locality region tier but can also be mapped (--locality=region=aws-us-east-1,..).
+  # A region cities SHOULD include cities in the region's proximity.
+  # A region MAY have e ISO-3166-1 country code and ISO-4217 currency code for all its cities.
+  # A city MUST have a name, country code and currency code.
+  # A city MAY override the country and currency code of the region.
+  regions:
+    - name: us-east-1
+      country: USA
+      currency: USD
+      cities:
+        - name: new york
+        - name: boston
+        - name: washington dc
+        - name: miami
+        - name: charlotte
+        - name: atlanta
+    - name: us-east-2
+      country: USA
+      currency: USD
+      cities:
+        - name: st louis
+        - name: indianapolis
+        - name: nashville
+        - name: dallas
+        - name: houston
+        - name: detroit
+    - name: us-west-1
+      country: USA
+      currency: USD
+      cities:
+        - name: san francisco
+        - name: los angeles
+        - name: san diego
+        - name: las vegas
+        - name: salt lake city
+    - name: us-west-2
+      country: USA
+      currency: USD
+      cities:
+        - name: seattle
+        - name: tacoma
+        - name: portland
+        - name: salem
+        - name: bend
+        - name: eugene
+    - name: us-central-1
+      country: USA
+      currency: USD
+      cities:
+        - name: phoenix
+        - name: minneapolis
+        - name: chicago
+        - name: detroit
+    - name: eu-central-1
+      primary: true
+      country: DEU
+      currency: EUR
+      cities:
+        - name: berlin
+        - name: hamburg
+        - name: munich
+        - name: frankfurt
+        - name: dusseldorf
+        - name: leipzig
+        - name: dortmund
+        - name: essen
+        - name: stuttgart
+    - name: eu-central-2
+      cities:
+        - name: zurich
+          country: CHE
+          currency: CHF
+        - name: krakov
+          country: POL
+          currency: PLN
+        - name: zagraeb
+          country: HRV
+          currency: EUR
+        - name: zaragoza
+          country: ESP
+          currency: EUR
+        - name: lodz
+          country: POL
+          currency: PLN
+        - name: athens
+          country: GRC
+          currency: EUR
+        - name: bratislava
+          country: SVK
+          currency: EUR
+        - name: prague
+          country: ZCE
+          currency: CZK
+        - name: sofia
+          country: BGR
+          currency: BGN
+        - name: bucharest
+          country: ROU
+          currency: RON
+        - name: vienna
+          country: AUT
+          currency: EUR
+        - name: warsaw
+          country: POL
+          currency: PLN
+        - name: budapest
+          country: HUN
+          currency: HUF
+    - name: eu-west-1
+      cities:
+        - name: dublin
+          country: IRL
+          currency: EUR
+        - name: belfast
+          country: GBR
+          currency: GBP
+        - name: liverpool
+          country: GBR
+          currency: GBP
+        - name: manchester
+          country: GBR
+          currency: GBP
+        - name: glasgow
+          country: GBR
+          currency: GBP
+        - name: birmingham
+          country: GBR
+          currency: GBP
+        - name: leeds
+          country: GBR
+          currency: GBP
+    - name: eu-west-2
+      secondary: true
+      cities:
+        - name: london
+          country: GBR
+          currency: GBP
+        - name: amsterdam
+          country: NLD
+          currency: EUR
+        - name: rotterdam
+          country: NLD
+          currency: EUR
+        - name: antwerp
+          country: BEL
+          currency: EUR
+        - name: hague
+          country: NLD
+          currency: EUR
+        - name: ghent
+          country: BEL
+          currency: EUR
+        - name: brussels
+          country: BEL
+          currency: EUR
+    - name: eu-west-3
+      cities:
+        - name: lisbon
+          country: PRT
+          currency: PTE
+        - name: lyon
+          country: FRA
+          currency: EUR
+        - name: toulouse
+          country: FRA
+          currency: EUR
+        - name: paris
+          country: FRA
+          currency: EUR
+        - name: cologne
+          country: FRA
+          currency: EUR
+        - name: seville
+          country: FRA
+          currency: EUR
+        - name: marseille
+          country: FRA
+          currency: EUR
+    - name: eu-south-1
+      country: ITA
+      currency: EUR
+      cities:
+        - name: rome
+        - name: milan
+        - name: naples
+        - name: turin
+        - name: valencia
+        - name: palermo
+    - name: eu-south-2
+      cities:
+        - name: madrid
+          country: ESP
+          currency: EUR
+        - name: barcelona
+          country: ESP
+          currency: EUR
+        - name: sintra
+          country: ESP
+          currency: EUR
+        - name: lisbon
+          country: PRT
+          currency: PTE
+    - name: eu-north-1
+      cities:
+        - name: stockholm
+          country: SWE
+          currency: SEK
+        - name: copenhagen
+          country: DNK
+          currency: DKK
+        - name: helsinki
+          country: FIN
+          currency: EUR
+        - name: oslo
+          country: NOR
+          currency: NOK
+        - name: riga
+          country: LVA
+          currency: EUR
+        - name: tallinn
+          country: EST
+          currency: EUR
+    - name: ap-northeast-1
+      cities:
+        - name: hong kong
+          country: HKG
+          currency: HKD
+        - name: beijing
+          country: CHN
+          currency: CNY
+        - name: shanghai
+          country: CHN
+          currency: CNY
+        - name: tokyo
+          country: JPN
+          currency: JPY
+    - name: ap-southeast-2
+      cities:
+        - name: singapore
+          country: SGP
+          currency: SGD
+        - name: jakarta
+          country: IDN
+          currency: IDR
+        - name: sydney
+          country: AUS
+          currency: AUD
+        - name: melbourne
+          country: AUS
+          currency: AUD
+    - name: me-south-1
+      cities:
+        - name: bahrain
+          country: BHR
+          currency: BHD
+        - name: tel aviv
+          country: ISR
+          currency: ILS
+        - name: dubai
+          country: SAU
+          currency: SAR
+        - name: cairo
+          country: EGY
+          currency: EGP
+        - name: amman
+          country: JOR
+          currency: JOD
+    - name: ca-central-1
+      cities:
+        - name: calgary
+          country: CAN
+          currency: CAD
+        - name: edmonton
+          country: CAN
+          currency: CAD
+        - name: winnipeg
+          country: CAN
+          currency: CAD
+        - name: regina
+          country: CAN
+          currency: CAD
+        - name: brandon
+          country: CAN
+          currency: CAD
+        - name: dryden
+          country: CAN
+          currency: CAD
+    - name: sa-east-1
+      cities:
+        - name: sao paulo
+          country: BRA
+          currency: BRL
+        - name: rio de janeiro
+          country: BRA
+          currency: BRL
+        - name: salvador
+          country: BRA
+          currency: BRL
+        - name: buenos aires
+          currency: ARS
+          country: ARG
+    - name: af-south-1
+      cities:
+        - name: cape town
+          country: ZAF
+          currency: ZAR
+        - name: durban
+          country: ZAF
+          currency: ZAR
+        - name: johannesburg
+          country: ZAF
+          currency: ZAR
+        - name: pretoria
+          country: ZAF
+          currency: ZAR
+        - name: grahamstown
+          country: ZAF
+          currency: ZAR
+        - name: kimberley
+          country: ZAF
+          currency: ZAR
+
+  ## Mapping of CockroachDB Cloud regions to application regions (one-to-many).
+  # The key SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..).
+  # The value SHOULD match a name in the 'regions' list above.
+  # A region do NOT need to exist in the cluster.
+  region-mappings:
+    ## AWS regions
+    # Asia Pacific
+    aws-ap-east-1: ap-northeast-1 #Hong Kong
+    aws-ap-southeast-3: ap-northeast-1 #Jakarta
+    aws-ap-northeast-1: ap-northeast-1 #Tokyo
+    aws-ap-northeast-2: ap-northeast-1 #Seoul
+    aws-ap-northeast-3: ap-northeast-1 #Osaka
+    aws-ap-south-1: ap-southeast-2 #Mumbai
+    aws-ap-southeast-1: ap-southeast-2 #Singapore
+    aws-ap-southeast-2: ap-southeast-2 #Sydney
+    # Middle East
+    aws-me-south-1: me-south-1 #Bahrain
+    aws-il-central-1: me-south-1 #Tel Aviv
+    aws-me-central-1: me-south-1 #United Arab Emirates
+    # North America
+    aws-ca-west-1: ca-central-1 #Calgary
+    aws-ca-central-1: ca-central-1 #Central Canada
+    aws-us-east-1: us-east-1 #N. Virginia
+    aws-us-east-2: us-east-2 #Ohio
+    aws-us-west-2: us-west-1 #Oregon
+    # South America
+    aws-sa-east-1: sa-east-1 #Sao Paolo
+    # Western Europe
+    aws-eu-central-1: eu-central-1 #Frankfurt
+    aws-eu-west-1: eu-west-1 #Ireland
+    aws-eu-west-2: eu-west-2 #London
+    aws-eu-south-1: eu-south-1 #Milan
+    aws-eu-north-1: eu-north-1 #Stockholm
+    aws-eu-west-3: eu-west-3 #Paris
+
+    ## Azure regions
+    # Africa
+    az-southafricanorth: af-south-1 #Johannesburg
+    # Asia Pacific
+    az-australiaeast: eu-central-1 #New South Wales
+    az-japaneast: eu-central-1 #Tokyo
+    az-koreacentral: eu-central-1 #Seoul
+    az-centralindia: eu-central-1 #Pune
+    az-eastasia: eu-central-1 #Hong Kong
+    az-southeastasia: eu-central-1 #Singapore
+    # Middle East
+    az-uaenorth: eu-central-1 #Dubai
+    # North America
+    az-canadacentral: eu-central-1 #Toronto
+    az-centralus: eu-central-1 #Iowa
+    az-eastus: eu-central-1 #Virginia
+    az-eastus2: eu-central-1 #Virginia
+    az-southcentralus: eu-central-1 #Texas
+    az-westus2: eu-central-1 #Washington
+    az-westus3: eu-central-1 #Washington
+    # Western Europe
+    az-francecentral: eu-central-1 #Paris
+    az-germanywestcentral: eu-central-1 #Frankfurt
+    az-northeurope: eu-central-1 #Ireland
+    az-norwayeast: eu-central-1 #Oslo
+    az-polandcentral: eu-central-1 #Warsaw
+    az-swedencentral: eu-central-1 #Gävle
+    az-switzerlandnorth: eu-central-1 #Zürich
+    az-uksouth: eu-central-1 #London
+    az-westeurope: eu-central-1 #Netherlands
+
+    ## GCP regions
+    # Asia Pacific
+    gcp-asia-east1: ap-northeast-1 #Changhua County
+    gcp-asia-east2: ap-northeast-1 #Hong Kong
+    gcp-asia-northeast1: ap-northeast-1 #Tokyo
+    gcp-asia-northeast2: ap-northeast-1 #Osaka
+    gcp-asia-northeast3: ap-northeast-1 #Seoul
+    gcp-asia-south1: ap-southeast-2 #Mumbai
+    gcp-asia-south2: ap-southeast-2 #Delhi
+    gcp-asia-southeast1: ap-southeast-2 #Jurong West
+    gcp-asia-southeast2: ap-southeast-2 #Jakarta
+    gcp-australia-southeast1: ap-southeast-2 #Sydney
+    gcp-australia-southeast2: ap-southeast-2 #Melbourne
+    # Middle East
+    gcp-me-central1: me-south-1 #Doha
+    gcp-me-west1: me-south-1 #Tel Aviv
+    # North America
+    gcp-northamerica-northeast1: ca-central-1 #Montréal
+    gcp-northamerica-northeast2: ca-central-1 #Toronto
+    gcp-us-central1: us-central-1 #Iowa
+    gcp-us-east1: us-east-1 #South Carolina
+    gcp-us-east4: us-east-2 #Virginia
+    gcp-us-east5: us-east-2 #Columbus
+    gcp-us-south1: us-east-2 #Dallas
+    gcp-us-west1: us-west-1 #Oregon
+    gcp-us-west2: us-west-1 #California
+    gcp-us-west3: us-west-2 #Salt Lake City
+    gcp-us-west4: us-west-2 #Las Vegas
+    # South America
+    gcp-southamerica-east1: sa-east-1 #São Paulo
+    # Western Europe
+    gcp-europe-central2: eu-central-2 #Warsaw
+    gcp-europe-north1: eu-north-1 #Hamina
+    gcp-europe-southwest1: eu-south-2 #Madrid
+    gcp-europe-west1: eu-west-1 #St. Ghislain
+    gcp-europe-west2: eu-west-2 #London
+    gcp-europe-west3: eu-central-1 #Frankfurt
+    gcp-europe-west4: eu-central-1 #Eemshaven
+    gcp-europe-west6: eu-central-2 #Zürich
+    gcp-europe-west9: eu-west-3 #Paris
+    gcp-europe-west12: eu-south-1 #Turin

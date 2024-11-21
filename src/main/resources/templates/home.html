@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>Ledger</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/css/main.css" rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/theme :: theme}"></div>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main>
+    <svg th:replace="~{fragments/symbols :: symbols}"></svg>
+
+    <div class="px-4 pt-3 my-3 text-center">
+        <div class="col-lg-6 mx-auto">
+            <div class="alert alert-info align-items-center alert-dismissible fade show" role="alert">
+                Connected to <code class="mt-2" th:text="${databaseVersion}"></code>
+                in isolation level <code class="mt-2" th:text="${databaseIsolation}"></code>.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <h1 class="display-5 fw-bold text-body-emphasis">Welcome to Ledger</h1>
+
+            <p class="lead mb-4">
+                A financial <a href="https://en.wikipedia.org/wiki/Ledger">accounting ledger</a> based
+                on the <a href="https://en.wikipedia.org/wiki/Double-entry_bookkeeping">double-entry bookkeeping</a>
+                principle.
+            </p>
+            <p class="mb-4">
+                Ledger manages monetary accounts and a journal of balanced, multi-legged transfers between
+                those accounts. Its designed to showcase CockroachDB's scalability, survival, consistency
+                and data domiciling capabilities.
+            </p>
+
+            <div class="card-group">
+                <div class="card">
+                    <img class="card-img-top"
+                         alt=""
+                         th:src="@{/images/treats/scale.png}">
+                    <div class="card-body">
+                        <h5 class="card-title">Scalability</h5>
+                        <p class="card-text">
+                            A distributed system that feels like a single, logical database.
+                            Scale reads, writes, and database capacity by simply adding nodes.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <img class="card-img-top"
+                         alt=""
+                         th:src="@{/images/treats/survival.png}">
+                    <div class="card-body">
+                        <h5 class="card-title">Survival</h5>
+                        <p class="card-text">
+                            Continues to serve queries even when nodes, availability zones, and even entire regions fail
+                            and when performing maintenance.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <img class="card-img-top"
+                         alt=""
+                         th:src="@{/images/treats/consistency.png}">
+                    <div class="card-body">
+                        <h5 class="card-title">Consistency</h5>
+                        <p class="card-text">
+                            Every machine can serve both reads and writes for the entire keyspace
+                            and provides ACID compliant transactions without compromising
+                            consistency during failure or contention.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <img class="card-img-top"
+                         alt=""
+                         th:src="@{/images/treats/domicile.png}">
+                    <div class="card-body">
+                        <h5 class="card-title">Locality</h5>
+                        <p class="card-text">
+                            Pin data to regions closest to end users to reduce latency and address placement
+                            compliance regulations with a multi-region deployment.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="thick-divider"></div>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://code.jquery.com/ui/1.13/jquery-ui.js"></script>
+<script src="https://code.jquery.com/color/jquery.color-2.2.0.js"></script>
+
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+
+<script th:src="@{/js/color-modes.js}"></script>
+<!--<script th:src="@{/js/main.js}"></script>-->
+<!--<script th:src="@{/js/region-dashboard.js}"></script>-->
+
+</body>
+</html>
