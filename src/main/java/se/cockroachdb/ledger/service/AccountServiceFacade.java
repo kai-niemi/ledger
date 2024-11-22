@@ -61,13 +61,15 @@ public class AccountServiceFacade {
     }
 
     @TransactionImplicit(readOnly = true)
-    public List<Account> findAccounts(List<City> cities, AccountType accountType, int limit) {
+    public List<Account> findAccounts(List<City> cities, AccountType accountType,
+                                      Pair<BigDecimal, BigDecimal> range,
+                                      int limit) {
         Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(),
                 "Expecting no active transaction");
 
         List<Callable<List<Account>>> tasks = new ArrayList<>();
 
-        tasks.add(() -> accountService.findByCriteria(City.joinCityNames(cities), accountType, limit));
+        tasks.add(() -> accountService.findByCriteria(City.joinCityNames(cities), accountType, range, limit));
 
         List<Account> accounts = new ArrayList<>();
 

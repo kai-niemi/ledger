@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.shell.standard.EnumValueProvider;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -16,6 +17,7 @@ import org.springframework.shell.table.BeanListTableModel;
 
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.service.TransferServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.shell.support.TableUtils;
@@ -51,15 +53,15 @@ public class TransferReportCommands extends AbstractInteractiveCommand {
 
     @ShellMethod(value = "List transfers", key = {"list-transfers", "lt"})
     public void listTransfers(
-//            @ShellOption(help = "transfer type",
-//                    defaultValue = "BANK",
-//                    valueProvider = EnumValueProvider.class) TransferType transferType,
+            @ShellOption(help = "transfer type",
+                    defaultValue = "BANK",
+                    valueProvider = EnumValueProvider.class) TransferType transferType,
             @ShellOption(help = "page size", defaultValue = "10") Integer pageSize) {
 
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<Transfer> transferPage = transferServiceFacade.findTransfers(page);
+            final Page<Transfer> transferPage = transferServiceFacade.findTransfers(transferType, page);
             logger.info("\n" + printTransferTable(transferPage.getContent()));
             page = askForPage(transferPage).orElseGet(Pageable::unpaged);
         }

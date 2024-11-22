@@ -96,7 +96,7 @@
                     </tbody>
                 </table>
                 <nav th:if="${transferPage.totalPages > 0}"
-                     th:replace="~{fragments/paging-banner :: paging-banner(${transferPage})}">
+                     th:replace="~{fragments/paging-banner :: paging-banner(${transferPage}, '')}">
                 </nav>
             </div>
         </div>

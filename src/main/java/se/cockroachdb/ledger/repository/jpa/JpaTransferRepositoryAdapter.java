@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import se.cockroachdb.ledger.ProfileNames;
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.repository.TransferRepository;
 
 @Repository
@@ -54,8 +55,8 @@ public class JpaTransferRepositoryAdapter implements TransferRepository {
     }
 
     @Override
-    public Page<Transfer> findAllTransfers(Pageable pageable) {
-        return transferJpaRepository.findAll(pageable);
+    public Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable) {
+        return transferJpaRepository.findAll(transferType, pageable);
     }
 
     @Override

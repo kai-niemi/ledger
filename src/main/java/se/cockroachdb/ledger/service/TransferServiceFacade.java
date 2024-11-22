@@ -17,6 +17,7 @@ import se.cockroachdb.ledger.annotations.TransactionImplicit;
 import se.cockroachdb.ledger.annotations.TransactionPriority;
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.model.TransferRequest;
 import se.cockroachdb.ledger.service.transfer.TransferService;
 
@@ -35,8 +36,8 @@ public class TransferServiceFacade {
     }
 
     @TransactionImplicit(readOnly = true)
-    public Page<Transfer> findTransfers(@PageableDefault(size = 5) Pageable page) {
-        return transferService.findAll(page);
+    public Page<Transfer> findTransfers(TransferType transferType, @PageableDefault(size = 5) Pageable page) {
+        return transferService.findAll(transferType, page);
     }
 
     @TransactionImplicit(readOnly = true)

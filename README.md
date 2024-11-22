@@ -37,12 +37,15 @@ bookkeeping principle, running on either [CockroachDB](https://www.cockroachlabs
 accounts and a journal of balanced, multi-legged, multi-currency transfers between those accounts. 
 
 It's designed to showcase CockroachDB's scalability, survival, consistency and data domiciling 
-capabilities and not the domain complexity of accounting. However, it's a realistic implementation 
-of a general ledger with most fundamental pieces.
+capabilities and not the actual domain complexity of accounting. However, it's a realistic 
+implementation of a general ledger with most of the fundamental pieces.
 
 Ledger is the successor to [Roach Bank](https://github.com/kai-niemi/roach-bank) with more focus on 
 load testing and operational ease-of-use. Conceptually they are the same, but Ledger has a simpler 
 design, improved UI and leverages JDK21 features such as virtual threads for better efficiency.
+
+![](img2.png)
+![](img1.png)
 
 ## Compatibility
 
@@ -68,6 +71,8 @@ Things you need to build and run Ledger locally.
 - Java 21+ JDK
     - https://openjdk.org/projects/jdk/21/
     - https://www.oracle.com/java/technologies/downloads/#java21
+- Git
+    - https://git-scm.com/downloads/mac
 - CockroachDB Cloud or self-hosted 23.2+
 - PostgreSQL 9+ (optional)
 
@@ -94,7 +99,7 @@ Then create the database, in this case assuming an insecure cluster:
     cockroach sql --insecure -e "create database ledger"
 
 An [enterprise license](https://www.cockroachlabs.com/docs/stable/licensing-faqs.html#obtain-a-license)
-is only required when using geo-partitioning and follower-reads (opt-out features if n/a).
+is only needed when using geo-partitioning and follower-reads (opt-out features if n/a).
 
 To set an enterprise license:
 
@@ -129,10 +134,12 @@ Instructions for building the project locally.
 
     git clone git@github.com:kai-niemi/ledger.git && cd ledger
 
-### Build the artifacts
+### Build the artifact
 
     chmod +x mvnw
     ./mvnw clean install
+
+Ledger is one single server component (executable jar) now available under`target/`.
 
 # Configuration
 
@@ -146,7 +153,7 @@ You can also override all parameters through the command line, which is the easi
     --spring.datasource.url="jdbc:postgresql://localhost:26257/ledger??ssl=true&sslmode=require" \
     --spring.datasource.username=craig \
     --spring.datasource.password=cockroach \
-    --spring.profiles.active="default,local"
+    --spring.profiles.active="default"
 
 Alternatively, you can create a new YAML file with a custom name suffix and then pass that
 name with the `--profiles` argument:
@@ -162,7 +169,7 @@ Start the server with:
 
     java -jar target/ledger-<version>.jar <args>
 
-(or use the `./run-server.sh` file).
+(or use `./run-server.sh`).
 
 Now you can access the application via http://localhost:9090.
 
@@ -170,19 +177,20 @@ Now you can access the application via http://localhost:9090.
               
 Add the shell commands you would like to run into a plain text file:
 
-    echo "help" > cmd.txt
-    echo "version" >> cmd.txt
+    echo "version" > cmd.txt
     echo "transfer-funds" >> cmd.txt
     echo "read-balance" >> cmd.txt
 
-Start the server in the background by passing the command file as an argument:
+Start the server in the background by passing a command file name 
+as argument with a `@` prefix:
 
     nohup java -jar target/ledger-<version>.jar @cmd.txt > ledger-stdout.log 2>&1 &
 
-(or use the `./start-server.sh` file)
+(or use `./start-server.sh @cmd.txt`)
 
 The server will run all commands in the text file and then wait to be closed. 
-Notice that you can't use `quit` in the end since all commands are run in parallel.
+Notice that you can't use `quit` in the end since all commands are run in sequence
+but executed in parallel.
 
 ## Enable PostgreSQL
 
@@ -192,78 +200,141 @@ PostgreSQL is enabled by activating the `psql` profile:
     --spring.datasource.url="jdbc:postgresql://localhost:5432/ledger \
     --spring.datasource.username=craig \
     --spring.datasource.password=cockroach \
-    --spring.profiles.active="default,local,psql"
+    --spring.profiles.active="psql"
+
+Ledger automatically adjusts to the dialect of PostgreSQL lack of multi-region 
+and follower read features. There's also no concept of gateway nodes, or primary 
+and secondary regions so you will need to specify regions on most workload commands.
 
 # Single-region Tutorial
 
-Usage tutorial for running a basic demo or load test towards a single-region or single-host CockroachDB cluster.
+Usage tutorial for running a basic demo or load test towards a single-region 
+or single-host CockroachDB cluster.
 
 ## Basics
 
-Ledger is operated entirely through its build-in shell, or by a command file passed at startup
-time, in which case the shell is disabled (see [running](#running) instructions above).
+Ledger is operated through its build-in shell, or by a command file passed at startup
+time, in which case the shell is disabled (see [running](#running) instructions).
 
-There are also many commands not listed here. For a complete list run:
+There are also many commands not listed here. For a complete list, run the `help` command.
+Ledger also provides a reactive web UI available at http://localhost:9090 by default
+to display activity and metric charts.
 
-    help
+Ledger organizes monetary accounts around cities within regions. A region maps to an 
+actual CockroachDB deployment region like `aws-us-east-1`. One region has one or 
+more cities and a city has a country code and currency code. This allows for good data 
+distribution and simple data partitioning for multi-region scenarios. 
 
-Ledger also provides a reactive web UI available at http://localhost:9090 (default port).
+You can create a custom region/city mapping through the application YAML. By default
+it includes all CockroachDB Cloud regions for AWS, GCP and Azure.
+
+Excerpt from `src/resources/application.yml`
+
+```yaml
+  ...
+  application:
+      regions:
+        - name: us-east-1
+          country: USA
+          currency: USD
+          cities:
+            - name: new york
+            - name: boston
+            - name: washington dc
+            - name: miami
+            - name: charlotte
+            - name: atlanta
+        - name: us-east-2
+          country: USA
+          currency: USD
+          cities:
+            - name: st louis
+            - name: indianapolis
+            - name: nashville
+            - name: dallas
+            - name: houston
+            - name: detroit
+        ...
+```
 
 ## Create an account plan
     
-The first step is to create an account plan:
+The first step is to build an account plan:
 
     build-account-plan
 
-This command will create one _liability_ account and 5,000 _asset_ accounts per city by default. The account plan
-is organized in such a way that the total balance of all accounts for a given city (and currency) amounts to zero. Thus,
-if a non-zero total is ever observed, it means money has been invented or destroyed and we can't have that.
+This command will create one _liability_ account and 5,000 _asset_ accounts per city, by default. The account plan
+is organized in such a way that the total balance of all accounts for a given city (and currency) amounts to zero. 
+Thus, if a non-zero total is ever observed it means money has either been invented or destroyed and 
+we can't have that *). 
 
-The account plan can be dropped and recreated, which is a destructive operation (truncating the app tables).
+The account plan can be dropped and recreated which is a destructive operation 
+since it truncates the tables.
+
+*) You can allow this to happen by running in `read committed` isolation without 
+pre-emptive locks. 
       
 ## Transfer funds
 
-Now that there's an account plan, it unlocks most of the different workloads available. One read-write workload
-is to transfer funds between asset accounts in a random and rapid fashion. This is done through balanced, multi-legged
-transfers that executes in parallel.
+An account plan unlocks the different workload commands. 
+
+This is the primary read-write workload that transfer funds between asset accounts 
+selected by random. It is done with balanced, multi-legged transfers that 
+runs in parallel. One transfer `leg` equals one account balance update, 
+thus the minimum number of legs required is two. 
+
+A balance update can hold a positive or negative value for simplicity, 
+rather than a _credit_ or _debit_ in real accounting (which is never negative).
+By default, all workloads select the cities in the gateway node's region
+(local region to the client). You can however pick any region, or all of them
+affectively starting a transfer workload for each city.
 
     transfer-funds
-                  
-By default, all workloads select the cities in the gateway region. You can however pick any region or all of them,
-which we will find useful in the multi-region scenario (below). 
-
-To see all options run:
-
-    help transfer-funds
 
 ## Read balance
 
-This workload is pure read-only and executes point lookups on accounts to retrieve the current balance.
+This workload is pure read-only and executes point lookups on accounts to 
+retrieve the current balance.
 
     read-balance
 
-One variant is to use historical follower reads, which, if you are familiar with CockroachDB, means that 
-any node receiving a request hosting a range replica for the requested key can service the request, 
-at the expense of the returned value being potentially stale (up to ~5s).
+Another variant is to use historical follower reads, which, if you are familiar with CockroachDB, 
+means that any node receiving a request hosting a range replica for the requested key 
+can service the request, at the expense of the returned value being potentially stale 
+with up to ~5s (called _bounded staleness read_).
 
     read-balance-historical
 
 ## Create accounts
 
-This command create new asset accounts in batches. Notice that these accounts have a zero balance
-and are not allowed to go negative. To fund these accounts, you need to run the next transfer command
-to grant funds from liability accounts.
+This is a write-only command to create new asset accounts in batches. It can be used to 
+populate the database with more accounts than created by the account plan. 
+
+Notice that these accounts will have a zero balance and not allowed to go negative. To fund 
+these accounts, you need to run the next transfer command to grant funds from liability 
+accounts.
 
     create-accounts
 
 ## Transfer grants
 
-Similar to the transfer funds command, this one will move funds from liability accounts to asset accounts
-with a specified balance range. It's useful to run this after creating new accounts to allow these
-accounts to become part of the selection.
+Similar to the transfer funds command, this one will move money from liability accounts to 
+asset accounts withing a specified balance range (near zero). It's useful to run this after 
+creating new accounts to allow those accounts to become part of selection.
 
     transfer-grants
   
+## Workload Overview
+
+| Workload                | Reads | Writes | Explicit | Implicit | Locks | Variable | Duration |
+|-------------------------|-------|--------|----------|----------|:------|:---------|:---------|
+| transfer-funds          | 20%   | 80%    | x        |          | x     | x        | 120m     |
+| transfer-grants         | 10%   | 90%    | x        |          | x     |          | Finite   |
+| create-accounts         |       | 100%   | x        |          |       | x        | 120m     |
+| read-balance            | 100%  |        |          | x        |       |          | 120m     |
+| read-balance-historical | 100&  |        |          | x        |       |          | 120m     |
+
+
 # Multi-region Tutorial
 
 For the complete multi-region guide, see [tutorial](TUTORIAL.md).

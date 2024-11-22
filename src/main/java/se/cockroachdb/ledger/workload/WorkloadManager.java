@@ -35,13 +35,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionSystemException;
 
 import se.cockroachdb.ledger.event.WorkloadUpdatedEvent;
+import se.cockroachdb.ledger.service.BusinessException;
 import se.cockroachdb.ledger.util.metrics.Metrics;
 
 /**
  * Manager for background workloads and time series data points for call metrics.
  */
 @Component
-public class WorkloadManager implements DisposableBean {
+public class WorkloadManager {
     private static void backoffDelayWithJitter(AtomicInteger inc) {
         try {
             TimeUnit.MILLISECONDS.sleep(
@@ -72,13 +73,6 @@ public class WorkloadManager implements DisposableBean {
     @Value("${application.sample-period-seconds}")
     private int samplePeriodSeconds;
 
-    @Override
-    public void destroy() {
-//        workloads.stream()
-//                .filter(Workload::isRunning)
-//                .forEach(Workload::cancel);
-    }
-
     public <T> Workload submitWorker(Worker<T> worker, WorkloadDescription description) {
         final Metrics metrics = Metrics.empty();
 
@@ -103,26 +97,32 @@ public class WorkloadManager implements DisposableBean {
                     if (errors.size() > 100) {
                         errors.removeFirst();
                     }
-                    errors.add(cause);
 
                     if (exceptionClassifier.isTransient(cause)) {
+                        errors.add(cause);
+
                         if (cause instanceof SQLException) {
                             String sqlState = ((SQLException) cause).getSQLState();
                             logger.warn("Transient SQL error [%s]: [%s]".formatted(sqlState, cause));
                             metrics.markFail(callTime, true);
                         } else {
-                            logger.warn("Transient data access error", ex);
+                            logger.warn("Transient data access error: [%s]".formatted(cause));
                             metrics.markFail(callTime, true);
                         }
                         backoffDelayWithJitter(retries);
                         return true;
                     } else {
-                        logger.error("Non-transient data access error", ex);
+                        errors.add(ex);
+
+                        logger.warn("Non-transient data access error: [%s]".formatted(ex));
                         metrics.markFail(callTime, false);
                         return true;
                     }
+                } else if (ex instanceof BusinessException) {
+                    // Business constraint violation - futile to continue
+                    throw (BusinessException) ex;
                 } else {
-                    // Fatal and futile
+                    // Uncategorized - potentially fatal and futile to continue
                     throw new UndeclaredThrowableException(ex);
                 }
             }
@@ -135,12 +135,14 @@ public class WorkloadManager implements DisposableBean {
                 logger.info("Started %s [%s]"
                         .formatted(description.displayValue(), description.categoryValue()));
                 workload.awaitCompletion();
-            } catch (ExecutionException e) {
-                logger.warn(e.getCause().toString());
-            } finally {
-                workload.setStopTime(Instant.now());
                 logger.info("Finished %s [%s]"
                         .formatted(description.displayValue(), description.categoryValue()));
+            } catch (ExecutionException e) {
+                logger.error("Finished with error: %s [%s]"
+                                .formatted(description.displayValue(), description.categoryValue()),
+                        e.getCause());
+            } finally {
+                workload.setStopTime(Instant.now());
             }
         });
 

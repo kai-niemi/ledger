@@ -150,19 +150,25 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Page<Transfer> findAllTransfers(Pageable pageable) {
-        int count = countAllTransfers();
+    public Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable) {
+        int count = countAllTransfers(transferType);
         List<Transfer> content = this.jdbcTemplate.query(
-                "SELECT * FROM transfer ORDER BY transfer_date LIMIT ? OFFSET ?",
+                "SELECT * FROM transfer "
+                + "WHERE transfer_type=? "
+                + "ORDER BY transfer_date LIMIT ? OFFSET ?",
                 (rs, rowNum) -> mapTransfer(rs, false),
-                pageable.getPageSize(), pageable.getOffset());
+                transferType.getCode(),
+                pageable.getPageSize(),
+                pageable.getOffset());
         return new PageImpl<>(content, pageable, count);
     }
 
-    private Integer countAllTransfers() {
+    private Integer countAllTransfers(TransferType transferType) {
         List<Integer> results = this.jdbcTemplate.query(
-                "SELECT count(id) FROM transfer",
-                (rs, rowNum) -> rs.getInt(1));
+                "SELECT count(id) FROM transfer "
+                + "WHERE transfer_type=?",
+                (rs, rowNum) -> rs.getInt(1),
+                transferType.getCode());
         return DataAccessUtils.singleResult(results);
     }
 

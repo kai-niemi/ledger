@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
@@ -24,16 +26,20 @@ import se.cockroachdb.ledger.annotations.ControlService;
 import se.cockroachdb.ledger.domain.Account;
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.model.AccountItem;
 import se.cockroachdb.ledger.model.TransferRequest;
 import se.cockroachdb.ledger.repository.AccountRepository;
 import se.cockroachdb.ledger.repository.TransferRepository;
 import se.cockroachdb.ledger.service.BadRequestException;
 import se.cockroachdb.ledger.service.NegativeBalanceException;
+import se.cockroachdb.ledger.shell.support.JsonHelper;
 import se.cockroachdb.ledger.util.Money;
 
 @ControlService
 public class DefaultTransferService implements TransferService {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     @Autowired
     private AccountRepository accountRepository;
 
@@ -123,7 +129,10 @@ public class DefaultTransferService implements TransferService {
         try {
             accountRepository.updateBalances(coalesceItems(transferRequest.getAccountItems()));
         } catch (IncorrectResultSizeDataAccessException e) {
-            throw new NegativeBalanceException("Negative balance check constraint failed", e);
+            logger.warn("Negative balance outcome for denied transfer request:\n%s".formatted(
+                    JsonHelper.toFormattedJSON(transferRequest)
+            ));
+            throw new NegativeBalanceException("Negative balance check constraint failed - check log", e);
         }
 
         return transfer;
@@ -199,8 +208,8 @@ public class DefaultTransferService implements TransferService {
     }
 
     @Override
-    public Page<Transfer> findAll(Pageable page) {
-        return transferRepository.findAllTransfers(page);
+    public Page<Transfer> findAll(TransferType transferType, Pageable page) {
+        return transferRepository.findAllTransfers(transferType, page);
     }
 
     @Override

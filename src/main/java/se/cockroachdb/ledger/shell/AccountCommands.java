@@ -25,7 +25,7 @@ public class AccountCommands extends AbstractServiceCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @ShellMethod(value = "Create new zero-balance asset accounts in batches (use transfer-grants to enable these)",
+    @ShellMethod(value = "Create new zero-balance asset accounts in batches",
             key = {"create-accounts", "ca"})
     @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXISTS)
     public void createAccounts(

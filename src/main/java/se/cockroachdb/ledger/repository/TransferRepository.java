@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 
 public interface TransferRepository {
     Transfer createTransfer(Transfer transfer);
@@ -22,7 +23,7 @@ public interface TransferRepository {
 
     Page<Transfer> findAllTransfersByCity(String city, Pageable pageable);
 
-    Page<Transfer> findAllTransfers(Pageable pageable);
+    Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable);
 
     Page<TransferItem> findAllTransferItems(UUID transferId, Pageable pageable);
 

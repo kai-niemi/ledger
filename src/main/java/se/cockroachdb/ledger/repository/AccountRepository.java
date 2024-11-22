@@ -35,10 +35,11 @@ public interface AccountRepository {
 
     void deleteAll();
 
-    List<Account> findByCriteria(Set<String> cities, AccountType accountType, int limit);
+    List<Account> findByCriteria(Set<String> cities, AccountType accountType,
+                                 Pair<BigDecimal, BigDecimal> range, int limit);
 
-    List<Account> findByCriteria(String city, AccountType accountType, Pair<BigDecimal, BigDecimal> range,
-                                 int limit);
+    List<Account> findByCriteria(String city, AccountType accountType,
+                                 Pair<BigDecimal, BigDecimal> range, int limit);
 
     List<Account> findById(Set<String> cities, Set<UUID> ids, boolean forUpdate);
 

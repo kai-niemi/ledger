@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 import se.cockroachdb.ledger.domain.Transfer;
 import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.model.TransferRequest;
 
 public interface TransferService {
@@ -14,7 +15,7 @@ public interface TransferService {
 
     Transfer findById(UUID id);
 
-    Page<Transfer> findAll(Pageable page);
+    Page<Transfer> findAll(TransferType transferType, Pageable page);
 
     Page<Transfer> findAllByAccountId(UUID accountId, Pageable page);
 

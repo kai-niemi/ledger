@@ -105,7 +105,7 @@
                 </table>
 
                 <nav th:if="${workloadPage.totalPages > 0}"
-                     th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage})}">
+                     th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage}, '')}">
                 </nav>
 
             </div>

@@ -133,20 +133,31 @@ public class JpaAccountRepository implements AccountRepository {
                 : accountRepository.findAll(ids, cities);
     }
 
-
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType, int limit) {
+    public List<Account> findByCriteria(Set<String> cities, AccountType accountType,
+                                        Pair<BigDecimal, BigDecimal> range,
+                                        int limit) {
         List<Account> accountEntities = new ArrayList<>();
-        // No window fnc
-        cities.stream().forEach(c -> accountEntities.addAll(accountRepository.findAll(
-                List.of(c),
-                accountType,
-                PageRequest.ofSize(limit)).getContent()));
+
+        // No window functions in JPA :o
+
+        // Equality cancels out balance range filtering
+        if (range.getFirst().equals(range.getSecond())) {
+            cities.forEach(c -> accountEntities.addAll(
+                    accountRepository.findAll(List.of(c), accountType,
+                            PageRequest.ofSize(limit)).getContent()));
+        } else {
+            cities.forEach(c -> accountEntities.addAll(
+                    accountRepository.findAll(List.of(c), accountType,
+                            range.getFirst(), range.getSecond(),
+                            PageRequest.ofSize(limit)).getContent()));
+        }
         return accountEntities;
     }
 
     @Override
-    public List<Account> findByCriteria(String city, AccountType accountType, Pair<BigDecimal, BigDecimal> range,
+    public List<Account> findByCriteria(String city, AccountType accountType,
+                                        Pair<BigDecimal, BigDecimal> range,
                                         int limit) {
         return accountRepository.findAll(city, accountType,
                 range.getFirst(), range.getSecond(),

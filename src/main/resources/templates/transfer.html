@@ -26,6 +26,29 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             <h3>Transfers</h3>
+
+            <div>
+                <form th:action="@{/transfer}" th:object="${form}" method="post" id="filterForm">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="transfer-type" class="form-label">Type of transfer:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select th:field="*{transferType}" class="form-select" aria-label="Default select" id="transfer-type">
+                                <option th:each="tt : ${T(se.cockroachdb.ledger.domain.TransferType).values()}"
+                                        th:value="${tt}"
+                                        th:text="${tt.getCode()}"
+                                        th:selected="${tt == form.transferType}"></option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-sm btn-bd-primary">Filter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Main table -->
             <div class="table-responsive-xl">
                 <table class="table table-striped table-bordered table-hover table-sm caption-top">
                     <caption th:unless="${city}" th:text="'List of transfers'"></caption>
@@ -58,7 +81,7 @@
                 </table>
 
                 <nav th:if="${transferPage.totalPages > 0}"
-                     th:replace="~{fragments/paging-banner :: paging-banner(${transferPage})}">
+                     th:replace="~{fragments/paging-banner :: paging-banner(${transferPage}, ${form.transferType})}">
                 </nav>
             </div>
         </div>

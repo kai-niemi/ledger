@@ -78,9 +78,11 @@ public class DefaultAccountService implements AccountService {
         accountRepository.deleteAll();
     }
 
+
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType, int limit) {
-        return accountRepository.findByCriteria(cities, accountType, limit);
+    public List<Account> findByCriteria(Set<String> cities, AccountType accountType, Pair<BigDecimal, BigDecimal> range,
+                                        int limit) {
+        return accountRepository.findByCriteria(cities, accountType, range, limit);
     }
 
     @Override

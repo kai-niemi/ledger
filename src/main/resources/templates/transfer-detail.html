@@ -80,7 +80,7 @@
                 </table>
 
                 <nav th:if="${itemPage.totalPages > 0}"
-                     th:replace="~{fragments/paging-banner :: paging-banner(${itemPage})}">
+                     th:replace="~{fragments/paging-banner :: paging-banner(${itemPage}, '')}">
                 </nav>
             </div>
         </div>

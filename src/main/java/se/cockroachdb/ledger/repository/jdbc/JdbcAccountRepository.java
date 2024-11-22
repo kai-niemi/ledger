@@ -226,21 +226,43 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType, int limit) {
+    public List<Account> findByCriteria(Set<String> cities, AccountType accountType,
+                                        Pair<BigDecimal, BigDecimal> range,
+                                        int limit) {
         if (cities.isEmpty()) {
             return List.of();
         }
-        // Use CTE window function to sort and limit by city
-        return this.namedParameterJdbcTemplate.query(
-                "WITH accounts AS ( " +
-                "SELECT *, ROW_NUMBER() OVER (PARTITION BY city ORDER BY id) n " +
-                "FROM account WHERE city IN (:cities) AND account.type = :type) " +
-                "SELECT * " +
-                "FROM accounts " +
-                "WHERE n <= :limit " +
-                "ORDER BY city",
+
+        String sql;
+
+        // Use CTE window function to sort and limit by city to avoid full scans.
+        // Equality cancels out balance range filtering.
+        if (range.getFirst().equals(range.getSecond())) {
+            sql = "WITH accounts AS ( " +
+                  "SELECT *, ROW_NUMBER() OVER (PARTITION BY city ORDER BY id) n " +
+                  "FROM account WHERE city IN (:cities) "
+                  + "AND account.type = :type) " +
+                  "SELECT * " +
+                  "FROM accounts " +
+                  "WHERE n <= :limit " +
+                  "ORDER BY city";
+        } else {
+            sql = "WITH accounts AS ( " +
+                  "SELECT *, ROW_NUMBER() OVER (PARTITION BY city ORDER BY id) n " +
+                  "FROM account WHERE city IN (:cities) "
+                  + "AND account.balance BETWEEN :min AND :max "
+                  + "AND account.type = :type) " +
+                  "SELECT * " +
+                  "FROM accounts " +
+                  "WHERE n <= :limit " +
+                  "ORDER BY city";
+        }
+
+        return this.namedParameterJdbcTemplate.query(sql,
                 new MapSqlParameterSource()
                         .addValue("cities", cities)
+                        .addValue("min", range.getFirst())
+                        .addValue("max", range.getSecond())
                         .addValue("type", accountType.getCode())
                         .addValue("limit", limit),
                 (rs, rowNum) -> readAccount(rs));

@@ -48,14 +48,18 @@ public class TransferCommands extends AbstractServiceCommand {
     @ShellMethod(value = "Transfer funds between non-negative balance asset accounts", key = {"transfer-funds", "tf"})
     @ShellMethodAvailability(ACCOUNT_PLAN_EXISTS)
     public void transferFunds(
-            @ShellOption(help = "minimum amount (in local currency)",
+            @ShellOption(help = "minimum transfer amount in account currency",
                     defaultValue = "0.05") final double min,
-            @ShellOption(help = "maximum amount (in local currency)",
-                    defaultValue = "1.00") final double max,
+            @ShellOption(help = "maximum transfer amount in account currency",
+                    defaultValue = "10.00") final double max,
             @ShellOption(help = "number of legs per transfer (must be at least 2)",
                     defaultValue = "2") final int legs,
             @ShellOption(help = "additional number of legs per transfer",
                     defaultValue = "0") final int variance,
+            @ShellOption(help = "minimum account balance for inclusion",
+                    defaultValue = "100.00") final double minBalance,
+            @ShellOption(help = "maximum account balance for inclusion",
+                    defaultValue = "999999999.00") final double maxBalance,
             @ShellOption(help = Constants.ACCOUNT_LIMIT_HELP,
                     defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT) int limit,
             @ShellOption(help = Constants.REGIONS_HELP,
@@ -72,7 +76,9 @@ public class TransferCommands extends AbstractServiceCommand {
         }
 
         final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.ASSET, limit);
+            return accountServiceFacade.findAccounts(cities, AccountType.ASSET,
+                    Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)),
+                    limit);
         });
 
         if (accountIdsPerCity.isEmpty()) {
@@ -153,11 +159,11 @@ public class TransferCommands extends AbstractServiceCommand {
     public void transferGrants(
             @ShellOption(help = "transfer amount debited liability accounts and credited asset accounts",
                     defaultValue = "500.00") final double amount,
-            @ShellOption(help = "minimum asset account amount for inclusion",
-                    defaultValue = "0.00") final double min,
-            @ShellOption(help = "maximum asset account amount for inclusion",
-                    defaultValue = "100.00") final double max,
-            @ShellOption(help = "max number of legs per transfer",
+            @ShellOption(help = "minimum asset account balance for inclusion",
+                    defaultValue = "0.00") final double minBalance,
+            @ShellOption(help = "maximum asset account balance for inclusion",
+                    defaultValue = "50.00") final double maxBalance,
+            @ShellOption(help = "max number of transfer legs per batch",
                     defaultValue = "128") final int legs,
             @ShellOption(help = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
@@ -166,7 +172,9 @@ public class TransferCommands extends AbstractServiceCommand {
                     defaultValue = ShellOption.NULL) String cityName
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.LIABILITY, 8192);
+            return accountServiceFacade.findAccounts(cities, AccountType.LIABILITY,
+                    Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
+                    8192);
         });
 
         if (accountIdsPerCity.isEmpty()) {
@@ -182,8 +190,8 @@ public class TransferCommands extends AbstractServiceCommand {
                         @Override
                         public Transfer call() {
                             Assert.notNull(accountPage, "accountPage is null");
-                            logger.info("Processing %,d asset accounts for city '%s'".formatted(accountPage.size(),
-                                    city.getName()));
+//                            logger.debug("Processing %,d asset accounts for city '%s'"
+//                                    .formatted(accountPage.size(), city.getName()));
                             List<UUID> assetAccounts = accountPage.stream().map(Account::getId).toList();
                             return grantFunds(city, liabilityAccounts, assetAccounts, BigDecimal.valueOf(amount));
                         }
@@ -191,7 +199,7 @@ public class TransferCommands extends AbstractServiceCommand {
                         @Override
                         public boolean test(Integer x) {
                             accountPage = accountServiceFacade.findAccounts(city, AccountType.ASSET,
-                                    Pair.of(BigDecimal.valueOf(min), BigDecimal.valueOf(max)), legs);
+                                    Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)), legs);
                             return !accountPage.isEmpty();
                         }
                     }, new WorkloadDescription() {

@@ -1,6 +1,7 @@
 package se.cockroachdb.ledger.shell;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -17,6 +18,7 @@ import se.cockroachdb.ledger.shell.support.RegionProvider;
 import se.cockroachdb.ledger.util.DurationUtils;
 import se.cockroachdb.ledger.util.RandomData;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,9 @@ public class ReadBalanceCommands extends AbstractServiceCommand {
                     defaultValue = Constants.DEFAULT_DURATION) String duration
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.ASSET, limit);
+            return accountServiceFacade.findAccounts(cities, AccountType.ASSET,
+                    Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
+                    limit);
         });
 
         if (accountIdsPerCity.isEmpty()) {
@@ -92,7 +96,9 @@ public class ReadBalanceCommands extends AbstractServiceCommand {
                     defaultValue = Constants.DEFAULT_DURATION) String duration
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.ASSET, limit);
+            return accountServiceFacade.findAccounts(cities, AccountType.ASSET,
+                    Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
+                    limit);
         });
 
         if (accountIdsPerCity.isEmpty()) {
