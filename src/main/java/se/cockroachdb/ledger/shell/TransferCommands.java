@@ -12,6 +12,7 @@ import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.shell.standard.EnumValueProvider;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -153,7 +154,7 @@ public class TransferCommands extends AbstractServiceCommand {
         return transferServiceFacade.createTransfer(builder.build());
     }
 
-    @ShellMethod(value = "Transfer grants from liability accounts to user asset accounts", key = {
+    @ShellMethod(value = "Transfer grants from liability accounts to user accounts", key = {
             "transfer-grants", "tg"})
     @ShellMethodAvailability(ACCOUNT_PLAN_EXISTS)
     public void transferGrants(
@@ -165,12 +166,19 @@ public class TransferCommands extends AbstractServiceCommand {
                     defaultValue = "50.00") final double maxBalance,
             @ShellOption(help = "max number of transfer legs per batch",
                     defaultValue = "128") final int legs,
+            @ShellOption(help = "target account type (any but LIABILITY)",
+                    defaultValue = "ASSET",
+                    valueProvider = EnumValueProvider.class) AccountType accountType,
             @ShellOption(help = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
                     valueProvider = RegionProvider.class) String region,
             @ShellOption(help = Constants.CITY_NAME_HELP,
                     defaultValue = ShellOption.NULL) String cityName
     ) {
+        if (accountType.equals(AccountType.LIABILITY)) {
+            throw new IllegalArgumentException("You are not allowed to target accounts of this type!");
+        }
+
         final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
             return accountServiceFacade.findAccounts(cities, AccountType.LIABILITY,
                     Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
@@ -190,15 +198,17 @@ public class TransferCommands extends AbstractServiceCommand {
                         @Override
                         public Transfer call() {
                             Assert.notNull(accountPage, "accountPage is null");
-//                            logger.debug("Processing %,d asset accounts for city '%s'"
-//                                    .formatted(accountPage.size(), city.getName()));
+                            if (logger.isTraceEnabled()) {
+                                logger.trace("Processing %,d asset accounts for city '%s'"
+                                        .formatted(accountPage.size(), city.getName()));
+                            }
                             List<UUID> assetAccounts = accountPage.stream().map(Account::getId).toList();
                             return grantFunds(city, liabilityAccounts, assetAccounts, BigDecimal.valueOf(amount));
                         }
 
                         @Override
                         public boolean test(Integer x) {
-                            accountPage = accountServiceFacade.findAccounts(city, AccountType.ASSET,
+                            accountPage = accountServiceFacade.findAccounts(city, accountType,
                                     Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)), legs);
                             return !accountPage.isEmpty();
                         }
@@ -217,9 +227,9 @@ public class TransferCommands extends AbstractServiceCommand {
     }
 
     private Transfer grantFunds(City city,
-                            List<UUID> liabilityAccounts,
-                            List<UUID> assetAccounts,
-                            BigDecimal amount) {
+                                List<UUID> liabilityAccounts,
+                                List<UUID> assetAccounts,
+                                BigDecimal amount) {
         Currency currency = Currency.getInstance(city.getCurrency());
 
         Money transferAmount = Money.of(amount, currency);

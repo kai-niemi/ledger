@@ -21,7 +21,7 @@ public abstract class Constants {
 
     public static final String DURATION_HELP = "Workload execution duration";
 
-    public static final String EXECUTION_LIMIT_HELP = "Workload max execution limit";
+    public static final String ITERATIONS_HELP = "Max execution iterations (overrides duration if > 0)";
 
     public static final String REGIONS_HELP = "Name of account region(s) to include in city selection."
                                               + "\n'gateway' refers to CockroachDB gateway node region."

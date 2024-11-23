@@ -22,9 +22,9 @@ if [ ! -f "$app_jarfile" ]; then
     ./mvnw clean install
 fi
 
-java -jar $app_jarfile \
+java -jar $app_jarfile $*
 #--spring.datasource.url="${db_url}" \
 #--spring.datasource.username=${db_user} \
 #--spring.datasource.password=${db_password} \
 #--spring.profiles.active="${spring_profile}" \
-$*
+#$*

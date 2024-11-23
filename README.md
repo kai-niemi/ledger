@@ -12,7 +12,7 @@
     * [PostgreSQL Setup (optional)](#postgresql-setup-optional)
   * [Building](#building)
     * [Clone the project](#clone-the-project)
-    * [Build the artifacts](#build-the-artifacts)
+    * [Build the artifact](#build-the-artifact)
 * [Configuration](#configuration)
 * [Running](#running)
   * [Run with an interactive shell](#run-with-an-interactive-shell)
@@ -25,6 +25,7 @@
   * [Read balance](#read-balance)
   * [Create accounts](#create-accounts)
   * [Transfer grants](#transfer-grants)
+  * [Workload Overview](#workload-overview)
 * [Multi-region Tutorial](#multi-region-tutorial)
 <!-- TOC -->
 
@@ -44,8 +45,9 @@ Ledger is the successor to [Roach Bank](https://github.com/kai-niemi/roach-bank)
 load testing and operational ease-of-use. Conceptually they are the same, but Ledger has a simpler 
 design, improved UI and leverages JDK21 features such as virtual threads for better efficiency.
 
-![](img2.png)
-![](img1.png)
+![](.github/img2.png)
+
+![](.github/img1.png)
 
 ## Compatibility
 
@@ -213,22 +215,22 @@ or single-host CockroachDB cluster.
 
 ## Basics
 
-Ledger is operated through its build-in shell, or by a command file passed at startup
+Ledger is operated through its built-in shell, or by a command file passed at startup
 time, in which case the shell is disabled (see [running](#running) instructions).
+For a complete list of commands, run the `help` command in the shell.
 
-There are also many commands not listed here. For a complete list, run the `help` command.
-Ledger also provides a reactive web UI available at http://localhost:9090 by default
-to display activity and metric charts.
+There's also a reactive web UI available at http://localhost:9090 (by default)
+to display account activities and different metric charts.
 
 Ledger organizes monetary accounts around cities within regions. A region maps to an 
 actual CockroachDB deployment region like `aws-us-east-1`. One region has one or 
-more cities and a city has a country code and currency code. This allows for good data 
+more cities, and a city has a country and currency code. This allows for good data 
 distribution and simple data partitioning for multi-region scenarios. 
 
-You can create a custom region/city mapping through the application YAML. By default
-it includes all CockroachDB Cloud regions for AWS, GCP and Azure.
+By default it includes all CockroachDB Cloud regions for AWS, GCP and Azure. You can 
+also create a custom region/city mapping through the application YAML.
 
-Excerpt from `src/resources/application.yml`
+Excerpt from `src/resources/application.yml`:
 
 ```yaml
   ...
@@ -255,6 +257,12 @@ Excerpt from `src/resources/application.yml`
             - name: houston
             - name: detroit
         ...
+      region-mappings:
+        aws-us-east-1: us-east-1 #N. Virginia
+        aws-us-east-2: us-east-2 #Ohio
+        gcp-us-east1: us-east-1 #South Carolina
+        gcp-us-east4: us-east-2 #Virginia
+        ...
 ```
 
 ## Create an account plan
@@ -276,63 +284,69 @@ pre-emptive locks.
       
 ## Transfer funds
 
-An account plan unlocks the different workload commands. 
-
-This is the primary read-write workload that transfer funds between asset accounts 
-selected by random. It is done with balanced, multi-legged transfers that 
-runs in parallel. One transfer `leg` equals one account balance update, 
-thus the minimum number of legs required is two. 
-
-A balance update can hold a positive or negative value for simplicity, 
-rather than a _credit_ or _debit_ in real accounting (which is never negative).
-By default, all workloads select the cities in the gateway node's region
-(local region to the client). You can however pick any region, or all of them
-affectively starting a transfer workload for each city.
+An existing account plan unlocks the different workload commands, such as: 
 
     transfer-funds
 
+This is the primary read-write workload that transfer funds between asset accounts 
+selected by random. It is done by balanced, multi-legged transfers executed 
+in parallel. 
+
+One transfer `leg` equals one account balance update, thus the minimum number of 
+legs required is two. A balance update can hold a positive or negative value for simplicity, 
+rather than a _credit_ or _debit_ in real accounting (which is never negative).
+
+By default, all workloads select the cities in the gateway node's region
+(local region to the client). You can however pick any region, or all of them,
+affectively starting a transfer workload for every city, like:
+
+    transfer-funds --region all
+
 ## Read balance
 
-This workload is pure read-only and executes point lookups on accounts to 
-retrieve the current balance.
+This workload is purely read-only and executes point lookups on accounts to 
+retrieve the current authoritative balance.
 
     read-balance
 
-Another variant is to use historical follower reads, which, if you are familiar with CockroachDB, 
+Another variant is to use a historical follower read, which, if you are familiar with CockroachDB, 
 means that any node receiving a request hosting a range replica for the requested key 
 can service the request, at the expense of the returned value being potentially stale 
-with up to ~5s (called _bounded staleness read_).
+with up to ~5s (called a _bounded staleness read_). Normally only the lease holder replica
+can service reads.
 
     read-balance-historical
 
 ## Create accounts
 
 This is a write-only command to create new asset accounts in batches. It can be used to 
-populate the database with more accounts than created by the account plan. 
+populate the database with more accounts than included in the account plan. 
 
-Notice that these accounts will have a zero balance and not allowed to go negative. To fund 
-these accounts, you need to run the next transfer command to grant funds from liability 
-accounts.
+Notice that these accounts will have a zero balance and are not allowed to go negative. 
+To fund these accounts, you need to run the `transfer-grants` command to grant funds 
+from liability accounts.
 
     create-accounts
 
 ## Transfer grants
 
-Similar to the transfer funds command, this one will move money from liability accounts to 
-asset accounts withing a specified balance range (near zero). It's useful to run this after 
-creating new accounts to allow those accounts to become part of selection.
+Similar to the `transfer-funds` command, this one will move money from liability accounts to 
+asset accounts withing a specified balance range. It's useful to run this after 
+creating new accounts to allow these to become part of workload selections.
 
     transfer-grants
   
 ## Workload Overview
 
-| Workload                | Reads | Writes | Explicit | Implicit | Locks | Variable | Duration |
-|-------------------------|-------|--------|----------|----------|:------|:---------|:---------|
-| transfer-funds          | 20%   | 80%    | x        |          | x     | x        | 120m     |
-| transfer-grants         | 10%   | 90%    | x        |          | x     |          | Finite   |
-| create-accounts         |       | 100%   | x        |          |       | x        | 120m     |
-| read-balance            | 100%  |        |          | x        |       |          | 120m     |
-| read-balance-historical | 100&  |        |          | x        |       |          | 120m     |
+A quick overview of the main workload commands and the type of SQL transactions they perform.
+
+| Workload                | Reads | Writes | Explicit | Implicit | Locks | Duration |
+|:------------------------|-------|--------|----------|----------|:------|:---------|
+| transfer-funds          | 20%   | 80%    | x        |          | x     | 120m     |
+| transfer-grants         | 10%   | 90%    | x        |          | x     | Finite   |
+| create-accounts         |       | 100%   |          | x        |       | 120m     |
+| read-balance            | 100%  |        |          | x        |       | 120m     |
+| read-balance-historical | 100&  |        |          | x        |       | 120m     |
 
 
 # Multi-region Tutorial
@@ -341,4 +355,4 @@ For the complete multi-region guide, see [tutorial](TUTORIAL.md).
 
 ---
 
--- The end
+-- The end, enjoy your accounting experience!

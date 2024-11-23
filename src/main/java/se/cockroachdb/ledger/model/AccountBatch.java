@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
 
+import se.cockroachdb.ledger.domain.AccountType;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountBatch {
     @NotNull
@@ -14,6 +16,17 @@ public class AccountBatch {
 
     @NotNull
     private Integer batchSize;
+
+    @NotNull
+    private AccountType accountType;
+
+    public AccountType getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
 
     public City getCity() {
         return city;
