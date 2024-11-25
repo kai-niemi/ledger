@@ -27,7 +27,7 @@ spring:
 
   ## Alternative datasource (Cloud)
 #  datasource:
-#    url: jdbc:postgresql://kai-valhall-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
+#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
 #    username: craig
 #    password: cockroach
 #    hikari:

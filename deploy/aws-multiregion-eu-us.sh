@@ -15,7 +15,7 @@ crdbnodes="1-9"
 # Array of client nodes (must match size of regions)
 clientnodes="10-12"
 # Array of regions localities (must match zone names)
-regions="us-east-1,eu-central-1,eu-north-1"
+regions="us-east-1,eu-central-1,eu-west-1"
 # AWS/GCE region zones (must align with nodes count)
 zones="\
 us-east-1a,\
@@ -24,14 +24,14 @@ us-east-1c,\
 eu-central-1a,\
 eu-central-1b,\
 eu-central-1c,\
-eu-north-1a,\
-eu-north-1b,\
-eu-north-1c,\
+eu-west-1a,\
+eu-west-1b,\
+eu-west-1c,\
 us-east-1a,\
 eu-central-1a,\
-eu-north-1a"
+eu-west-1a"
 # AWS/GCE machine types
-machinetypes="m6i.2xlarge"
+machinetypes="m6i.xlarge"
 
 # Dry run mode
 dryrun=on

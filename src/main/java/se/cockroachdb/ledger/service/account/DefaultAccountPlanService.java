@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -50,7 +49,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
     }
 
     @Override
-    public void buildAccountPlan(AccountPlan accountPlan, Set<String> visibleRegions) {
+    public void buildAccountPlan(AccountPlan accountPlan) {
         Assert.isTrue(!hasAccountPlan(), "Account plan already exist!");
 
         logger.info("Building account plan '%s'".formatted(accountPlan.toString()));
@@ -59,63 +58,64 @@ public class DefaultAccountPlanService implements AccountPlanService {
 
         final List<City> cities = Region.joinCities(regionServiceFacade.listAllRegions());
 
-        final AtomicInteger current = new AtomicInteger();
         final AtomicInteger total = new AtomicInteger(cities.size() * accountPlan.getAccountsPerCity());
+        final AtomicInteger current = new AtomicInteger();
 
         cities.parallelStream()
                 .unordered()
-                .forEach((x) -> createAccounts(accountPlan, current, total, x));
+                .forEach((city) -> {
+                    Currency currency;
+                    try {
+                        currency = city.getCurrencyInstance();
+                    } catch (IllegalArgumentException e) {
+                        throw new ApplicationContextException("Bad currency code for city: " + city, e);
+                    }
 
-        logger.info("The Ledger is now open for business %s".formatted(AsciiArt.happy()));
-    }
+                    // Adjust proper fractions for currency
+                    final Money initialBalance = Money.of(
+                            BigDecimal.valueOf(accountPlan.getInitialBalance()), currency);
+                    // Compute total balance for all accounts in this city
+                    final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCity()).negate();
 
-    private void createAccounts(AccountPlan accountPlan,
-                                AtomicInteger current,
-                                AtomicInteger total,
-                                City city) {
-        Currency currency;
-        try {
-            currency = city.getCurrencyInstance();
-        } catch (IllegalArgumentException e) {
-            throw new ApplicationContextException("Bad currency code for city: " + city, e);
-        }
+                    accountServiceFacade.createAccount(
+                            Account.builder()
+                                    .withGeneratedId()
+                                    .withCity(city.getName())
+                                    .withName("system-account-" + city.getName())
+                                    .withAllowNegative(true)
+                                    .withBalance(totalBalance)
+                                    .withAccountType(AccountType.LIABILITY)
+                                    .withUpdated(LocalDateTime.now()).build());
 
-        // Adjust to proper fractions
-        final Money initialBalance = Money.of(BigDecimal.valueOf(accountPlan.getInitialBalance()), currency);
-        final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCity());
+                    // Use set returning (virtual table) function for speed
 
-        accountServiceFacade.createAccount(
-                Account.builder()
-                        .withGeneratedId()
-                        .withCity(city.getName())
-                        .withName("system-account-" + city.getName())
-                        .withAllowNegative(true)
-                        .withBalance(totalBalance.negate())
-                        .withAccountType(AccountType.LIABILITY)
-                        .withUpdated(LocalDateTime.now()).build());
+                    int rows = jdbcTemplate.update(
+                            "insert into account (city, balance, currency, name, type, closed, allow_negative, updated_at) "
+                            + "select "
+                            + " ?,"
+                            + " ?,"
+                            + " ?,"
+                            + " (concat('user:', no::text)),"
+                            + " ?::account_type,"
+                            + " false,"
+                            + " 0,"
+                            + " ? "
+                            + "from generate_series(1, ?) no",
+                            city.getName(),
+                            initialBalance.getAmount(),
+                            initialBalance.getCurrency().getCurrencyCode(),
+                            AccountType.ASSET.getCode(),
+                            LocalDateTime.now(),
+                            accountPlan.getAccountsPerCity());
 
-        int rows = jdbcTemplate.update(
-                "insert into account (city, balance, currency, name, type, closed, allow_negative, updated_at) "
-                + "select "
-                + " ?,"
-                + " ?,"
-                + " ?,"
-                + " (concat('user:', no::text)),"
-                + " ?::account_type,"
-                + " false,"
-                + " 0,"
-                + " ? "
-                + "from generate_series(1, ?) no",
-                city.getName(),
-                initialBalance.getAmount(),
-                initialBalance.getCurrency().getCurrencyCode(),
-                AccountType.ASSET.getCode(),
-                LocalDateTime.now(),
-                accountPlan.getAccountsPerCity());
+                    // Tick
 
-        ansiConsole.progressBar(current.addAndGet(rows), total.get(),
-                city.getCountry() + "/" + city.getName() + "/" + initialBalance + " ("
-                + currency.getSymbol(Locale.US) + ")");
+                    ansiConsole.progressBar(current.addAndGet(rows), total.get(),
+                            city.getCountry() + "/" + city.getName() + "/" + initialBalance + " ("
+                            + currency.getSymbol(Locale.US) + ")");
+                });
+
+        logger.info("Ledger is now open for business %s".formatted(AsciiArt.happy()));
     }
 
     @Override

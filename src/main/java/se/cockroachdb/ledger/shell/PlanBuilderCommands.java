@@ -31,7 +31,7 @@ public class PlanBuilderCommands extends AbstractServiceCommand {
         if (initialBalance != null) {
             accountPlan.setInitialBalance(initialBalance);
         }
-        accountPlanService.buildAccountPlan(accountPlan, applicationModel.getVisibleRegions());
+        accountPlanService.buildAccountPlan(accountPlan);
     }
 
     @ShellMethod(value = "Drop account plan including all accounts and transfers",
