@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_COMMANDS)
+@ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
 public class ReadBalanceCommands extends AbstractServiceCommand {
     @Autowired
     private WorkloadManager workloadManager;

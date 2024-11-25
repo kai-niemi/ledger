@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_COMMANDS)
+@ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
 public class FakeCommands {
     private final AtomicInteger monotonicCounter = new AtomicInteger();
 
@@ -28,7 +28,7 @@ public class FakeCommands {
     @ShellMethod(value = "Create fake workload with random sleep durations", key = {"fake", "f"})
     public void createFakeWorkloads(
             @ShellOption(help = "number of workloads",
-                    defaultValue = "10") int count,
+                    defaultValue = "5") int count,
             @ShellOption(help = "min sleep time in ms",
                     defaultValue = "10") int min,
             @ShellOption(help = "max sleep time in ms",

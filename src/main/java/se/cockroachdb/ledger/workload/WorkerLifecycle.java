@@ -14,5 +14,5 @@ public interface WorkerLifecycle {
     /**
      * Invoked after a failed worker call.
      */
-    boolean failure(Duration callTime, Exception ex);
+    void failure(Duration callTime, Exception ex);
 }

@@ -1,5 +1,6 @@
 package se.cockroachdb.ledger.domain;
 
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Currency;
 import java.util.UUID;
@@ -76,7 +77,7 @@ public class Account extends AbstractEntity<UUID> {
     protected void postLoad() {
         Currency currency = balance.getCurrency();
         this.balance = Money.of(balance.getAmount()
-                .setScale(currency.getDefaultFractionDigits()), currency);
+                .setScale(currency.getDefaultFractionDigits(), RoundingMode.UNNECESSARY), currency);
     }
 
     @Override

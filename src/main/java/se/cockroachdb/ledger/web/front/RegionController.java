@@ -32,6 +32,16 @@ public class RegionController {
     public Callable<String> indexPage(Model model) {
         List<RegionModel> regions = new ArrayList<>();
 
+        regionServiceFacade.getGatewayRegion().ifPresent(region -> {
+            model.addAttribute("gatewayRegion", region.getName());
+        });
+        regionServiceFacade.getPrimaryRegion().ifPresent(region -> {
+            model.addAttribute("primaryRegion", region.getName());
+        });
+        regionServiceFacade.getSecondaryRegion().ifPresent(region -> {
+            model.addAttribute("secondaryRegion", region.getName());
+        });
+
         regionServiceFacade
                 .listAllRegions()
                 .forEach(region -> {
@@ -81,16 +91,6 @@ public class RegionController {
                 });
 
         model.addAttribute("regions", regions);
-
-        regionServiceFacade.getGatewayRegion().ifPresent(region -> {
-            model.addAttribute("gatewayRegion", region.getName());
-        });
-        regionServiceFacade.getPrimaryRegion().ifPresent(region -> {
-            model.addAttribute("primaryRegion", region.getName());
-        });
-        regionServiceFacade.getSecondaryRegion().ifPresent(region -> {
-            model.addAttribute("secondaryRegion", region.getName());
-        });
 
         return () -> "region";
     }

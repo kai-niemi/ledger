@@ -18,29 +18,64 @@
 <main>
     <div class="py-2 rounded bg-body-tertiary">
         <div class="container-xl">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                These workloads are server local and not shared across different instances.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
             <h3>Workload Metrics</h3>
+
             <div class="table-responsive-xl">
                 <canvas id="chart-container-p99" style="max-height: 300px"></canvas>
                 <hr/>
                 <canvas id="chart-container-tps" style="max-height: 300px"></canvas>
                 <hr/>
 
+
                 <div class="hstack gap-2">
-                    <button class="btn btn-sm btn-outline-warning me-md-0" type="button"
-                            data-bs-toggle="modal" data-bs-target="#confirmCancelAllModal">Cancel All
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger me-md-0" type="button"
-                            data-bs-toggle="modal" data-bs-target="#confirmDeleteAllModal">Delete All
-                    </button>
-                    <div class="vr"></div>
-                    <a th:href="@{/workload/data-points/clear}" class="btn btn-sm btn-outline-info">Clear Stats</a>
+                    <form th:action="@{/workload}" th:object="${form}" method="post" id="filterForm">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-danger" type="button"
+                                        data-bs-toggle="modal" data-bs-target="#confirmDeleteAllModal">Delete All
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-warning" type="button"
+                                        data-bs-toggle="modal" data-bs-target="#confirmCancelAllModal">Cancel All
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <a th:href="@{/workload/data-points/clear}" class="btn btn-sm btn-outline-info">Clear
+                                    Stats</a>
+                            </div>
+                            <div class="col-auto">
+                                <label for="workload-title" class="form-label">Title:</label>
+                            </div>
+                            <div class="col-auto">
+                                <select th:field="*{title}" class="form-select" aria-label="Default select"
+                                        id="workload-title">
+                                    <option th:each="t : ${workloadTitles}"
+                                            th:value="${t}"
+                                            th:text="${t}"
+                                            th:selected="${t == form.title}"></option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
+                            </div>
+                            <div class="col-auto">
+                                <a th:href="@{/workload}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
-                <p th:if="${#lists.size(workloadPage.getContent()) == 0}" class="badge text-bg-info mt-3">No workloads found, use shell commands to start some.</p>
+                <p th:if="${#lists.size(workloadPage.getContent()) == 0}" class="badge text-bg-info mt-3">No workloads found.</p>
 
                 <table class="table table-striped table-bordered table-hover table-sm caption-top"
                        th:if="${#lists.size(workloadPage.getContent()) > 0}">
-                    <caption th:text="${'Total workloads ' + workloadPage.totalElements}"></caption>
+                    <caption th:text="${'Total workloads for this server: ' + workloadPage.totalElements}"></caption>
                     <thead class="thead-light">
                     <tr>
                         <th>Name</th>
@@ -60,7 +95,9 @@
                     </thead>
                     <tbody>
                     <tr th:each="workload : ${workloadPage.content}" th:id="${'row-' + workload.id}">
-                        <td th:text="${workload.title}"></td>
+                        <td>
+                            <a th:href="@{/workload/{id}(id=${workload.id})}" th:text="${workload.title}"></a>
+                        </td>
                         <td th:text="${workload.category}"></td>
                         <td th:text="${workload.id}"></td>
                         <td th:text="${workload.executionTime}" class="execution-time"></td>
@@ -104,15 +141,14 @@
                     </tfoot>
                 </table>
 
-                <nav th:if="${workloadPage.totalPages > 0}"
-                     th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage}, '')}">
-                </nav>
-
+                <div th:if="${#lists.size(workloadPage.getContent()) > 0}">
+                    <nav th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage}, ${form.title})}"></nav>
+                </div>
             </div>
         </div>
     </div>
 </main>
-
+                                                 3
 <footer th:replace="~{fragments/footer :: footer}"></footer>
 
 <!-- Modals -->

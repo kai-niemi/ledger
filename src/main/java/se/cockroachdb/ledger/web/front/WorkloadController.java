@@ -1,26 +1,31 @@
 package se.cockroachdb.ledger.web.front;
 
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 
 import se.cockroachdb.ledger.event.WorkloadUpdatedEvent;
-import se.cockroachdb.ledger.workload.Workload;
-import se.cockroachdb.ledger.workload.WorkloadManager;
 import se.cockroachdb.ledger.web.push.SimpMessagePublisher;
 import se.cockroachdb.ledger.web.push.TopicName;
+import se.cockroachdb.ledger.workload.Workload;
+import se.cockroachdb.ledger.workload.WorkloadManager;
 
 @Controller
 @RequestMapping("/workload")
@@ -48,18 +53,62 @@ public class WorkloadController {
     }
 
     @GetMapping
-    public Callable<String> indexPage(Model model, @PageableDefault(size = 10) Pageable page) {
-        model.addAttribute("workloadPage",
-                workloadManager.getWorkloads(page, (x) -> true));
-        model.addAttribute("aggregatedMetrics",
-                workloadManager.getMetricsAggregate(page));
+    public Callable<String> listWorkloads(
+            @RequestParam(value = "type", required = false) String type,
+            @PageableDefault(size = 10) Pageable page,
+            Model model) {
+        Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload -> {
+            return type == null || workload.getTitle().equalsIgnoreCase(type);
+        });
+
+        Set<String> allTitles = workloadManager.getWorkloads()
+                .stream().map(Workload::getTitle)
+                .collect(Collectors.toSet());
+        allTitles.add("");
+
+        model.addAttribute("workloadPage", workloadPage);
+        model.addAttribute("form", new WorkloadForm(type));
+        model.addAttribute("workloadTitles", allTitles);
+        model.addAttribute("aggregatedMetrics", workloadManager.getMetricsAggregate(page));
+
         return () -> "workload";
     }
 
-    @GetMapping("/detail/{id}")
-    public Callable<String> workloadDetails(@PathVariable("id") Integer id, Model model) {
-        return () -> "workload";
+    @PostMapping
+    public Callable<String> filterWorkloads(@ModelAttribute("form") WorkloadForm form,
+                                            @PageableDefault(size = 10) Pageable page,
+                                            Model model) {
+        return () -> {
+            Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload -> {
+                return workload.getTitle().equalsIgnoreCase(form.getTitle());
+            });
+
+            Set<String> allTitles = workloadManager.getWorkloads()
+                    .stream().map(Workload::getTitle).collect(Collectors.toSet());
+            allTitles.add("");
+
+            model.addAttribute("workloadPage", workloadPage);
+            model.addAttribute("form", form);
+            model.addAttribute("workloadTitles", allTitles);
+            model.addAttribute("aggregatedMetrics", workloadManager.getMetricsAggregate(page));
+
+            return "workload";
+        };
     }
+
+    @GetMapping("{id}")
+    public Callable<String> workloadDetails(
+            @PathVariable("id") Integer id,
+            Model model) {
+        return () -> {
+            Workload workload = workloadManager.getWorkloadById(id);
+
+            model.addAttribute("form", workload);
+
+            return "workload-detail";
+        };
+    }
+
 
     @PostMapping(value = "/cancelAll")
     public RedirectView cancelAll() {

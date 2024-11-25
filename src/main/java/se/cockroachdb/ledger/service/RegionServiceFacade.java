@@ -6,6 +6,7 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,12 @@ import se.cockroachdb.ledger.repository.RegionRepository;
 
 @ServiceFacade
 public class RegionServiceFacade {
+    private static List<String> RBR_TABLES = List.of(
+            "account",
+            "transfer",
+            "transfer_item"
+    );
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
@@ -189,17 +196,22 @@ public class RegionServiceFacade {
     }
 
     @TransactionImplicit
-    public void applyMultiRegion() {
-        logger.info("Adding database regions");
+    public void applyMultiRegion(SurvivalGoal goal) {
+        logger.info("Adding database regions: %s".formatted(
+                        String.join(",", applicationProperties.getRegions()
+                                .stream()
+                                .filter(r -> !r.getDatabaseRegions().isEmpty())
+                                .map(Region::getDatabaseRegion)
+                                .collect(Collectors.toSet()))
+                )
+        );
         multiRegionRepository.addDatabaseRegions(applicationProperties.getRegions());
 
-        logger.info("Adding RBR localities");
-        multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), "account");
-        multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), "transfer");
-        multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), "transfer_item");
+        logger.info("Adding RBR localities: %s".formatted(String.join(",", RBR_TABLES)));
+        RBR_TABLES.forEach(table -> multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
 
-        logger.info("Setting survival goal");
-        multiRegionRepository.setSurvivalGoal(SurvivalGoal.REGION);
+        logger.info("Setting survival goal: %s".formatted(goal));
+        multiRegionRepository.setSurvivalGoal(goal);
 
         updateRegions();
     }
@@ -207,16 +219,13 @@ public class RegionServiceFacade {
     @TransactionImplicit
     public void revertMultiRegion() {
         logger.info("Reverting table localities");
-        multiRegionRepository.setRegionalByTable("account");
-        multiRegionRepository.setRegionalByTable("transfer");
-        multiRegionRepository.setRegionalByTable("transfer_item");
 
-        logger.info("Dropping region columns");
-        multiRegionRepository.dropRegionColumn("account");
-        multiRegionRepository.dropRegionColumn("transfer");
-        multiRegionRepository.dropRegionColumn("transfer_item");
+        RBR_TABLES.forEach(table -> multiRegionRepository.setRegionalByTable(table));
 
-        logger.info("Reverting survival goal");
+        logger.info("Dropping computed region columns");
+        RBR_TABLES.forEach(table -> multiRegionRepository.dropRegionColumn(table));
+
+        logger.info("Reverting survival goal to ZONE");
         multiRegionRepository.setSurvivalGoal(SurvivalGoal.ZONE);
 
         logger.info("Dropping regions");

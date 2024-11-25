@@ -38,7 +38,7 @@ import se.cockroachdb.ledger.workload.WorkloadDescription;
 import se.cockroachdb.ledger.workload.WorkloadManager;
 
 @ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_COMMANDS)
+@ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
 public class TransferCommands extends AbstractServiceCommand {
     @Autowired
     private TransferServiceFacade transferServiceFacade;

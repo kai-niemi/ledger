@@ -20,19 +20,19 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.TransactionSystemException;
+import org.springframework.transaction.TransactionException;
 
 import se.cockroachdb.ledger.event.WorkloadUpdatedEvent;
 import se.cockroachdb.ledger.service.BusinessException;
@@ -76,7 +76,7 @@ public class WorkloadManager {
     public <T> Workload submitWorker(Worker<T> worker, WorkloadDescription description) {
         final Metrics metrics = Metrics.empty();
 
-        final LinkedList<Throwable> errors = new LinkedList<>();
+        final LinkedList<Problem> problems = new LinkedList<>();
 
         final Future<T> future = submit(worker, new WorkerLifecycle() {
             private final AtomicInteger retries = new AtomicInteger();
@@ -87,62 +87,54 @@ public class WorkloadManager {
             }
 
             @Override
-            public boolean failure(Duration callTime, Exception ex) {
-                if (ex instanceof SQLException
-                    || ex instanceof DataAccessException
-                    || ex instanceof TransactionSystemException) {
+            public void failure(Duration callTime, Exception ex) {
+                if (problems.size() >= 20) {
+                    problems.removeLast();
+                }
+                problems.addFirst(Problem.from(ex));
 
-                    Throwable cause = NestedExceptionUtils.getMostSpecificCause(ex);
+                Throwable cause = NestedExceptionUtils.getMostSpecificCause(ex);
+                if (cause instanceof SQLException) {
+                    String sqlState = ((SQLException) cause).getSQLState();
 
-                    if (errors.size() > 100) {
-                        errors.removeFirst();
-                    }
-
-                    if (exceptionClassifier.isTransient(cause)) {
-                        errors.add(cause);
-
-                        if (cause instanceof SQLException) {
-                            String sqlState = ((SQLException) cause).getSQLState();
-                            logger.warn("Transient SQL error [%s]: [%s]".formatted(sqlState, cause));
-                            metrics.markFail(callTime, true);
-                        } else {
-                            logger.warn("Transient data access error: [%s]".formatted(cause));
-                            metrics.markFail(callTime, true);
-                        }
-                        backoffDelayWithJitter(retries);
-                        return true;
+                    if (exceptionClassifier.isTransient((SQLException) cause)) {
+                        logger.warn("Transient SQL exception [%s]: [%s]".formatted(sqlState, cause));
+                        metrics.markFail(callTime, true);
                     } else {
-                        errors.add(ex);
-
-                        logger.warn("Non-transient data access error: [%s]".formatted(ex));
+                        logger.error("Non-transient SQL exception [%s]: [%s]".formatted(sqlState, cause));
                         metrics.markFail(callTime, false);
-                        return true;
                     }
-                } else if (ex instanceof BusinessException) {
-                    // Business constraint violation - futile to continue
-                    throw (BusinessException) ex;
+                } else if (ex instanceof TransientDataAccessException) {
+                    logger.warn("Transient data access exception: [%s]".formatted(ex));
+                    metrics.markFail(callTime, true);
+                } else if (ex instanceof NonTransientDataAccessException || ex instanceof TransactionException || ex instanceof BusinessException) {
+                    logger.error("Non-transient exception: [%s]".formatted(ex));
+                    metrics.markFail(callTime, false);
                 } else {
-                    // Uncategorized - potentially fatal and futile to continue
+                    // Uncategorized - potentially fatal
                     throw new UndeclaredThrowableException(ex);
                 }
+
+                backoffDelayWithJitter(retries);
             }
         });
 
-        Workload workload = new Workload(monotonicId.incrementAndGet(), future, description, metrics, errors);
+        Workload workload = new Workload(monotonicId.incrementAndGet(), future, description, metrics, problems);
 
         asyncTaskExecutor.submit(() -> {
             try {
                 logger.info("Started %s [%s]"
                         .formatted(description.displayValue(), description.categoryValue()));
+
                 workload.awaitCompletion();
+
                 logger.info("Finished %s [%s]"
                         .formatted(description.displayValue(), description.categoryValue()));
             } catch (ExecutionException e) {
-                logger.error("Finished with error: %s [%s]"
+                logger.warn("Finished with error: %s [%s]"
                                 .formatted(description.displayValue(), description.categoryValue()),
                         e.getCause());
-            } finally {
-                workload.setStopTime(Instant.now());
+                problems.addFirst(Problem.from(e.getCause()));
             }
         });
 
@@ -159,7 +151,7 @@ public class WorkloadManager {
 
             while (task.test(calls++)) {
                 if (Thread.interrupted()) {
-                    logger.warn("Thread interrupted - bailing out");
+//                    logger.warn("Thread interrupted - bailing out");
                     break;
                 }
 
@@ -173,10 +165,7 @@ public class WorkloadManager {
                     logger.warn("Thread interrupted - bailing out");
                     break;
                 } catch (Exception e) {
-                    if (!lifecycle.failure(Duration.between(callTime, Instant.now()), e)) {
-                        logger.warn("Unrecoverable exception - bailing out");
-                        break;
-                    }
+                    lifecycle.failure(Duration.between(callTime, Instant.now()), e);
                 }
             }
 
@@ -192,6 +181,10 @@ public class WorkloadManager {
                 .orElseThrow(() -> new IllegalArgumentException("No workload with id: " + id));
     }
 
+    public List<Workload> getWorkloads() {
+        return Collections.unmodifiableList(workloads);
+    }
+
     public Page<Workload> getWorkloads(Pageable pageable, Predicate<Workload> predicate) {
         List<Workload> content = new ArrayList<>(workloads.stream()
                 .filter(predicate)
@@ -200,6 +193,11 @@ public class WorkloadManager {
                 .toList());
         int total = workloads.size();
         return PageableExecutionUtils.getPage(content, pageable, () -> total);
+    }
+
+    public void deleteWorkloads() {
+        workloads.removeIf(workload -> !workload.isRunning());
+        applicationEventPublisher.publishEvent(new WorkloadUpdatedEvent(this));
     }
 
     public void deleteWorkload(Integer id) {
@@ -213,9 +211,10 @@ public class WorkloadManager {
         }
     }
 
-    public void deleteWorkloads() {
-        cancelWorkloads();
-        workloads.clear();
+    public void cancelWorkloads() {
+        workloads.stream()
+                .filter(Workload::isRunning)
+                .forEach(Workload::cancel);
         applicationEventPublisher.publishEvent(new WorkloadUpdatedEvent(this));
     }
 
@@ -224,14 +223,7 @@ public class WorkloadManager {
         applicationEventPublisher.publishEvent(new WorkloadUpdatedEvent(this));
     }
 
-    public void cancelWorkloads() {
-        workloads.stream()
-                .filter(Workload::isRunning)
-                .forEach(Workload::cancel);
-        applicationEventPublisher.publishEvent(new WorkloadUpdatedEvent(this));
-    }
-
-    // Time series functions
+// Time series functions
 
     public Metrics getMetricsAggregate(Pageable page) {
         List<Metrics> metrics = getWorkloads(page, workloadModel -> true)

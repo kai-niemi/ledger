@@ -16,6 +16,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.table.BeanListTableModel;
 
+import se.cockroachdb.ledger.workload.Problem;
 import se.cockroachdb.ledger.workload.Workload;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.workload.WorkloadManager;
@@ -23,7 +24,7 @@ import se.cockroachdb.ledger.shell.support.ListTableModel;
 import se.cockroachdb.ledger.shell.support.TableUtils;
 
 @ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_ADMIN_COMMANDS)
+@ShellCommandGroup(Constants.WORKLOAD_MODIFICATION_COMMANDS)
 public class WorkloadCommands extends AbstractInteractiveCommand {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -40,7 +41,7 @@ public class WorkloadCommands extends AbstractInteractiveCommand {
         workloadManager.cancelWorkload(id);
     }
 
-    @ShellMethod(value = "Delete all workloads", key = {"delete-all", "da"})
+    @ShellMethod(value = "Delete all non-running workloads", key = {"delete-all", "da"})
     public void deleteWorkloads() {
         workloadManager.deleteWorkloads();
     }
@@ -51,7 +52,7 @@ public class WorkloadCommands extends AbstractInteractiveCommand {
     }
 
     @ShellMethod(value = "List all running workloads", key = {"list-workloads", "lw"},
-            group = Constants.WORKLOAD_ADMIN_COMMANDS)
+            group = Constants.WORKLOAD_QUERY_COMMANDS)
     public void listWorkloads(@ShellOption(help = "page size", defaultValue = "10") Integer pageSize) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
@@ -78,20 +79,20 @@ public class WorkloadCommands extends AbstractInteractiveCommand {
     }
 
     @ShellMethod(value = "List workload errors", key = {"list-errors", "le"},
-            group = Constants.WORKLOAD_ADMIN_COMMANDS)
+            group = Constants.WORKLOAD_QUERY_COMMANDS)
     public void listErrors(@ShellOption(help = "workload id") Integer id) {
         Workload workloadModel = workloadManager.getWorkloadById(id);
-        List<Throwable> errors = workloadModel.getLastErrors();
+        List<Problem> problems = workloadModel.getLastProblems();
 
         AtomicInteger idx = new AtomicInteger();
         logger.info("\n" + TableUtils.prettyPrint(
-                new ListTableModel<>(errors,
+                new ListTableModel<>(problems,
                         List.of("#", "Type", "Message", "Cause"), (object, column) -> {
                     return switch (column) {
                         case 0 -> idx.incrementAndGet();
-                        case 1 -> object.getClass().getSimpleName();
+                        case 1 -> object.getClassName();
                         case 2 -> object.getMessage();
-                        case 3 -> object.getCause();
+                        case 3 -> object.getStackTrace();
                         default -> "??";
                     };
                 })));

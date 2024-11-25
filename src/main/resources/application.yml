@@ -156,7 +156,8 @@ application:
   ## Default account plan settings
   account-plan:
     # Number of accounts per city
-    accounts-per-city: 5_000
+    acc
+    ounts-per-city: 5_000
     # Initial balance for user asset accounts (in local currency)
     initial-balance: 5000.00
 

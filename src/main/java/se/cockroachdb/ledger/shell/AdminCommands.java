@@ -31,7 +31,7 @@ public class AdminCommands implements Quit.Command {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
-    @ShellMethod(value = "Toggle SQL trace logging (server side)", key = {"sql-trace", "r"})
+    @ShellMethod(value = "Toggle SQL trace logging (extremely verbose)", key = {"sql-trace"})
     public void toggleSqlTraceLogging() {
         boolean enabled = toggleLogLevel(DataSourceConfig.SQL_TRACE_LOGGER);
         logger.info("SQL Trace Logging {}", enabled ? "ENABLED" : "DISABLED");

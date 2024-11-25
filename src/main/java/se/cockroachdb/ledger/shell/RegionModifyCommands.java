@@ -9,45 +9,22 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import se.cockroachdb.ledger.model.SurvivalGoal;
-import se.cockroachdb.ledger.model.TableName;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.shell.support.RegionProvider;
 
-import java.util.List;
-
-import static se.cockroachdb.ledger.shell.RegionCommands.printRegionTable;
-
 @ShellComponent
-@ShellCommandGroup(Constants.MULTI_REGION_COMMANDS)
-public class MultiRegionCommands {
+@ShellCommandGroup(Constants.REGION_MODIFICATION_COMMANDS)
+public class RegionModifyCommands {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private RegionServiceFacade regionServiceFacade;
 
-    @ShellMethod(value = "Show primary region", key = {"show-primary-region", "spr"})
-    public void showPrimaryRegion() {
-        regionServiceFacade.getPrimaryRegion().ifPresentOrElse(region -> {
-            logger.info("\n" + printRegionTable(List.of(region)));
-        }, () -> {
-            logger.warn("No primary region found");
-        });
-    }
-
     @ShellMethod(value = "Set primary database region", key = {"primary-region", "pr"})
     public void primaryRegion(@ShellOption(help = "region name",
             valueProvider = RegionProvider.class) String region) {
         regionServiceFacade.setPrimaryRegion(region);
-    }
-
-    @ShellMethod(value = "Show secondary region", key = {"show-secondary-region", "ssr"})
-    public void showSecondaryRegion() {
-        regionServiceFacade.getSecondaryRegion().ifPresentOrElse(region -> {
-            logger.info("\n" + printRegionTable(List.of(region)));
-        }, () -> {
-            logger.warn("No secondary region found");
-        });
     }
 
     @ShellMethod(value = "Set secondary database region", key = {"secondary-region", "sr"})
@@ -71,17 +48,6 @@ public class MultiRegionCommands {
         regionServiceFacade.dropDatabaseRegions();
     }
 
-    @ShellMethod(value = "Show survival goal", key = {"show-survival-goal", "ssg"})
-    public void showSurvivalGoal() {
-        logger.info("" + regionServiceFacade.getSurvivalGoal());
-    }
-
-    @ShellMethod(value = "Show CREATE TABLE statement", key = {"show-create-table", "sc"})
-    public void showCreateTable(@ShellOption(help = "table name",
-            valueProvider = EnumValueProvider.class) TableName table) {
-        logger.info("\n" + regionServiceFacade.showCreateTable(table.name()));
-    }
-
     @ShellMethod(value = "Set survival goal", key = {"survival-goal", "sg"})
     public void survivalGoal(@ShellOption(help = "survival goal",
             valueProvider = EnumValueProvider.class) SurvivalGoal goal) {
@@ -90,8 +56,9 @@ public class MultiRegionCommands {
 
     @ShellMethod(value = "Apply multi-region configurations (regions, localities and survival goals)",
             key = {"apply-multi-region", "amr"})
-    public void applyMultiRegion() {
-        regionServiceFacade.applyMultiRegion();
+    public void applyMultiRegion(@ShellOption(help = "survival goal",
+            valueProvider = EnumValueProvider.class) SurvivalGoal goal) {
+        regionServiceFacade.applyMultiRegion(goal);
     }
 
     @ShellMethod(value = "Revert multi-region configurations (regions, localities and survival goals)",

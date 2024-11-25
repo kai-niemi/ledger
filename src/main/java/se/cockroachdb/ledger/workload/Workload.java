@@ -1,11 +1,13 @@
 package se.cockroachdb.ledger.workload;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -30,18 +32,20 @@ public class Workload {
 
     private final Metrics metrics;
 
-    private final LinkedList<Throwable> errors;
+    private final LinkedList<Problem> problems;
+
+    private boolean failed;
 
     Workload(Integer id,
-                    Future<?> future,
-                    WorkloadDescription workloadDescription,
-                    Metrics metrics,
-                    LinkedList<Throwable> errors) {
+             Future<?> future,
+             WorkloadDescription workloadDescription,
+             Metrics metrics,
+             LinkedList<Problem> problems) {
         this.id = id;
         this.future = future;
         this.workloadDescription = workloadDescription;
         this.metrics = metrics;
-        this.errors = errors;
+        this.problems = problems;
         this.startTime = Instant.now();
     }
 
@@ -49,12 +53,30 @@ public class Workload {
         return id;
     }
 
+    public WorkloadStatus getStatus() {
+        if (failed) {
+            return WorkloadStatus.FAILED;
+        } else if (isRunning()) {
+            return WorkloadStatus.RUNNING;
+        } else if (isCancelled()) {
+            return WorkloadStatus.CANCELLED;
+        } else {
+            return WorkloadStatus.COMPLETED;
+        }
+    }
+
     public Instant getStartTime() {
         return startTime;
     }
 
-    public void setStopTime(Instant stopTime) {
+    public void setCompletion(Instant stopTime, Optional<Problem> failed) {
         this.stopTime = stopTime;
+        this.failed = failed.isPresent();
+        failed.ifPresent(this.problems::addFirst);
+    }
+
+    public Instant getStopTime() {
+        return stopTime;
     }
 
     public String getTitle() {
@@ -65,8 +87,8 @@ public class Workload {
         return workloadDescription.categoryValue();
     }
 
-    public List<Throwable> getLastErrors() {
-        return Collections.unmodifiableList(errors);
+    public List<Problem> getLastProblems() {
+        return Collections.unmodifiableList(problems);
     }
 
     public Metrics getMetrics() {
@@ -97,8 +119,14 @@ public class Workload {
     public void awaitCompletion() throws ExecutionException {
         try {
             future.get();
+            setCompletion(Instant.now(), Optional.empty());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            setCompletion(Instant.now(), Optional.of(Problem.from(e)));
+            throw new UndeclaredThrowableException(e);
+        } catch (ExecutionException e) {
+            setCompletion(Instant.now(), Optional.of(Problem.from(e.getCause())));
+            throw e;
         }
     }
 
