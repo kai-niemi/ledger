@@ -60,7 +60,7 @@
                         <th>Amount</th>
                         <th>Note</th>
                         <th>Running Balance</th>
-                        <th>Actions</th>
+                        <th>Account</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -70,10 +70,8 @@
                         <td th:text="${item.note}"></td>
                         <td th:text="${item.runningBalance}"></td>
                         <td>
-                            <a class="btn btn-outline-success"
-                               th:href="@{/account/{id}(id=${item.account.id})}">
-                                Account
-                            </a>
+                            <a th:href="@{/account/{id}(id=${item.account.id})}"
+                               th:text="${item.account.id}"></a>
                         </td>
                     </tr>
                     </tbody>

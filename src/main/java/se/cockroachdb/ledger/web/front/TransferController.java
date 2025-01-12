@@ -59,12 +59,14 @@ public class TransferController {
 
     @GetMapping("city/{city}")
     public Callable<String> listTransfersByCity(
+            @ModelAttribute("form") TransferFilterForm form,
             @PathVariable("city") String city,
             @PageableDefault(size = 30) Pageable page, Model model) {
         return () -> {
             Page<Transfer> transferPage = transferService.findAllByCity(city, page);
             model.addAttribute("transferPage", transferPage);
             model.addAttribute("city", city);
+            model.addAttribute("form", form);
             return "transfer";
         };
     }

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <spring-shell.version>3.3.3</spring-shell.version>
+        <spring-shell.version>3.4.0</spring-shell.version>
     </properties>
 
     <inceptionYear>2024</inceptionYear>
@@ -134,6 +134,7 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+            <!-- Downgrade to avoid issues with 10.x -->
             <version>9.22.3</version>
         </dependency>
         <dependency>
@@ -194,14 +195,6 @@
             <version>5.3.3</version>
             <scope>runtime</scope>
         </dependency>
-<!-- n/a
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>chartjs</artifactId>
-            <version>4.4.6</version>
-            <scope>runtime</scope>
-        </dependency>
--->
 
         <!-- Test -->
         <dependency>
@@ -249,10 +242,12 @@
                     </image>
                 </configuration>
             </plugin>
+<!--
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
                 <artifactId>git-commit-id-maven-plugin</artifactId>
             </plugin>
+-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

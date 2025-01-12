@@ -37,7 +37,6 @@ public abstract class ConcurrencyUtils {
     private ConcurrencyUtils() {
     }
 
-
     public static <V> void runConcurrentlyAndWait(List<Callable<V>> tasks,
                                                   long timeout, TimeUnit timeUnit,
                                                   int concurrencyLimit,

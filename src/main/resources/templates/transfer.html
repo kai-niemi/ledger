@@ -60,22 +60,17 @@
                         <th>Type</th>
                         <th>Transfer Date</th>
                         <th>Booking Date</th>
-                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="transfer: ${transferPage.content}">
-                        <td th:text="${transfer.id}"></td>
+                        <td>
+                            <a th:href="@{/transfer/{id}(id=${transfer.id})}" th:text="${transfer.id}"></a>
+                        </td>
                         <td th:text="${transfer.city}"></td>
                         <td th:text="${transfer.transferType}"></td>
                         <td th:text="${transfer.transferDate}"></td>
                         <td th:text="${transfer.bookingDate}"></td>
-                        <td class="text-center py-1">
-                            <a class="btn btn-outline-success"
-                               th:href="@{/transfer/{id}(id=${transfer.id})}">
-                                Details <span class="badge text-bg-warning" th:text="${transferItems}">0</span>
-                            </a>
-                        </td>
                     </tr>
                     </tbody>
                 </table>

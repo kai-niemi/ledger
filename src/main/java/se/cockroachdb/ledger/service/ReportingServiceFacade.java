@@ -41,7 +41,8 @@ public class ReportingServiceFacade {
 
         final List<AccountSummary> allSummaries = new ArrayList<>();
 
-        ConcurrencyUtils.runConcurrentlyAndWait(tasks, -1, allSummaries::add);
+        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
+                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, allSummaries::add);
 
         return allSummaries;
     }
@@ -63,7 +64,8 @@ public class ReportingServiceFacade {
 
         final List<TransferSummary> allSummaries = new ArrayList<>();
 
-        ConcurrencyUtils.runConcurrentlyAndWait(tasks, -1, allSummaries::add);
+        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
+                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, allSummaries::add);
 
         return allSummaries;
     }
