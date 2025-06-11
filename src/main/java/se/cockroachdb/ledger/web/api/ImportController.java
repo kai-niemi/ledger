@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import se.cockroachdb.ledger.ApplicationProperties;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.domain.Account;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.model.AccountPlan;

@@ -2,11 +2,11 @@
 
 fn_create_cluster() {
   if [ "${cloud}" = "aws" ]; then
-    fn_failcheck roachprod create $CLUSTER --clouds=aws --aws-machine-type-ssd=${machinetypes} --geo --local-ssd --nodes=${nodes} --aws-zones=${zones} --aws-profile crl-revenue --aws-config ~/rev.json
+    fn_failcheck roachprod create $CLUSTER --clouds=aws --aws-machine-type-ssd=${machinetypes} --geo --local-ssd --nodes=${nodes} --aws-zones=${zones} --aws-profile crl-revenue --aws-config ~/rev.json  --os-volume-size 750 --lifetime 24h0m0s
   elif [ "${cloud}" = "gce" ]; then
-    fn_failcheck roachprod create $CLUSTER --clouds=gce --gce-machine-type=${machinetypes} --geo --local-ssd --nodes=${nodes} --gce-zones=${zones} --aws-profile crl-revenue --aws-config ~/rev.json
+    fn_failcheck roachprod create $CLUSTER --clouds=gce --gce-machine-type=${machinetypes} --geo --local-ssd --nodes=${nodes} --gce-zones=${zones} --aws-profile crl-revenue --aws-config ~/rev.json --os-volume-size 750 --lifetime 24h0m0s
   else
-    fn_failcheck roachprod create $CLUSTER --clouds=azure --azure-machine-type=${machinetypes} --geo --local-ssd --nodes=${nodes} --azure-locations=${zones} --aws-profile crl-revenue --aws-config ~/rev.json
+    fn_failcheck roachprod create $CLUSTER --clouds=azure --azure-machine-type=${machinetypes} --geo --local-ssd --nodes=${nodes} --azure-locations=${zones} --aws-profile crl-revenue --aws-config ~/rev.json --os-volume-size 750 --lifetime 24h0m0s
   fi
 }
 

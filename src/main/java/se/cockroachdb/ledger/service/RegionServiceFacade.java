@@ -16,7 +16,7 @@ import org.springframework.util.StringUtils;
 
 import jakarta.annotation.PostConstruct;
 
-import se.cockroachdb.ledger.ApplicationProperties;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.annotations.ServiceFacade;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
 import se.cockroachdb.ledger.model.Region;

@@ -1,4 +1,4 @@
-package se.cockroachdb.ledger;
+package se.cockroachdb.ledger.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +13,6 @@ import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-
-import se.cockroachdb.ledger.model.AccountPlan;
-import se.cockroachdb.ledger.model.Region;
 
 @Validated
 @ConfigurationProperties(prefix = "application")

@@ -112,7 +112,6 @@ logging:
 #############################
 management:
   endpoints:
-    enabled-by-default: true
     web:
       exposure:
         include: caches,health,info,conditions,shutdown,env,flyway,heapdump,threaddump,metrics,scheduledtasks
@@ -132,14 +131,13 @@ server:
 # Ledger Application Configuration
 #
 # This file overrides the application configuration properties.
-# For the application properties this file overrides, see: src/resources/application.yml.
-# For all other spring boot container properties, see:
-# https://docs.spring.io/spring-boot/appendix/application-properties/index.html
+# For all spring boot container properties, see:
+#  https://docs.spring.io/spring-boot/appendix/application-properties/index.html
 ############################################################################################
 
 application:
   ## Use pre-emptive locks when reading with the intent to write.
-  # WARNING: It's imperative for correctness in READ_COMMITTED to set this to true.
+  # WARNING: It's imperative for correctness under READ_COMMITTED to set this to true.
   # If set to false, you may see lost update (P4) anomalies under READ_COMMITTED.
   # Under serializable (1SR), correctness is never compromised and locking may
   # help to reduce contention.
@@ -160,10 +158,8 @@ application:
     # Initial balance for user asset accounts (in local currency)
     initial-balance: 5000.00
 
-  ## Include only the specified regions (all if omitted)
-#  visible-regions: eu-north-1,us-east-1
-
-  ## Region to city mappings
+  ## Region to city mappings.
+  #
   # A region name SHOULD match an existing locality region tier but can also be mapped (--locality=region=aws-us-east-1,..).
   # A region cities SHOULD include cities in the region's proximity.
   # A region MAY have e ISO-3166-1 country code and ISO-4217 currency code for all its cities.
@@ -486,7 +482,8 @@ application:
           country: ZAF
           currency: ZAR
 
-  ## Mapping of CockroachDB Cloud regions to application regions (one-to-many).
+  ## CockroachDB Cloud region mapping to application regions (one-to-many).
+  #
   # The key SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..).
   # The value SHOULD match a name in the 'regions' list above.
   # A region do NOT need to exist in the cluster.
@@ -593,3 +590,6 @@ application:
     gcp-europe-west6: eu-central-2 #Zürich
     gcp-europe-west9: eu-west-3 #Paris
     gcp-europe-west12: eu-south-1 #Turin
+
+  # Include only the specified regions (all if omitted)
+  #visible-regions: eu-north-1,us-east-1

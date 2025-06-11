@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import se.cockroachdb.ledger.ApplicationProperties;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.annotations.ControlService;
 import se.cockroachdb.ledger.domain.Account;
 import se.cockroachdb.ledger.domain.Transfer;

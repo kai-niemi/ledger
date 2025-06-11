@@ -169,7 +169,7 @@ name with the `--profiles` argument:
 
 Start the server with:
 
-    java -jar target/ledger-<version>.jar <args>
+    java -jar target/ledger.jar <args>
 
 (or use `./run-server.sh`).
 
@@ -186,7 +186,7 @@ Add the shell commands you would like to run into a plain text file:
 Start the server in the background by passing a command file name 
 as argument with a `@` prefix:
 
-    nohup java -jar target/ledger-<version>.jar @cmd.txt > ledger-stdout.log 2>&1 &
+    nohup java -jar target/ledger.jar @cmd.txt > ledger-stdout.log 2>&1 &
 
 (or use `./start-server.sh @cmd.txt`)
 

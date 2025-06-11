@@ -6,7 +6,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
-import se.cockroachdb.ledger.ApplicationProperties;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.model.AccountPlan;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.util.Multiplier;
