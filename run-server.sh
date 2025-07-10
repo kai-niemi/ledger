@@ -13,9 +13,10 @@ if [ ! -x ${pid} ]; then
    exit 1
 fi
 
-echo -e "Inspecting pom.xml version.."
-pomVersion=$(echo 'VERSION=${project.version}' | ./mvnw help:evaluate | grep '^VERSION=' | sed 's/^VERSION=//g')
-app_jarfile=target/ledger-${pomVersion}.jar
+#echo -e "Inspecting pom.xml version.."
+#pomVersion=$(echo 'VERSION=${project.version}' | ./mvnw help:evaluate | grep '^VERSION=' | sed 's/^VERSION=//g')
+#app_jarfile=target/ledger-${pomVersion}.jar
+app_jarfile=target/ledger.jar
 
 if [ ! -f "$app_jarfile" ]; then
     echo -e "Building jar.."
