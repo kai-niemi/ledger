@@ -33,13 +33,14 @@
 
 <img align="left" src=".github/logo.png" alt="" width="64"/> 
 
-Ledger represents a full-stack, financial accounting ledger based on the double-entry
-bookkeeping principle, running on either [CockroachDB](https://www.cockroachlabs.com/) or PostgreSQL. It manages monetary 
+Ledger represents a realistic, financial accounting ledger based on the double-entry
+bookkeeping principle running on either [CockroachDB](https://www.cockroachlabs.com/) or PostgreSQL. It manages monetary 
 accounts and a journal of balanced, multi-legged, multi-currency transfers between those accounts. 
 
 It's designed to showcase CockroachDB's scalability, survival, consistency and data domiciling 
-capabilities and not the actual domain complexity of accounting. However, it's a realistic 
-implementation of a general ledger with most of the fundamental pieces.
+capabilities and not the actual domain complexity of accounting. It is however a realistic 
+implementation of a general ledger with most of the fundamental pieces like account plans,
+reporting and invariant checks.
 
 Ledger is the successor to [Roach Bank](https://github.com/kai-niemi/roach-bank) with more focus on 
 load testing and operational ease-of-use. Conceptually they are the same, but Ledger has a simpler 
@@ -149,10 +150,12 @@ All configuration properties can be specified in [config/application-default.yml
 overrides the baseline configuration in [src/main/resources/application.yml](src/main/resources/application.yml) 
 (see this file for a reference on all options available).
 
-You can also override all parameters through the command line, which is the easiest approach: 
+You can also override all parameters through the command line, which is the easiest approach.
+
+For example:
 
     java -jar ledger.jar \
-    --spring.datasource.url="jdbc:postgresql://localhost:26257/ledger??ssl=true&sslmode=require" \
+    --spring.datasource.url="jdbc:postgresql://localhost:26257/ledger?ssl=true&sslmode=require" \
     --spring.datasource.username=craig \
     --spring.datasource.password=cockroach \
     --spring.profiles.active="default"
@@ -161,7 +164,7 @@ Alternatively, you can create a new YAML file with a custom name suffix and then
 name with the `--profiles` argument:
 
     cp src/main/resources/application.yml config/application-craig.yml
-    java -jar ledger.jar --spring.profiles.active="craig"
+    java -jar ledger.jar --profiles craig
 
 # Running
 
@@ -194,9 +197,9 @@ The server will run all commands in the text file and then wait to be closed.
 Notice that you can't use `quit` in the end since all commands are run in sequence
 but executed in parallel.
 
-## Enable PostgreSQL
+## Use PostgreSQL
 
-PostgreSQL is enabled by activating the `psql` profile:
+PostgreSQL as the underlying database is used by activating the `psql` profile:
 
     java -jar ledger.jar \
     --spring.datasource.url="jdbc:postgresql://localhost:5432/ledger \
@@ -204,9 +207,10 @@ PostgreSQL is enabled by activating the `psql` profile:
     --spring.datasource.password=cockroach \
     --spring.profiles.active="psql"
 
-Ledger automatically adjusts to the dialect of PostgreSQL lack of multi-region 
+Ledger automatically adjusts to the dialect of PostgreSQL and lack of multi-region 
 and follower read features. There's also no concept of gateway nodes, or primary 
-and secondary regions so you will need to specify regions on most workload commands.
+and secondary regions, so you will need to specify the region(s) to use on most 
+workload commands.
 
 # Single-region Tutorial
 
@@ -222,15 +226,16 @@ For a complete list of commands, run the `help` command in the shell.
 There's also a reactive web UI available at http://localhost:9090 (by default)
 to display account activities and different metric charts.
 
-Ledger organizes monetary accounts around cities within regions. A region maps to an 
-actual CockroachDB deployment region like `aws-us-east-1`. One region has one or 
-more cities, and a city has a country and currency code. This allows for good data 
-distribution and simple data partitioning for multi-region scenarios. 
+It organizes monetary accounts around cities within regions. A region maps to an 
+actual CockroachDB `--locality` region name like `aws-us-east-1`. One region has one or 
+more cities, and a city has a country and currency code. This allows for optimal data 
+distribution and simple data partitioning for multi-region load test scenarios. 
 
-By default it includes all CockroachDB Cloud regions for AWS, GCP and Azure. You can 
-also create a custom region/city mapping through the application YAML.
+The default configuration includes all current CockroachDB Cloud regions for AWS, GCP 
+and Azure. You can easily add custom region ot city mappings through a 
+`config/application-<profile>` YAML.
 
-Excerpt from `src/resources/application.yml`:
+For example:
 
 ```yaml
   ...
@@ -256,31 +261,58 @@ Excerpt from `src/resources/application.yml`:
             - name: dallas
             - name: houston
             - name: detroit
+        - name: us-west-1
+          country: USA
+          currency: USD
+          cities:
+            - name: san francisco
+            - name: los angeles
+            - name: san diego
+            - name: las vegas
+            - name: salt lake city
         ...
       region-mappings:
-        aws-us-east-1: us-east-1 #N. Virginia
-        aws-us-east-2: us-east-2 #Ohio
-        gcp-us-east1: us-east-1 #South Carolina
-        gcp-us-east4: us-east-2 #Virginia
+        aws-us-east-1: us-east-1 
+        aws-us-east-2: us-east-2 
+        aws-us-west-1: us-west-1 
+        gcp-us-east1: us-east-1
+        gcp-us-east4: us-east-2
+        gcp-us-west1: us-west-1
         ...
 ```
 
+Ledger initially attempts to match the cluster's `--locality` region tier to an application
+region name in `application.regions.name`. If none is found, it checks the `region-mappings`
+section for a matching key. If none is found there either, it logs a warning that the
+database cluster locality doesnt match any application region.
+
+For a multi-region use case / demo, its required to use at least 3 separate regions preferably
+with disjoint cities for best data distribution.
+
+For more guidance, see the [Multi-region Tutorial](TUTORIAL.md).
+
 ## Create an account plan
     
-The first step is to build an account plan:
+A financial ledger always operates towards a pre-defined account plan. An account plan
+is simply a collection of accounts of different types with an initial balance and 
+a total balance of zero (negative balances are used to simplify the credit/debit rule).
+
+The first step is therefore to build an account plan, derived from the list of regions
+and cities in the selected application.yml:
 
     build-account-plan
 
 This command will create one _liability_ account and 5,000 _asset_ accounts per city, by default. The account plan
 is organized in such a way that the total balance of all accounts for a given city (and currency) amounts to zero. 
-Thus, if a non-zero total is ever observed it means money has either been invented or destroyed and 
+
+Thus, if a non-zero total balance is ever observed it means money has either been invented or destroyed and 
 we can't have that *). 
 
 The account plan can be dropped and recreated which is a destructive operation 
 since it truncates the tables.
 
-*) You can allow this to happen by running in `read committed` isolation without 
-pre-emptive locks. 
+*) You can allow this to happen just for fun by running in `read committed` isolation without 
+pre-emptive locks. Under 1SR (default) its however impossible.
       
 ## Transfer funds
 
@@ -355,4 +387,4 @@ For the complete multi-region guide, see [tutorial](TUTORIAL.md).
 
 ---
 
--- The end, enjoy your accounting experience!
+-- That is all, enjoy your accounting experience!

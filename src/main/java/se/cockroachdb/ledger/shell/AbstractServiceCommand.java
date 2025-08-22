@@ -18,7 +18,9 @@ import java.util.stream.Collectors;
 
 @ShellComponent
 public abstract class AbstractServiceCommand extends AbstractInteractiveCommand {
-    public static final String ACCOUNT_PLAN_EXISTS = "accountPlanExists";
+    public static final String ACCOUNT_PLAN_EXIST = "accountPlanExist";
+
+    public static final String ACCOUNT_PLAN_NOT_EXIST = "accountPlanDoesNotExist";
 
     @Autowired
     protected AccountPlanService accountPlanService;
@@ -29,10 +31,16 @@ public abstract class AbstractServiceCommand extends AbstractInteractiveCommand 
     @Autowired
     protected RegionServiceFacade regionServiceFacade;
 
-    public Availability accountPlanExists() {
+    public Availability accountPlanExist() {
         return accountPlanService.hasAccountPlan()
                 ? Availability.available()
-                : Availability.unavailable("there's no account plan (run --help)!");
+                : Availability.unavailable("there's no account plan (use 'help build-account-plan')!");
+    }
+
+    public Availability accountPlanDoesNotExist() {
+        return !accountPlanService.hasAccountPlan()
+                ? Availability.available()
+                : Availability.unavailable("account plan already exist!");
     }
 
     @FunctionalInterface
@@ -40,8 +48,7 @@ public abstract class AbstractServiceCommand extends AbstractInteractiveCommand 
         List<Account> findAccounts(List<City> cities);
     }
 
-    protected Map<City, List<UUID>> findAccounts(String region, String cityName,
-                                                 AccountQuery accountQuery) {
+    protected Map<City, List<UUID>> findAccounts(String region, String cityName, AccountQuery accountQuery) {
         // List of cities in potentially different countries and corresponding currencies
         final List<City> allCities = Region.joinCities(regionServiceFacade.listRegions(region));
 

@@ -16,9 +16,9 @@ import org.springframework.util.StringUtils;
 
 import jakarta.annotation.PostConstruct;
 
-import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.annotations.ServiceFacade;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.model.Region;
 import se.cockroachdb.ledger.model.RegionCategory;
 import se.cockroachdb.ledger.model.SurvivalGoal;
@@ -46,70 +46,118 @@ public class RegionServiceFacade {
 
     @PostConstruct
     public void init() {
-        updateRegions();
+        validateRegionMappings();
+        updateRegionMappings();
     }
 
-    private void updateRegions() {
+    private void validateRegionMappings() {
+        final List<String> errors = new ArrayList<>();
+
         final List<Region> regions = applicationProperties.getRegions();
-        final Map<String, String> regionMappings = applicationProperties.getRegionMappings();
-
         if (regions.isEmpty()) {
-            logger.warn("No regions found - check application-<profile>.yml");
+            errors.add("No regions found");
+        } else {
+            logger.info("Found %d app regions".formatted(regions.size()));
         }
+
+        final Map<String, String> regionMappings = applicationProperties.getRegionMappings();
         if (regionMappings.isEmpty()) {
-            logger.warn("No region mappings found - check application-<profile>.yml");
+            logger.info("No region mappings found");
+        } else {
+            logger.info("Found %d region mappings".formatted(regionMappings.size()));
         }
 
-        final List<String> clusterRegions = regionRepository.listClusterRegions();
+        applicationProperties.getVisibleRegions().forEach(region-> {
+            if (regions.stream()
+                    .filter(x -> x.getName().equals(region))
+                    .findFirst()
+                    .isEmpty()) {
+                errors.add("Bad visible region filter - app region '%s' does not exist".formatted(region));
+            }
+        });
 
-        if (clusterRegions.isEmpty()) {
-            logger.warn("No cluster regions found!");
-        }
+        regionMappings.forEach((k, v) -> {
+            if (regions.stream()
+                    .filter(region -> region.getName().equals(v))
+                    .findFirst()
+                    .isEmpty()) {
+                errors.add("Bad region mapping '%s ->> %s' - app region '%s' does not exist".formatted(k, v, v));
+            }
+        });
 
-        // Ensure all cities have a country and currency code
+        // Ensure all region cities have a country and currency code
         regions.forEach(region -> {
             region.getCities().forEach(city -> {
                 if (!StringUtils.hasLength(city.getCountry())) {
                     if (!StringUtils.hasLength(region.getCountry())) {
-                        throw new ApplicationContextException(
-                                "City '%s' in region '%s' missing country code".formatted(city.getName(),
-                                        region.getName()));
+                        errors.add("City '%s' in region '%s' missing country code".formatted(city.getName(),
+                                region.getName()));
+                    } else {
+                        city.setCountry(region.getCountry());
                     }
-                    city.setCountry(region.getCountry());
                 }
 
                 if (!StringUtils.hasLength(city.getCurrency())) {
                     if (!StringUtils.hasLength(region.getCurrency())) {
-                        throw new ApplicationContextException(
-                                "City '%s' in region '%s' missing currency code".formatted(city.getName(),
+                        errors.add("City '%s' in region '%s' missing currency code".formatted(city.getName(),
                                         region.getName()));
+                    } else {
+                        city.setCurrency(region.getCurrency());
                     }
-                    city.setCurrency(region.getCurrency());
                 }
 
                 try {
                     Currency.getInstance(city.getCurrency());
                 } catch (IllegalArgumentException e) {
-                    throw new ApplicationContextException(
-                            "City '%s' currency code '%s' is invalid".formatted(city.getName(),
-                                    city.getCurrency()), e);
+                    errors.add("City '%s' currency code '%s' is invalid".formatted(city.getName(), city.getCurrency()));
                 }
             });
         });
 
-        // Map regions to actual cluster regions
+        final List<String> clusterRegionNames = regionRepository.listClusterRegions();
+        if (clusterRegionNames.isEmpty()) {
+            logger.info("No cluster regions found!");
+        } else {
+            logger.info("Found %d cluster regions: %s"
+                    .formatted(clusterRegionNames.size(), String.join(", ", clusterRegionNames)));
+        }
+
+        clusterRegionNames.forEach(name -> {
+            if (regions.stream()
+                        .filter(region -> region.getName().equals(name))
+                        .findFirst()
+                        .isEmpty() && !regionMappings.containsKey(name)) {
+                errors.add("Database region '%s' not found in region list or mapping!".formatted(name));
+            }
+        });
+
+        if (!errors.isEmpty()) {
+            errors.forEach(logger::error);
+            throw new ApplicationContextException("There are configuration errors - check the config/application-<profile>.yml");
+        }
+    }
+
+    private void updateRegionMappings() {
+        final List<String> clusterRegionNames = regionRepository.listClusterRegions();
+        final Map<String, String> regionMappings = applicationProperties.getRegionMappings();
+        final List<Region> regions = applicationProperties.getRegions();
+
+        // Map regions to actual cluster/database regions
         regions.forEach(region -> {
             region.clearDatabaseRegions();
 
             // Check if app region matches a current cluster region
-            if (clusterRegions.contains(region.getName())) {
+            if (clusterRegionNames.contains(region.getName())) {
                 region.addDatabaseRegion(region.getName());
             } else {
-                // If not, check if there's a mapping
-                regionMappings.entrySet().stream()
+                // If not, check if there's a mapping.
+                // key is cluster region, value is app region.
+                regionMappings
+                        .entrySet()
+                        .stream()
                         .filter(e -> e.getValue().equals(region.getName()))
                         .forEach(e -> {
-                            if (clusterRegions.contains(e.getKey())) {
+                            if (clusterRegionNames.contains(e.getKey())) {
                                 region.addDatabaseRegion(e.getKey());
                             }
                         });
@@ -159,8 +207,8 @@ public class RegionServiceFacade {
         try {
             regionCategory = RegionCategory.valueOf(region);
         } catch (IllegalArgumentException e) {
-            Optional<Region> specified = applicationProperties.getRegionByName(region);
-            return specified.map(List::of).orElseGet(List::of);
+            return applicationProperties.findRegionByName(region)
+                    .map(List::of).orElseGet(List::of);
         }
 
         if (regionCategory == RegionCategory.all) {
@@ -175,7 +223,7 @@ public class RegionServiceFacade {
 
             if (singleton.isPresent()) {
                 Optional<Region> gatewayRegion = applicationProperties
-                        .getRegionWithDatabaseRegion(singleton.get());
+                        .findRegionByDatabaseRegion(singleton.get());
                 return gatewayRegion.map(List::of).orElseGet(List::of);
             }
         }
@@ -201,25 +249,25 @@ public class RegionServiceFacade {
                         String.join(",", applicationProperties.getRegions()
                                 .stream()
                                 .filter(r -> !r.getDatabaseRegions().isEmpty())
-                                .map(Region::getDatabaseRegion)
+                                .map(Region::getDatabaseRegionSingleton)
                                 .collect(Collectors.toSet()))
                 )
         );
         multiRegionRepository.addDatabaseRegions(applicationProperties.getRegions());
 
-        logger.info("Adding RBR localities: %s".formatted(String.join(",", RBR_TABLES)));
-        RBR_TABLES.forEach(table -> multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
+        logger.info("Adding regional-by-row localities to tables: %s".formatted(String.join(",", RBR_TABLES)));
+        RBR_TABLES.forEach(
+                table -> multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
 
         logger.info("Setting survival goal: %s".formatted(goal));
         multiRegionRepository.setSurvivalGoal(goal);
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void revertMultiRegion() {
         logger.info("Reverting table localities");
-
         RBR_TABLES.forEach(table -> multiRegionRepository.setRegionalByTable(table));
 
         logger.info("Dropping computed region columns");
@@ -231,48 +279,50 @@ public class RegionServiceFacade {
         logger.info("Dropping regions");
         multiRegionRepository.dropDatabaseRegions(applicationProperties.getRegions());
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void addDatabaseRegions() {
         List<Region> regions = applicationProperties.getRegions();
+
         multiRegionRepository.addDatabaseRegions(regions);
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void dropDatabaseRegions() {
         List<Region> regions = applicationProperties.getRegions();
+
         multiRegionRepository.dropDatabaseRegions(regions);
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void setPrimaryRegion(String region) {
-        Region r = applicationProperties.getRegionByName(region)
+        Region r = applicationProperties.findRegionByName(region)
                 .orElseThrow(() -> new IllegalArgumentException("No such region: " + region));
         multiRegionRepository.setPrimaryRegion(r);
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void setSecondaryRegion(String region) {
-        Region r = applicationProperties.getRegionByName(region)
+        Region r = applicationProperties.findRegionByName(region)
                 .orElseThrow(() -> new IllegalArgumentException("No such region: " + region));
         multiRegionRepository.setSecondaryRegion(r);
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
     public void dropSecondaryRegion() {
         multiRegionRepository.dropSecondaryRegion();
 
-        updateRegions();
+        updateRegionMappings();
     }
 
     @TransactionImplicit
@@ -295,7 +345,7 @@ public class RegionServiceFacade {
     public Optional<Region> getGatewayRegion() {
         Optional<String> gateway = regionRepository.getGatewayRegion();
         if (gateway.isPresent()) {
-            return applicationProperties.getRegionWithDatabaseRegion(gateway.get());
+            return applicationProperties.findRegionByDatabaseRegion(gateway.get());
         } else {
             return Optional.empty();
         }
@@ -305,7 +355,7 @@ public class RegionServiceFacade {
     public Optional<Region> getPrimaryRegion() {
         Optional<String> gateway = regionRepository.getPrimaryRegion();
         if (gateway.isPresent()) {
-            return applicationProperties.getRegionWithDatabaseRegion(gateway.get());
+            return applicationProperties.findRegionByDatabaseRegion(gateway.get());
         } else {
             return Optional.empty();
         }
@@ -315,7 +365,7 @@ public class RegionServiceFacade {
     public Optional<Region> getSecondaryRegion() {
         Optional<String> gateway = regionRepository.getSecondaryRegion();
         if (gateway.isPresent()) {
-            return applicationProperties.getRegionWithDatabaseRegion(gateway.get());
+            return applicationProperties.findRegionByDatabaseRegion(gateway.get());
         } else {
             return Optional.empty();
         }

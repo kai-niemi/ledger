@@ -115,7 +115,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
                             + currency.getSymbol(Locale.US) + ")");
                 });
 
-        logger.info("Ledger is now open for business %s".formatted(AsciiArt.happy()));
+        logger.info("Ledger is open for business %s".formatted(AsciiArt.happy()));
     }
 
     @Override

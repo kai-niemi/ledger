@@ -55,11 +55,15 @@ application:
     initial-balance: 5000.00
 
   ## Region to city mappings.
-  #
-  # A region name SHOULD match an existing locality region tier but can also be mapped (--locality=region=aws-us-east-1,..).
-  # A region cities SHOULD include cities in the region's proximity.
+
+  # Include only the specified regions (all if omitted)
+  # Example:
+  # visible-regions: eu-north-1,us-east-1
+
+  # A region name SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..) but can also be mapped in 'region-mappings'.
   # A region MAY have e ISO-3166-1 country code and ISO-4217 currency code for all its cities.
-  # A city MUST have a name, country code and currency code.
+  # A region cities SHOULD only include cities in the region's proximity.
+  # A city MUST have a name, country code and currency code, derived from the region.
   # A city MAY override the country and currency code of the region.
   regions:
     - name: us-east-1
@@ -378,11 +382,11 @@ application:
           country: ZAF
           currency: ZAR
 
-  ## CockroachDB Cloud region mapping to application regions (one-to-many).
+  ## Cockroach Cloud region to application region mappings (one-to-many).
   #
   # The key SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..).
-  # The value SHOULD match a name in the 'regions' list above.
-  # A region do NOT need to exist in the cluster.
+  # The value MUST match a name in the 'regions' list above.
+  # The mapping list MUST have at least one entry, if not commented out.
   region-mappings:
     ## AWS regions
     # Asia Pacific
@@ -443,6 +447,7 @@ application:
     az-swedencentral: eu-central-1 #Gävle
     az-switzerlandnorth: eu-central-1 #Zürich
     az-uksouth: eu-central-1 #London
+    az-ukwest: eu-central-1 #Cardiff
     az-westeurope: eu-central-1 #Netherlands
 
     ## GCP regions
@@ -486,6 +491,3 @@ application:
     gcp-europe-west6: eu-central-2 #Zürich
     gcp-europe-west9: eu-west-3 #Paris
     gcp-europe-west12: eu-south-1 #Turin
-
-  # Include only the specified regions (all if omitted)
-  #visible-regions: eu-north-1,us-east-1

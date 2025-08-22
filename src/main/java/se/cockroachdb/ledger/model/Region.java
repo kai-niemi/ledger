@@ -66,23 +66,26 @@ public class Region implements Comparable<Region> {
         this.secondary = secondary;
     }
 
-    public List<String> getDatabaseRegions() {
-        return databaseRegions;
+    public void clearDatabaseRegions() {
+        this.databaseRegions.clear();
     }
 
-    public String getDatabaseRegion() {
+    public List<String> getDatabaseRegions() {
+        return Collections.unmodifiableList(databaseRegions);
+    }
+
+    public String getDatabaseRegionSingleton() {
         if (databaseRegions.size() != 1) {
-            throw new IllegalStateException("Expected one database region but got " + databaseRegions.size());
+            throw new IllegalStateException(
+                    "Expected singleton database region but got %d: %s - check region mappings"
+                            .formatted(databaseRegions.size(),
+                                    String.join(",", databaseRegions)));
         }
         return databaseRegions.get(0);
     }
 
     public void addDatabaseRegion(String databaseRegion) {
         this.databaseRegions.add(databaseRegion);
-    }
-
-    public void clearDatabaseRegions() {
-        this.databaseRegions.clear();
     }
 
     public String getName() {
@@ -114,12 +117,12 @@ public class Region implements Comparable<Region> {
     @Override
     public String toString() {
         return "Region{" +
-                "name='" + name + '\'' +
-                ", cities=" + cities +
-                ", databaseRegion='" + databaseRegions + '\'' +
-                ", primary=" + primary +
-                ", secondary=" + secondary +
-                '}';
+               "name='" + name + '\'' +
+               ", cities=" + cities +
+               ", databaseRegion='" + databaseRegions + '\'' +
+               ", primary=" + primary +
+               ", secondary=" + secondary +
+               '}';
     }
 }
 

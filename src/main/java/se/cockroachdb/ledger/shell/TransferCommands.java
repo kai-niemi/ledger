@@ -47,7 +47,7 @@ public class TransferCommands extends AbstractServiceCommand {
     private WorkloadManager workloadManager;
 
     @ShellMethod(value = "Transfer funds between non-negative balance asset accounts", key = {"transfer-funds", "tf"})
-    @ShellMethodAvailability(ACCOUNT_PLAN_EXISTS)
+    @ShellMethodAvailability(ACCOUNT_PLAN_EXIST)
     public void transferFunds(
             @ShellOption(help = "minimum transfer amount in account currency",
                     defaultValue = "0.05") final double min,
@@ -83,7 +83,7 @@ public class TransferCommands extends AbstractServiceCommand {
         });
 
         if (accountIdsPerCity.isEmpty()) {
-            logger.warn("No cities found matching criteria");
+            logger.warn("No cities found in region '%s' matching criteria".formatted(region));
             return;
         }
 
@@ -156,7 +156,7 @@ public class TransferCommands extends AbstractServiceCommand {
 
     @ShellMethod(value = "Transfer grants from liability accounts to user accounts", key = {
             "transfer-grants", "tg"})
-    @ShellMethodAvailability(ACCOUNT_PLAN_EXISTS)
+    @ShellMethodAvailability(ACCOUNT_PLAN_EXIST)
     public void transferGrants(
             @ShellOption(help = "transfer amount debited liability accounts and credited asset accounts",
                     defaultValue = "500.00") final double amount,

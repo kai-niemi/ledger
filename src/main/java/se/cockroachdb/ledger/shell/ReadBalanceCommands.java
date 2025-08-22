@@ -31,7 +31,7 @@ public class ReadBalanceCommands extends AbstractServiceCommand {
     private WorkloadManager workloadManager;
 
     @ShellMethod(value = "Read account balances", key = {"read-balance", "rb"})
-    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXISTS)
+    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXIST)
     public void readBalance(
             @ShellOption(help = Constants.ACCOUNT_LIMIT_HELP,
                     defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT) int limit,
@@ -83,7 +83,7 @@ public class ReadBalanceCommands extends AbstractServiceCommand {
     }
 
     @ShellMethod(value = "Read historical account balances", key = {"read-balance-historical", "rbh"})
-    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXISTS)
+    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXIST)
     public void readHistoricalBalance(
             @ShellOption(help = Constants.ACCOUNT_LIMIT_HELP,
                     defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT) int limit,

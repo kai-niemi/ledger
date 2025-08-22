@@ -1,0 +1,159 @@
+############################################################################################
+# Ledger Application Configuration
+#
+# This file overrides the application configuration properties.
+# For all spring boot container properties, see:
+#  https://docs.spring.io/spring-boot/appendix/application-properties/index.html
+############################################################################################
+
+spring:
+  ## Default datasource (insecure)
+  datasource:
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
+    username: root
+    password:
+    hikari:
+      transaction-isolation: TRANSACTION_SERIALIZABLE
+
+  ## Default datasource (secure)
+  #  datasource:
+  #    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require
+  #    username: craig
+  #    password: cockroach
+  #    hikari:
+  #      transaction-isolation: TRANSACTION_SERIALIZABLE
+
+  ## Alternative datasource (Cloud)
+#  datasource:
+#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
+#    username: craig
+#    password: cockroach
+#    hikari:
+#      transaction-isolation: TRANSACTION_SERIALIZABLE
+
+application:
+  ## Use pre-emptive locks when reading with the intent to write.
+  # WARNING: It's imperative for correctness under READ_COMMITTED to set this to true.
+  # If set to false, you may see lost update (P4) anomalies under READ_COMMITTED.
+  # Under serializable (1SR), correctness is never compromised and locking may
+  # help to reduce contention.
+  using-locks: true
+  ## Enable idempotency check for each transfer request (one extra point read).
+  idempotency-check: false
+  ## Ledger is I/O bound and uses JDK21 virtual threads rather than thread pools.
+  task-executor:
+    # A negative value denotes an unbounded amount of concurrent tasks.
+    # For best performance on high-end machines, leave this value as-is.
+    concurrency-limit: -1
+  ## Sample period for time-series data points in graphs
+  sample-period-seconds: 300
+  ## Default account plan settings
+  account-plan:
+    # Number of accounts per city
+    accounts-per-city: 5_000
+    # Initial balance for user asset accounts (in local currency)
+    initial-balance: 5000.00
+
+  regions:
+    - name: x-eu-central-1
+      primary: true
+      country: DEU
+      currency: EUR
+      cities:
+        - name: berlin
+        - name: hamburg
+        - name: munich
+        - name: frankfurt
+        - name: dusseldorf
+        - name: leipzig
+        - name: dortmund
+        - name: essen
+        - name: stuttgart
+        - name: zurich
+          country: CHE
+          currency: CHF
+        - name: krakov
+          country: POL
+          currency: PLN
+        - name: zagraeb
+          country: HRV
+          currency: EUR
+        - name: zaragoza
+          country: ESP
+          currency: EUR
+        - name: lodz
+          country: POL
+          currency: PLN
+        - name: athens
+          country: GRC
+          currency: EUR
+        - name: bratislava
+          country: SVK
+          currency: EUR
+        - name: prague
+          country: ZCE
+          currency: CZK
+        - name: sofia
+          country: BGR
+          currency: BGN
+        - name: bucharest
+          country: ROU
+          currency: RON
+        - name: vienna
+          country: AUT
+          currency: EUR
+        - name: warsaw
+          country: POL
+          currency: PLN
+        - name: budapest
+          country: HUN
+          currency: HUF
+    - name: x-eu-south-1
+      country: ITA
+      currency: EUR
+      cities:
+        - name: rome
+        - name: milan
+        - name: naples
+        - name: turin
+        - name: valencia
+        - name: palermo
+        - name: madrid
+          country: ESP
+          currency: EUR
+        - name: barcelona
+          country: ESP
+          currency: EUR
+        - name: sintra
+          country: ESP
+          currency: EUR
+        - name: lisbon
+          country: PRT
+          currency: PTE
+    - name: x-eu-north-1
+      cities:
+        - name: stockholm
+          country: SWE
+          currency: SEK
+        - name: copenhagen
+          country: DNK
+          currency: DKK
+        - name: helsinki
+          country: FIN
+          currency: EUR
+        - name: oslo
+          country: NOR
+          currency: NOK
+        - name: riga
+          country: LVA
+          currency: EUR
+        - name: tallinn
+          country: EST
+          currency: EUR
+
+  region-mappings:
+    eu-north-1: x-eu-north-1
+    eu-central-1: x-eu-central-1
+    eu-south-1: x-eu-south-1
+
+#  visible-regions: x-eu-north-1,x-eu-central-1,x-eu-south-1

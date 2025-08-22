@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 
 import se.cockroachdb.ledger.model.ApplicationProperties;
@@ -17,6 +18,7 @@ public class PlanBuilderCommands extends AbstractServiceCommand {
     @Autowired
     private ApplicationProperties applicationModel;
 
+    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_NOT_EXIST)
     @ShellMethod(value = "Build account plan", key = {"build-account-plan", "bap"})
     public void buildAccountPlan(
             @ShellOption(help = "override number of accounts per city", defaultValue = ShellOption.NULL)
@@ -34,6 +36,7 @@ public class PlanBuilderCommands extends AbstractServiceCommand {
         accountPlanService.buildAccountPlan(accountPlan);
     }
 
+    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXIST)
     @ShellMethod(value = "Drop account plan including all accounts and transfers",
             key = {"drop-account-plan", "dap"})
     public void dropAccountPlan(@ShellOption(help = "confirm dropping accounts and transfers")

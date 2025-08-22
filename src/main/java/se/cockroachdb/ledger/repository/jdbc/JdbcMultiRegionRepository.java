@@ -1,20 +1,5 @@
 package se.cockroachdb.ledger.repository.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import se.cockroachdb.ledger.model.City;
-import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.SurvivalGoal;
-import se.cockroachdb.ledger.repository.MultiRegionRepository;
-
-import javax.sql.DataSource;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +7,22 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import se.cockroachdb.ledger.model.City;
+import se.cockroachdb.ledger.model.Region;
+import se.cockroachdb.ledger.model.SurvivalGoal;
+import se.cockroachdb.ledger.repository.MultiRegionRepository;
 
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS) // to support both explicit and implicit
@@ -57,7 +58,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
                 .filter(Region::isPrimary)
                 .findFirst()
                 .ifPresent(region -> {
-                    String primary = region.getDatabaseRegion();
+                    String primary = region.getDatabaseRegionSingleton();
                     jdbcTemplate.update(formatSQL(
                             "ALTER DATABASE ledger PRIMARY REGION '%s'", primary));
                 });
@@ -65,11 +66,11 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
         validRegions.forEach(region -> {
             if (!region.isPrimary()) {
                 jdbcTemplate.update(formatSQL("ALTER DATABASE ledger ADD REGION IF NOT EXISTS '%s'",
-                        region.getDatabaseRegion()));
+                        region.getDatabaseRegionSingleton()));
 
                 if (region.isSecondary()) {
                     jdbcTemplate.update(formatSQL("ALTER DATABASE ledger SET SECONDARY REGION '%s'",
-                            region.getDatabaseRegion()));
+                            region.getDatabaseRegionSingleton()));
                 }
             }
         });
@@ -83,7 +84,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
                     if (!region.isPrimary()) {
                         jdbcTemplate.update(formatSQL(
                                 "ALTER DATABASE ledger DROP REGION IF EXISTS '%s'",
-                                region.getDatabaseRegion()));
+                                region.getDatabaseRegionSingleton()));
                     }
                     if (region.isSecondary()) {
                         dropSecondaryRegion();
@@ -94,13 +95,13 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
     @Override
     public void setPrimaryRegion(Region region) {
         jdbcTemplate.update(formatSQL("ALTER DATABASE ledger SET PRIMARY REGION '%s'",
-                region.getDatabaseRegion()));
+                region.getDatabaseRegionSingleton()));
     }
 
     @Override
     public void setSecondaryRegion(Region region) {
         jdbcTemplate.update(formatSQL("ALTER DATABASE ledger SET SECONDARY REGION '%s'",
-                region.getDatabaseRegion()));
+                region.getDatabaseRegionSingleton()));
     }
 
     @Override
@@ -120,7 +121,8 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
     @Override
     public Optional<String> getSurvivalGoal() {
         try {
-            String goal = jdbcTemplate.queryForObject("select survival_goal from [show databases] where database_name='ledger'",
+            String goal = jdbcTemplate.queryForObject(
+                    "select survival_goal from [show databases] where database_name='ledger'",
                     String.class);
             return Optional.ofNullable(goal);
         } catch (EmptyResultDataAccessException e) {
@@ -132,7 +134,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
     public Optional<String> showCreateTable(String table) {
         try {
             String goal = jdbcTemplate.queryForObject("select create_statement from [show create table %s]"
-                            .formatted(table), String.class);
+                    .formatted(table), String.class);
             return Optional.ofNullable(goal);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -185,7 +187,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
                         sb.append("'").append(city.getName()).append("'");
                     }
                     sb.append(") THEN '")
-                            .append(region.getDatabaseRegion())
+                            .append(region.getDatabaseRegionSingleton())
                             .append("'");
                 });
 
@@ -195,7 +197,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
             }
 
             sb.append(" ELSE '")
-                    .append(primary.pop().getDatabaseRegion())
+                    .append(primary.pop().getDatabaseRegionSingleton())
                     .append("' END) STORED NOT NULL");
 
             logger.debug("SQL: %s".formatted(sb.toString()));

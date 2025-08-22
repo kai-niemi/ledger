@@ -33,11 +33,13 @@ public class Application {
         System.out.println("--help                    this help");
         System.out.println("--profiles [profile,..]   spring profiles to activate");
         System.out.println("  Available profiles:");
-        System.out.println("    default  - use default account plan and region definitions.");
-        System.out.println("    local    - enable property overrides.");
-        System.out.println("    outbox   - enable writing to outbox table for CDC.");
-        System.out.println("    retries  - enable aspect-oriented transaction retries.");
-        System.out.println("    jpa      - enable JPA and Hibernate repositories.");
+        System.out.println("    default *) - use account plan and region definitions in 'config/application-default.yml'.");
+        System.out.println("    test    *) - use account plan and region definitions in 'config/application-test.yml'.");
+        System.out.println("    outbox     - enable writing to outbox table for CDC.");
+        System.out.println("    retries    - enable aspect-oriented transaction retries.");
+        System.out.println("    jpa        - enable JPA and Hibernate repositories.");
+        System.out.println();
+        System.out.println("*) Pick either one or another named profile in 'config/' directory. Default is used when empty.");
         System.out.println();
         System.out.println("All other options are passed directly to spring container.");
         System.out.println();

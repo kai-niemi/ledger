@@ -1,8 +1,8 @@
 #!/bin/bash
 
-db_url="jdbc:postgresql://localhost:26257/ledger??ssl=true&sslmode=require"
+db_url="jdbc:postgresql://localhost:26257/ledger?sslmode=disable"
 db_user=root
-db_password=cockroach
+db_password=
 spring_profile="default"
 
 ######################################################
@@ -13,18 +13,18 @@ if [ ! -x ${pid} ]; then
    exit 1
 fi
 
-echo -e "Inspecting pom.xml version.."
-pomVersion=$(echo 'VERSION=${project.version}' | ./mvnw help:evaluate | grep '^VERSION=' | sed 's/^VERSION=//g')
-app_jarfile=target/ledger-${pomVersion}.jar
+app_jarfile=target/ledger.jar
 
 if [ ! -f "$app_jarfile" ]; then
     echo -e "Building jar.."
     ./mvnw clean install
 fi
 
-nohup java -jar $app_jarfile > ledger-stdout.log 2>&1 &
-#--spring.datasource.url="${db_url}" \
-#--spring.datasource.username=${db_user} \
-#--spring.datasource.password=${db_password} \
-#--spring.profiles.active="${spring_profile}" \
-#> ledger-stdout.log 2>&1 &
+nohup java -jar $app_jarfile \
+--spring.datasource.url="${db_url}" \
+--spring.datasource.username=${db_user} \
+--spring.datasource.password=${db_password} \
+--spring.profiles.active="${spring_profile}" \
+> ledger-stdout.log 2>&1 &
+
+tail -f ledger-stdout.log

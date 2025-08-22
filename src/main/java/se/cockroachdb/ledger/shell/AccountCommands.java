@@ -30,7 +30,7 @@ public class AccountCommands extends AbstractServiceCommand {
 
     @ShellMethod(value = "Create new zero-balance asset accounts in batches",
             key = {"create-accounts", "ca"})
-    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXISTS)
+    @ShellMethodAvailability(AbstractServiceCommand.ACCOUNT_PLAN_EXIST)
     public void createAccounts(
             @ShellOption(help = "batch size",
                     defaultValue = "128") int batchSize,

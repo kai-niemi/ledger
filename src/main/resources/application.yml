@@ -80,7 +80,7 @@ spring:
     url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
     username: root
     password:
-    name: ledger
+    name: Ledger
     hikari:
       pool-name: ledger-pool
       connection-init-sql: SELECT 1
@@ -90,7 +90,7 @@ spring:
       max-lifetime: 180000
       idle-timeout: 60000
       maximum-pool-size: 256
-      minimum-idle: 0
+      minimum-idle: 10
       transaction-isolation: TRANSACTION_SERIALIZABLE
       data-source-properties:
         reWriteBatchedInserts: true

@@ -1,6 +1,7 @@
 package se.cockroachdb.ledger.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,20 +66,19 @@ public class ApplicationProperties {
 
     public List<Region> getRegions() {
         return regions.stream()
-                .filter(region -> {
-                    return visibleRegions.isEmpty()
-                           || visibleRegions.contains(region.getName());
-                }).toList();
+                .filter(region -> visibleRegions.isEmpty()
+                                  || visibleRegions.contains(region.getName())).toList();
     }
 
-    public Optional<Region> getRegionByName(String name) {
+    public Optional<Region> findRegionByName(String name) {
         return regions.stream()
-                .filter(r -> r.getName().equals(name)).findFirst();
+                .filter(r -> r.getName().equals(name))
+                .findFirst();
     }
 
-    public Optional<Region> getRegionWithDatabaseRegion(String region) {
+    public Optional<Region> findRegionByDatabaseRegion(String databaseRegion) {
         return regions.stream()
-                .filter(r -> r.getDatabaseRegions().contains(region))
+                .filter(r -> r.getDatabaseRegions().contains(databaseRegion))
                 .findFirst();
     }
 
@@ -87,7 +87,7 @@ public class ApplicationProperties {
     }
 
     public Map<String, String> getRegionMappings() {
-        return regionMappings;
+        return Collections.unmodifiableMap(regionMappings);
     }
 
     public void setRegionMappings(Map<String, String> regionMappings) {

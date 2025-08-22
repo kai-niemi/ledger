@@ -57,7 +57,7 @@ public class RegionModifyCommands {
     @ShellMethod(value = "Apply multi-region configurations (regions, localities and survival goals)",
             key = {"apply-multi-region", "amr"})
     public void applyMultiRegion(@ShellOption(help = "survival goal",
-            valueProvider = EnumValueProvider.class) SurvivalGoal goal) {
+            valueProvider = EnumValueProvider.class, defaultValue = "ZONE") SurvivalGoal goal) {
         regionServiceFacade.applyMultiRegion(goal);
     }
 
