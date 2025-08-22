@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Secure mode
-db_url="jdbc:postgresql://localhost:26257/ledger??ssl=true&sslmode=require"
+db_url="jdbc:postgresql://localhost:26257/ledger?ssl=true&sslmode=require"
 db_user=root
 db_password=cockroach
 spring_profiles="default"

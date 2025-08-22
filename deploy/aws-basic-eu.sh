@@ -5,7 +5,7 @@
 
 title="CockroachDB single region deployment (AWS)"
 # CRDB release version
-releaseversion="v24.2.4"
+releaseversion="v25.3.0"
 # AWS/GCE cloud (aws|gce|az)
 cloud="aws"
 # Number of node instances in total including clients
