@@ -18,22 +18,22 @@
     <logger name="org.springframework.web" level="WARN"/>
 
     <springProfile name="verbose">
-        <logger name="se.cockroachdb.ledger" level="DEBUG" additivity="false">
+        <logger name="io.cockroachdb.ledger" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
         </logger>
-        <logger name="se.cockroachdb.ledger.SQL_TRACE" level="TRACE" additivity="false">
+        <logger name="io.cockroachdb.ledger.SQL_TRACE" level="TRACE" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
         </logger>
     </springProfile>
 
     <springProfile name="!verbose">
-        <logger name="se.cockroachdb.ledger" level="INFO" additivity="false">
+        <logger name="io.cockroachdb.ledger" level="INFO" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
         </logger>
-        <logger name="se.cockroachdb.ledger.SQL_TRACE" level="DEBUG" additivity="false">
+        <logger name="io.cockroachdb.ledger.SQL_TRACE" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
         </logger>

@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-auto">
                             <select th:field="*{transferType}" class="form-select" aria-label="Default select" id="transfer-type">
-                                <option th:each="tt : ${T(se.cockroachdb.ledger.domain.TransferType).values()}"
+                                <option th:each="tt : ${T(io.cockroachdb.ledger.domain.TransferType).values()}"
                                         th:value="${tt}"
                                         th:text="${tt.getCode()}"
                                         th:selected="${tt == form.transferType}"></option>

@@ -11,10 +11,10 @@
     <logger name="org.springframework.transaction.interceptor" level="WARN"/>
     <logger name="org.springframework.web" level="WARN"/>
 
-    <logger name="se.cockroachdb.ledger" level="DEBUG" additivity="false">
+    <logger name="io.cockroachdb.ledger" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
-    <logger name="se.cockroachdb.ledger.SQL_TRACE" level="TRACE" additivity="false">
+    <logger name="io.cockroachdb.ledger.SQL_TRACE" level="TRACE" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
     

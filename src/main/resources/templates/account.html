@@ -37,7 +37,7 @@
                             </div>
                             <div class="col-auto">
                                 <select th:field="*{accountType}" class="form-select" aria-label="Default select" id="account-type">
-                                    <option th:each="at : ${T(se.cockroachdb.ledger.domain.AccountType).values()}"
+                                    <option th:each="at : ${T(io.cockroachdb.ledger.domain.AccountType).values()}"
                                             th:value="${at}"
                                             th:text="${at.getCode()}"
                                             th:selected="${tt == form.accountType}"></option>
