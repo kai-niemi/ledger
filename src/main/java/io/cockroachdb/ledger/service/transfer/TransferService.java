@@ -11,7 +11,7 @@ import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferType;
 
 public interface TransferService {
-    TransferEntity createTransfer(TransferRequest transferRequest);
+    TransferEntity create(TransferRequest transferRequest);
 
     TransferEntity findById(UUID id);
 

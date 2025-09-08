@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +71,7 @@ public class TransferCommands extends AbstractServiceCommand {
                     defaultValue = Constants.DEFAULT_DURATION) String duration,
             @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1") int concurrency
-            ) {
+    ) {
         if (legs < 2) {
             logger.info("Number of legs must be >= 2");
             return;
@@ -141,15 +142,14 @@ public class TransferCommands extends AbstractServiceCommand {
             nLegs++;
         }
 
-        IntStream.rangeClosed(1, nLegs).forEach(value -> {
-            // Possible non-unique id:s but the legs are coalesced
-            UUID accountId = RandomData.selectRandom(accountIds);
-            builder.addItem()
-                    .withId(accountId)
-                    .withAmount(value % 2 == 0 ? transferAmount.negate() : transferAmount)
-                    .withNote(CockroachFacts.nextFact())
-                    .then();
-        });
+        AtomicInteger c = new AtomicInteger();
+
+        RandomData.selectRandomUnique(accountIds, nLegs)
+                .forEach(uuid -> builder.addItem()
+                        .withId(uuid)
+                        .withAmount(c.incrementAndGet() % 2 == 0 ? transferAmount.negate() : transferAmount)
+                        .withNote(CockroachFacts.nextFact())
+                        .then());
 
         return transferServiceFacade.createTransfer(builder.build());
     }

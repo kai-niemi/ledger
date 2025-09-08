@@ -115,7 +115,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .then()
                 .build();
 
-        TransferEntity transferEntity = transferService.createTransfer(request);
+        TransferEntity transferEntity = transferService.create(request);
         Assertions.assertNotNull(transferEntity);
         Assertions.assertEquals(3, transferEntity.getItems().size());
         Assertions.assertEquals(TransferType.BANK, transferEntity.getTransferType());
@@ -158,7 +158,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .then()
                 .build();
 
-        TransferEntity transferEntity = transferService.createTransfer(request);
+        TransferEntity transferEntity = transferService.create(request);
         Assertions.assertNotNull(transferEntity);
         Assertions.assertEquals(3, transferEntity.getItems().size());
         Assertions.assertEquals(TransferType.BANK, transferEntity.getTransferType());
@@ -193,7 +193,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .then()
                 .build();
 
-        TransferEntity transferEntity = transferService.createTransfer(request);
+        TransferEntity transferEntity = transferService.create(request);
         Assertions.assertNotNull(transferEntity);
         Assertions.assertEquals(2, transferEntity.getItems().size());
         Assertions.assertEquals(TransferType.PAYMENT, transferEntity.getTransferType());
@@ -266,7 +266,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .then()
                 .build();
 
-        TransferEntity transferEntity = transferService.createTransfer(request);
+        TransferEntity transferEntity = transferService.create(request);
         Assertions.assertNotNull(transferEntity);
         Assertions.assertEquals(4, transferEntity.getItems().size());
         Assertions.assertEquals(TransferType.PAYMENT, transferEntity.getTransferType());
@@ -302,7 +302,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .build();
 
         Assertions.assertThrows(BadRequestException.class, () -> {
-            transferService.createTransfer(form);
+            transferService.create(form);
         });
     }
 
@@ -335,7 +335,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .build();
 
         Assertions.assertThrows(BadRequestException.class, () -> {
-            transferService.createTransfer(form);
+            transferService.create(form);
         });
     }
 
@@ -368,7 +368,7 @@ public class FunctionalTest extends AbstractIntegrationTest {
                 .build();
 
         Assertions.assertThrows(NegativeBalanceException.class, () -> {
-            transferService.createTransfer(form);
+            transferService.create(form);
         });
     }
 

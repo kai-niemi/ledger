@@ -44,7 +44,7 @@ public class ModelUpdateAspect {
 
     private final Map<String, RateLimiter> rateLimiterMap = Collections.synchronizedMap(new HashMap<>());
 
-    @AfterReturning(pointcut = "execution(* io.cockroachdb.ledger.service.transfer.DefaultTransferService.createTransfer(..)) "
+    @AfterReturning(pointcut = "execution(* io.cockroachdb.ledger.service.transfer.DefaultTransferService.create(..)) "
                                + "&& args(transferRequest,..)",
             argNames = "transferRequest,returnedValue",
             returning = "returnedValue")

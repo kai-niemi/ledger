@@ -78,7 +78,7 @@ public class WorkloadManager {
         return workers;
     }
 
-    public   <T> Workload submitWorker(Worker<T> worker, WorkloadDescription description) {
+    public <T> Workload submitWorker(Worker<T> worker, WorkloadDescription description) {
         final Metrics metrics = Metrics.empty();
 
         final LinkedList<Problem> problems = new LinkedList<>();
@@ -299,15 +299,11 @@ public class WorkloadManager {
 
                     List<Double> data = metrics
                             .stream()
-                            .filter(metric -> {
-                                // TODO!
-                                return true;// Instant.now().plusSeconds(10).isBefore(metric.getUpdateTime());
-                            })
                             .map(mapper)
                             .toList();
 
                     dataElement.put("id", workload.getId());
-                    dataElement.put("name", "%s (%d)".formatted(workload.getTitle(), workload.getId()));
+                    dataElement.put("name", "%s".formatted(workload.getId()));
                     dataElement.put("data", data.toArray());
 
                     columnData.add(dataElement);

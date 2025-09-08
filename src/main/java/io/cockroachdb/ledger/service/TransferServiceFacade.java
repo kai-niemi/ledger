@@ -32,7 +32,7 @@ public class TransferServiceFacade {
     @TransactionExplicit(priority = TransactionPriority.HIGH, retryPriority = TransactionPriority.HIGH)
     @ResponseOutboxEvent(value = TransferEntity.class)
     public TransferEntity createTransfer(TransferRequest request) {
-        return transferService.createTransfer(request);
+        return transferService.create(request);
     }
 
     @TransactionImplicit(readOnly = true)

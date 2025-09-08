@@ -12,6 +12,7 @@ spring:
     password:
     hikari:
       transaction-isolation: TRANSACTION_SERIALIZABLE
+#      transaction-isolation: TRANSACTION_READ_COMMITTED
 
   ## Default datasource (secure)
 #  datasource:

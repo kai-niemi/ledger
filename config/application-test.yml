@@ -4,8 +4,8 @@ spring:
     username: root
     password:
     hikari:
-#      transaction-isolation: TRANSACTION_SERIALIZABLE
-      transaction-isolation: TRANSACTION_READ_COMMITTED
+      transaction-isolation: TRANSACTION_SERIALIZABLE
+#      transaction-isolation: TRANSACTION_READ_COMMITTED
 
 application:
   using-locks: false

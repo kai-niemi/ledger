@@ -50,12 +50,9 @@ public class DefaultTransferService implements TransferService {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY) // to signal txn required
-    public TransferEntity createTransfer(TransferRequest transferRequest) {
+    public TransferEntity create(TransferRequest transferRequest) {
         Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(),
                 "Expected transaction context");
-
-        // Validate request first
-        preValidateInvariants(transferRequest.getAccountItems());
 
         // Short-circuit if seen before with a shallow, transient copy.
         // For formally correct idempotency it's required to return the existing transfer with legs.
@@ -66,18 +63,14 @@ public class DefaultTransferService implements TransferService {
                     .build();
         }
 
-        final Set<UUID> accountIds = transferRequest.getAccountItems()
-                .stream()
-                .map(AccountItem::getId)
-                .collect(Collectors.toSet());
+        // Validate request and get account IDs
+        final Set<UUID> accountIds =  validateAccountItems(transferRequest.getAccountItems());
 
         final Map<UUID, AccountItem> itemsPerAccountId = transferRequest.getAccountItems()
-                .stream()
-                .collect(Collectors.toMap(AccountItem::getId,
+                .stream().collect(Collectors.toMap(AccountItem::getId,
                         accountItem -> accountItem, (x, b) -> b));
 
         // Business validation complete, let's go ahead with DB reads/writes and defer the rest to DB constraints
-
         final List<AccountEntity> accountEntities
                 = accountRepository.findById(accountIds, applicationModel.isUsingLocks());
 
@@ -98,7 +91,8 @@ public class DefaultTransferService implements TransferService {
 
         // Then create transfer items or legs, describing the monetary transfer and
         // storing a running balance (balance before update).
-        final TransferItemEntity.Builder itemBuilder = TransferItemEntity.builder().withTransfer(transferEntity);
+        final TransferItemEntity.Builder itemBuilder
+                = TransferItemEntity.builder().withTransfer(transferEntity);
         {
             accountEntities.forEach(account -> {
                 AccountItem accountItem = itemsPerAccountId.get(account.getId());
@@ -120,25 +114,30 @@ public class DefaultTransferService implements TransferService {
         try {
             accountRepository.updateBalances(coalesceItems(transferRequest.getAccountItems()));
         } catch (IncorrectResultSizeDataAccessException e) {
-            logger.warn("Negative balance outcome for denied transfer request:\n%s".formatted(
+            logger.warn("Negative balance update outcome:\n%s".formatted(
                     JsonHelper.toFormattedJSON(transferRequest)
             ));
-            throw new NegativeBalanceException("Negative balance check constraint failed - check log", e);
+            throw new NegativeBalanceException("Negative balance constraint failed - check log", e);
         }
 
         return transferEntity;
     }
 
-    private void preValidateInvariants(List<AccountItem> accountItems) {
+    private Set<UUID> validateAccountItems(List<AccountItem> accountItems) {
         if (accountItems.size() < 2) {
-            throw new BadRequestException("Must have at least two account legs but got: "
-                                          + accountItems.size());
+            throw new BadRequestException("Expected at least two account legs, found %d"
+                    .formatted(accountItems.size()));
+        }
+
+        final Set<UUID> accountIds = accountItems.stream().map(AccountItem::getId).collect(Collectors.toSet());
+        if (accountIds.size() < 2) {
+            throw new BadRequestException("Expected at least 2 distinct account legs, found %d"
+                    .formatted(accountIds.size()));
         }
 
         final Map<Currency, BigDecimal> checksumPerCurrency = new HashMap<>();
 
         accountItems.forEach(accountItem -> {
-            Assert.notNull(accountItem.getId(), "account leg id is null");
             // Zero-balance invariant
             checksumPerCurrency.compute(accountItem.getAmount().getCurrency(),
                     (currency, checksum) ->
@@ -151,9 +150,11 @@ public class DefaultTransferService implements TransferService {
         checksumPerCurrency.forEach((key, value) -> {
             if (value.compareTo(BigDecimal.ZERO) != 0) {
                 throw new BadRequestException(
-                        "Unbalanced transaction: currency [" + key + "], amount sum [" + value + "]");
+                        "Unbalanced transaction: currency [" + key + "], sum [" + value + "]");
             }
         });
+
+        return accountIds;
     }
 
     /**

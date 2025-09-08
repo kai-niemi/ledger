@@ -152,6 +152,7 @@ public class JdbcTransferRepository implements TransferRepository {
     @Override
     public Page<TransferEntity> findAllTransfers(TransferType transferType, Pageable pageable) {
         int count = countAllTransfers(transferType);
+
         List<TransferEntity> content = this.jdbcTemplate.query(
                 "SELECT * FROM transfer "
                 + "WHERE transfer_type=? "
@@ -160,6 +161,7 @@ public class JdbcTransferRepository implements TransferRepository {
                 transferType.getCode(),
                 pageable.getPageSize(),
                 pageable.getOffset());
+
         return new PageImpl<>(content, pageable, count);
     }
 
