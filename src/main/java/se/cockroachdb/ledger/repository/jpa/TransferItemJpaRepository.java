@@ -9,19 +9,19 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferItemId;
 
-public interface TransferItemJpaRepository extends JpaRepository<TransferItem, TransferItemId>,
-        JpaSpecificationExecutor<TransferItem> {
+public interface TransferItemJpaRepository extends JpaRepository<TransferItemEntity, TransferItemId>,
+        JpaSpecificationExecutor<TransferItemEntity> {
 
     @Query(value
-            = "select item from TransferItem item "
-              + "where item.transfer.id = :transferId",
+            = "select item from TransferItemEntity item "
+              + "where item.transferEntity.id = :transferId",
             countQuery
-                    = "select count(item.id.transferId) from TransferItem item "
-                      + "where item.transfer.id = :transferId")
-    Page<TransferItem> findById(
+                    = "select count(item.id.transferId) from TransferItemEntity item "
+                      + "where item.transferEntity.id = :transferId")
+    Page<TransferItemEntity> findById(
             @Param("transferId") UUID transferId,
             Pageable page);
 }

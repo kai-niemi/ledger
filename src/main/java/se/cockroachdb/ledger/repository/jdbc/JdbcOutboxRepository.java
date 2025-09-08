@@ -1,8 +1,7 @@
 package se.cockroachdb.ledger.repository.jdbc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,10 +9,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+
 import se.cockroachdb.ledger.annotations.EventAggregate;
 import se.cockroachdb.ledger.repository.OutboxRepository;
-
-import javax.sql.DataSource;
 
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS) // to support both explicit and implicit

@@ -2,17 +2,29 @@ package se.cockroachdb.ledger.model;
 
 import java.util.Collection;
 import java.util.Currency;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
 
+@Validated
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class City implements Comparable<City> {
+    public static City of(String name, String country, String currency) {
+        City c = new City();
+        c.setName(name);
+        c.setCountry(country);
+        c.setCurrency(currency);
+        return c;
+    }
+
     public static Optional<City> findByName(Collection<City> collection, String name) {
         return collection.stream()
                 .filter(c -> name.equals(c.getName()))
@@ -32,14 +44,16 @@ public class City implements Comparable<City> {
     private String name;
 
     /**
-     * ISO-4217 currency code
-     */
-    private String currency;
-
-    /**
      * ISO-3166-1 A3 country codes (for flags)
      */
+    @NotNull
     private String country;
+
+    /**
+     * ISO-4217 currency code
+     */
+    @NotNull
+    private String currency;
 
     public String getName() {
         return name;
@@ -77,20 +91,16 @@ public class City implements Comparable<City> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         City city = (City) o;
-        return name.equals(city.name);
+        return Objects.equals(name, city.name);
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return Objects.hashCode(name);
     }
 
     @Override

@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import se.cockroachdb.ledger.domain.SurvivalGoal;
 import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.SurvivalGoal;
 import se.cockroachdb.ledger.repository.MultiRegionRepository;
 
 @Repository

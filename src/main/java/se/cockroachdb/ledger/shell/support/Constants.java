@@ -26,18 +26,16 @@ public abstract class Constants {
     public static final String ITERATIONS_HELP = "Max execution iterations (overrides duration if > 0)";
 
     public static final String REGIONS_HELP = "Name of account region(s) to include in city selection."
-                                              + "\n'gateway' refers to CockroachDB gateway node region."
-                                              + "\n'primary' refers to CockroachDB primary node region."
-                                              + "\n'secondary' refers to CockroachDB secondary node region."
-                                              + "\n'all' includes all regions.";
-
-    public static final String CITY_NAME_HELP = "Narrow selection to one specific city (must exist in some region)";
+                                              + "\n'GATEWAY' refers to CockroachDB gateway node region."
+                                              + "\n'PRIMARY' refers to CockroachDB primary node region."
+                                              + "\n'SECONDARY' refers to CockroachDB secondary node region."
+                                              + "\n'ALL' includes all regions.";
 
     public static final String ACCOUNT_LIMIT_HELP = "Max number of accounts per city";
 
     public static final String DEFAULT_ACCOUNT_LIMIT = "5000";
 
-    public static final String DEFAULT_REGION = "gateway";
+    public static final String DEFAULT_REGION = "GATEWAY";
 
     private Constants() {
     }

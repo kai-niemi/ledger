@@ -5,7 +5,8 @@ import org.jline.utils.AttributedStyle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.jline.PromptProvider;
 import org.springframework.stereotype.Component;
-import se.cockroachdb.ledger.workload.WorkloadManager;
+
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
 
 @Component
 public class ShellPromptProvider implements PromptProvider {

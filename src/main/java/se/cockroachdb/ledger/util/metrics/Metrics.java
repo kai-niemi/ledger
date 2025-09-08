@@ -1,14 +1,15 @@
 package se.cockroachdb.ledger.util.metrics;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.data.util.Pair;
-import org.springframework.util.Assert;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.springframework.data.util.Pair;
+import org.springframework.util.Assert;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Metrics {

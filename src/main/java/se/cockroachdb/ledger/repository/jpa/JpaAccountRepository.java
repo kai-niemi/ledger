@@ -27,7 +27,7 @@ import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
 
 import se.cockroachdb.ledger.ProfileNames;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.repository.AccountRepository;
 import se.cockroachdb.ledger.util.Money;
@@ -45,36 +45,34 @@ public class JpaAccountRepository implements AccountRepository {
     private Environment environment;
 
     @Override
-    public List<UUID> createAccounts(Supplier<Account> factory, int batchSize) {
+    public List<UUID> createAccounts(Supplier<AccountEntity> factory, int batchSize) {
         List<UUID> ids = new ArrayList<>();
         IntStream.rangeClosed(1, batchSize).forEach(value -> {
-            Account account = factory.get();
-            accountRepository.save(account);
-            ids.add(account.getId());
+            AccountEntity accountEntity = factory.get();
+            accountRepository.save(accountEntity);
+            ids.add(accountEntity.getId());
         });
         return ids;
     }
 
     @Override
-    public Account createAccount(Account account) {
-        return accountRepository.save(account);
+    public AccountEntity createAccount(AccountEntity accountEntity) {
+        return accountRepository.save(accountEntity);
     }
 
     @Override
-    public void updateBalances(Map<UUID, Pair<String, BigDecimal>> accountUpdates) {
-        accountUpdates.forEach((uuid, pair) -> {
-            Query q = entityManager.createQuery("UPDATE Account a"
+    public void updateBalances(Map<UUID, BigDecimal> balanceUpdates) {
+        balanceUpdates.forEach((uuid, amount) -> {
+            Query q = entityManager.createQuery("UPDATE AccountEntity a"
                                                 + " SET"
                                                 + "   a.balance.amount = a.balance.amount + ?2,"
-                                                + "   a.updatedAt = ?4"
+                                                + "   a.updatedAt = ?3"
                                                 + " WHERE a.id = ?1"
-                                                + "   AND a.city = ?3"
                                                 + "   AND (a.balance.amount + ?2) * abs(a.allowNegative - 1) >= 0");
 
             q.setParameter(1, uuid);
-            q.setParameter(2, pair.getSecond());
-            q.setParameter(3, pair.getFirst());
-            q.setParameter(4, LocalDateTime.now());
+            q.setParameter(2, amount);
+            q.setParameter(3, LocalDateTime.now());
 
             int rows = q.executeUpdate();
 
@@ -86,22 +84,22 @@ public class JpaAccountRepository implements AccountRepository {
 
     @Override
     public void closeAccount(UUID id) {
-        Account account = accountRepository.getReferenceById(id);
-        if (!account.isClosed()) {
-            account.setClosed(true);
+        AccountEntity accountEntity = accountRepository.getReferenceById(id);
+        if (!accountEntity.isClosed()) {
+            accountEntity.setClosed(true);
         }
     }
 
     @Override
     public void openAccount(UUID id) {
-        Account account = accountRepository.getReferenceById(id);
-        if (account.isClosed()) {
-            account.setClosed(false);
+        AccountEntity accountEntity = accountRepository.getReferenceById(id);
+        if (accountEntity.isClosed()) {
+            accountEntity.setClosed(false);
         }
     }
 
     @Override
-    public Optional<Account> getAccountById(UUID id) {
+    public Optional<AccountEntity> getAccountById(UUID id) {
         return accountRepository.findById(id);
     }
 
@@ -127,41 +125,32 @@ public class JpaAccountRepository implements AccountRepository {
     }
 
     @Override
-    public List<Account> findById(Set<String> cities, Set<UUID> ids, boolean forUpdate) {
+    public List<AccountEntity> findById(Set<UUID> ids, boolean forUpdate) {
         return forUpdate
-                ? accountRepository.findAllWithLock(ids, cities)
-                : accountRepository.findAll(ids, cities);
+                ? accountRepository.findAllWithLock(ids)
+                : accountRepository.findAll(ids);
     }
 
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType,
-                                        Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
-        List<Account> accountEntities = new ArrayList<>();
+    public List<AccountEntity> findByCriteria(Set<String> cities, AccountType accountType,
+                                              Pair<BigDecimal, BigDecimal> range,
+                                              int limit) {
+        List<AccountEntity> accountEntityEntities = new ArrayList<>();
 
         // No window functions in JPA :o
 
         // Equality cancels out balance range filtering
         if (range.getFirst().equals(range.getSecond())) {
-            cities.forEach(c -> accountEntities.addAll(
+            cities.forEach(c -> accountEntityEntities.addAll(
                     accountRepository.findAll(List.of(c), accountType,
                             PageRequest.ofSize(limit)).getContent()));
         } else {
-            cities.forEach(c -> accountEntities.addAll(
+            cities.forEach(c -> accountEntityEntities.addAll(
                     accountRepository.findAll(List.of(c), accountType,
                             range.getFirst(), range.getSecond(),
                             PageRequest.ofSize(limit)).getContent()));
         }
-        return accountEntities;
-    }
-
-    @Override
-    public List<Account> findByCriteria(String city, AccountType accountType,
-                                        Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
-        return accountRepository.findAll(city, accountType,
-                range.getFirst(), range.getSecond(),
-                PageRequest.ofSize(limit)).getContent();
+        return accountEntityEntities;
     }
 
     @Override
@@ -170,13 +159,7 @@ public class JpaAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Page<Account> findAll(AccountType accountType, Pageable page) {
+    public Page<AccountEntity> findAll(AccountType accountType, Pageable page) {
         return accountRepository.findAll(accountType, page);
-    }
-
-    @Override
-    public Page<Account> findAll(Set<String> cities, Pageable page) {
-        List<String> names = cities.stream().toList();
-        return accountRepository.findAll(names, page);
     }
 }

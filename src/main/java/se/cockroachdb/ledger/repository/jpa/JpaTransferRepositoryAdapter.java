@@ -10,8 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import se.cockroachdb.ledger.ProfileNames;
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.repository.TransferRepository;
 
@@ -25,42 +25,42 @@ public class JpaTransferRepositoryAdapter implements TransferRepository {
     private TransferItemJpaRepository transferItemJpaRepository;
 
     @Override
-    public Transfer createTransfer(Transfer transfer) {
-        return transferJpaRepository.save(transfer);
+    public TransferEntity createTransfer(TransferEntity transferEntity) {
+        return transferJpaRepository.save(transferEntity);
     }
 
     @Override
-    public List<TransferItem> createTransferItems(List<TransferItem> items) {
+    public List<TransferItemEntity> createTransferItems(List<TransferItemEntity> items) {
         return items;
     }
 
     @Override
-    public Transfer findTransferById(UUID transferId) {
+    public TransferEntity findTransferById(UUID transferId) {
         return transferJpaRepository.findById(transferId).orElse(null);
     }
 
     @Override
-    public boolean checkTransferExists(UUID transferId, String city) {
+    public boolean checkTransferExists(UUID transferId) {
         return transferJpaRepository.existsById(transferId);
     }
 
     @Override
-    public Page<Transfer> findAllTransfersByAccountId(UUID accountId, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfersByAccountId(UUID accountId, Pageable pageable) {
         return transferJpaRepository.findAll(accountId, pageable);
     }
 
     @Override
-    public Page<Transfer> findAllTransfersByCity(String city, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfersByCity(String city, Pageable pageable) {
         return transferJpaRepository.findAllByCity(city, pageable);
     }
 
     @Override
-    public Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfers(TransferType transferType, Pageable pageable) {
         return transferJpaRepository.findAll(transferType, pageable);
     }
 
     @Override
-    public Page<TransferItem> findAllTransferItems(UUID transferId, Pageable pageable) {
+    public Page<TransferItemEntity> findAllTransferItems(UUID transferId, Pageable pageable) {
         return transferItemJpaRepository.findById(transferId, pageable);
     }
 

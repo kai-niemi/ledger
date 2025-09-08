@@ -1,11 +1,9 @@
 package se.cockroachdb.ledger.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +14,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.Assert;
 
 import se.cockroachdb.ledger.annotations.ServiceFacade;
-import se.cockroachdb.ledger.annotations.TransactionExplicit;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountBatchRequest;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
-import se.cockroachdb.ledger.model.AccountBatch;
 import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.service.account.AccountService;
 import se.cockroachdb.ledger.util.CockroachFacts;
-import se.cockroachdb.ledger.util.ConcurrencyUtils;
 import se.cockroachdb.ledger.util.Money;
 
 @ServiceFacade
@@ -35,19 +31,17 @@ public class AccountServiceFacade {
     private AccountService accountService;
 
     @TransactionImplicit
-    public Account createAccount(Account account) {
-        return accountService.createAccount(account);
+    public AccountEntity createAccount(AccountEntity accountEntity) {
+        return accountService.createAccount(accountEntity);
     }
 
     @TransactionImplicit
-    public List<UUID> createAccountBatch(AccountBatch form) {
-        Currency currency = form.getCity().getCurrencyInstance();
-
-        return accountService.createAccountBatch(() -> Account.builder()
+    public List<UUID> createAccountBatch(AccountBatchRequest form) {
+        return accountService.createAccountBatch(() -> AccountEntity.builder()
                         .withId(UUID.randomUUID())
-                        .withCity(form.getCity().getName())
+                        .withCity(form.getCity())
                         .withAccountType(form.getAccountType())
-                        .withBalance(Money.zero(currency))
+                        .withBalance(Money.zero(form.getCurrency()))
                         .withAllowNegative(false)
                         .withName(String.format("user:%05d", monotonicBatchSequence.incrementAndGet()))
                         .withDescription(CockroachFacts.nextFact(256))
@@ -56,40 +50,40 @@ public class AccountServiceFacade {
     }
 
     @TransactionImplicit(readOnly = true)
-    public Page<Account> findAccounts(AccountType accountType, Pageable pageable) {
+    public Page<AccountEntity> findAccounts(AccountType accountType, Pageable pageable) {
         return accountService.findAll(accountType, pageable);
     }
 
+//    @TransactionImplicit(readOnly = true)
+//    public List<AccountEntity> findAccounts(Set<String> cities,
+//                                            AccountType accountType,
+//                                            Pair<BigDecimal, BigDecimal> range,
+//                                            int limit) {
+//        Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(),
+//                "Expecting no active transaction");
+//
+//        List<Callable<List<AccountEntity>>> tasks = new ArrayList<>();
+//        tasks.add(() -> accountService.findByCriteria(cities, accountType, range, limit));
+//
+//        List<AccountEntity> accountEntities = new ArrayList<>();
+//
+//        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
+//                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, accountEntities::addAll);
+//
+//        return accountEntities;
+//    }
+
     @TransactionImplicit(readOnly = true)
-    public List<Account> findAccounts(List<City> cities, AccountType accountType,
+    public List<AccountEntity> findAccounts(City city, AccountType accountType,
                                       Pair<BigDecimal, BigDecimal> range,
                                       int limit) {
         Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(),
                 "Expecting no active transaction");
 
-        List<Callable<List<Account>>> tasks = new ArrayList<>();
-
-        tasks.add(() -> accountService.findByCriteria(City.joinCityNames(cities), accountType, range, limit));
-
-        List<Account> accounts = new ArrayList<>();
-
-        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
-                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, accounts::addAll);
-
-        return accounts;
+        return accountService.findByCriteria(Set.of(city.getName()), accountType, range, limit);
     }
 
-    @TransactionImplicit(readOnly = true)
-    public List<Account> findAccounts(City city, AccountType accountType,
-                                      Pair<BigDecimal, BigDecimal> range,
-                                      int limit) {
-        Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(),
-                "Expecting no active transaction");
-
-        return accountService.findByCriteria(city.getName(), accountType, range, limit);
-    }
-
-    @TransactionImplicit(readOnly = true)
+        @TransactionImplicit(readOnly = true)
     public Money getAccountBalance(UUID id) {
         return accountService.getBalance(id);
     }

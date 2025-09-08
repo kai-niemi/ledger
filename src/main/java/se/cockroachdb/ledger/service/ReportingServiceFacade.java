@@ -1,20 +1,22 @@
 package se.cockroachdb.ledger.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.AsyncTaskExecutor;
 
 import se.cockroachdb.ledger.annotations.ServiceFacade;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
-import se.cockroachdb.ledger.model.AccountSummary;
+import se.cockroachdb.ledger.domain.AccountSummary;
+import se.cockroachdb.ledger.domain.TransferSummary;
 import se.cockroachdb.ledger.model.City;
-import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.TransferSummary;
 import se.cockroachdb.ledger.repository.ReportingRepository;
-import se.cockroachdb.ledger.util.ConcurrencyUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
+import se.cockroachdb.ledger.model.BalanceSheet;
 
 @ServiceFacade
 public class ReportingServiceFacade {
@@ -22,51 +24,50 @@ public class ReportingServiceFacade {
     private ReportingRepository reportingRepository;
 
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    @Qualifier("applicationTaskExecutor")
+    private AsyncTaskExecutor asyncTaskExecutor;
 
     @TransactionImplicit(readOnly = true)
-    public List<AccountSummary> getAccountSummaryByRegion(String region) {
-        List<Region> regions = regionServiceFacade.listRegions(region);
-        return getAccountSummary(Region.joinCities(regions));
-    }
+    public List<BalanceSheet> getBalanceSheets(Set<City> cities) {
+        List<CompletableFuture<BalanceSheet>> allFutures = new ArrayList<>();
 
-    @TransactionImplicit(readOnly = true)
-    public List<AccountSummary> getAccountSummary(List<City> cities) {
-        final List<Callable<AccountSummary>> tasks = new ArrayList<>();
+        cities.forEach(city -> {
+            CompletableFuture<AccountSummary> f1 = asyncTaskExecutor.submitCompletable(() -> {
+                return reportingRepository.accountSummary(city);
+            });
 
-        cities.forEach(c -> tasks.add(() -> {
-            return reportingRepository.accountSummary(c.getName())
-                    .orElse(AccountSummary.empty(c));
-        }));
+            CompletableFuture<TransferSummary> f2 = asyncTaskExecutor.submitCompletable(() -> {
+                return reportingRepository.transferSummary(city);
+            });
 
-        final List<AccountSummary> allSummaries = new ArrayList<>();
+            CompletableFuture<BalanceSheet> combinedFuture = f1.thenCombine(f2,
+                    (accountSummary, transferSummary) -> {
+                BalanceSheet balanceSheet = new BalanceSheet();
+                balanceSheet.setCity(city);
 
-        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
-                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, allSummaries::add);
+                balanceSheet.setUpdatedAt(accountSummary.getUpdatedAt());
+                balanceSheet.setNumberOfAccounts(accountSummary.getNumberOfAccounts());
+                balanceSheet.setMinBalance(accountSummary.getMaxBalance());
+                balanceSheet.setMaxBalance(accountSummary.getMaxBalance());
+                balanceSheet.setTotalBalance(accountSummary.getTotalBalance());
 
-        return allSummaries;
-    }
+                balanceSheet.setNumberOfTransfers(transferSummary.getNumberOfTransfers());
+                balanceSheet.setNumberOfLegs(transferSummary.getNumberOfLegs());
+                balanceSheet.setTotalTurnover(transferSummary.getTotalTurnover());
+                balanceSheet.setTotalChecksum(transferSummary.getTotalCheckSum());
 
-    @TransactionImplicit(readOnly = true)
-    public List<TransferSummary> getTransactionSummaryByRegion(String region) {
-        List<Region> regions = regionServiceFacade.listRegions(region);
-        return getTransactionSummary(Region.joinCities(regions));
-    }
+                return balanceSheet;
+            });
 
-    @TransactionImplicit(readOnly = true)
-    public List<TransferSummary> getTransactionSummary(List<City> cities) {
-        final List<Callable<TransferSummary>> tasks = new ArrayList<>();
+            allFutures.add(combinedFuture);
+        });
 
-        cities.forEach(c -> tasks.add(() -> {
-            return reportingRepository.transactionSummary(c.getName())
-                    .orElse(TransferSummary.empty(c));
-        }));
+        final List<BalanceSheet> balanceSheets = new ArrayList<>();
 
-        final List<TransferSummary> allSummaries = new ArrayList<>();
+        allFutures.forEach(balanceSheetCompletableFuture -> {
+            balanceSheets.add(balanceSheetCompletableFuture.join());
+        });
 
-        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
-                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, allSummaries::add);
-
-        return allSummaries;
+        return balanceSheets;
     }
 }

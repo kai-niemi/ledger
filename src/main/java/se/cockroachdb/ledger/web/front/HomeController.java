@@ -12,18 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import se.cockroachdb.ledger.model.MessageModel;
-import se.cockroachdb.ledger.model.MessageType;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
-import se.cockroachdb.ledger.web.push.SimpMessagePublisher;
-import se.cockroachdb.ledger.web.push.TopicName;
 
 @Controller
 @RequestMapping("/")
 public class HomeController {
-    @Autowired
-    private SimpMessagePublisher simpMessagePublisher;
-
     @Autowired
     private RegionServiceFacade regionServiceFacade;
 
@@ -36,10 +29,6 @@ public class HomeController {
 
     @PostMapping("/inform")
     public ResponseEntity<?> informPage(Model model) {
-        simpMessagePublisher.convertAndSend(TopicName.REGION_TOAST_MESSAGE,
-                MessageModel.from("A message has been sent!")
-                        .setMessageType(MessageType.warning));
-
         return ResponseEntity.ok().build();
     }
 

@@ -8,7 +8,8 @@ import org.springframework.shell.standard.ShellCommandGroup;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
-import se.cockroachdb.ledger.model.SurvivalGoal;
+
+import se.cockroachdb.ledger.domain.SurvivalGoal;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.shell.support.RegionProvider;

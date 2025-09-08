@@ -11,9 +11,9 @@ RegionDashboard.prototype = {
 
         // stompClient.log = (log) => {};
         stompClient.connect({}, function (frame) {
-            stompClient.subscribe(_this.settings.topics.cityModelUpdate, function (payload) {
-                var cityModel = JSON.parse(payload.body);
-                _this.handleCityModelUpdate(cityModel);
+            stompClient.subscribe(_this.settings.topics.balanceSheetUpdate, function (payload) {
+                var balanceSheet = JSON.parse(payload.body);
+                _this.handleModelUpdate(balanceSheet);
             });
         });
     },
@@ -22,12 +22,12 @@ RegionDashboard.prototype = {
         return $('#' + id);
     },
 
-    handleCityModelUpdate: function (cityModel) {
+    handleModelUpdate: function (balanceSheet) {
         var _this = this;
 
-        // console.log("City model update: " + cityModel);
+        console.log("Model update: " + balanceSheet);
 
-        var divElt = _this.getElement("city-" +  cityModel.name);
+        var divElt = _this.getElement("city-" +  balanceSheet.city.name);
 
         // Flash spinner
         var _spinnerElt = divElt.find(".ledger-city-spinner");
@@ -36,11 +36,12 @@ RegionDashboard.prototype = {
             _spinnerElt.attr('style','display: none');
         }, 1500);
 
-        divElt.find(".ledger-totalBalance").text(_this.formatMoney(cityModel.totalBalance));
-        divElt.find(".ledger-totalTurnover").text(_this.formatMoney(cityModel.totalTurnover));
-        divElt.find(".ledger-numberOfAccounts").text(cityModel.numberOfAccounts);
-        divElt.find(".ledger-numberOfTransfers").text(cityModel.numberOfTransfers);
-        divElt.find(".ledger-last-active").text(cityModel.lastActive);
+        divElt.find(".ledger-totalBalance").text(_this.formatMoney(balanceSheet.totalBalance));
+        divElt.find(".ledger-totalChecksum").text(_this.formatMoney(balanceSheet.totalChecksum));
+        divElt.find(".ledger-totalTurnover").text(_this.formatMoney(balanceSheet.totalTurnover));
+        divElt.find(".ledger-numberOfAccounts").text(balanceSheet.numberOfAccounts);
+        divElt.find(".ledger-numberOfTransfers").text(balanceSheet.numberOfTransfers);
+        divElt.find(".ledger-last-active").text(balanceSheet.lastActive);
     },
 
     formatMoney: function (money) {
@@ -59,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
 
         topics: {
-            cityModelUpdate: '/topic/region/city/update',
+            balanceSheetUpdate: '/topic/balance-sheet/update',
         },
     });
 });

@@ -12,16 +12,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.util.Pair;
 
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.util.Money;
 
 public interface AccountRepository {
-    Account createAccount(Account account);
+    AccountEntity createAccount(AccountEntity accountEntity);
 
-    List<UUID> createAccounts(Supplier<Account> factory, int batchSize);
+    List<UUID> createAccounts(Supplier<AccountEntity> factory, int batchSize);
 
-    Optional<Account> getAccountById(UUID id);
+    Optional<AccountEntity> getAccountById(UUID id);
 
     Money getBalance(UUID id);
 
@@ -31,19 +31,16 @@ public interface AccountRepository {
 
     void openAccount(UUID id);
 
-    void updateBalances(Map<UUID, Pair<String, BigDecimal>> accountUpdates);
+    void updateBalances(Map<UUID, BigDecimal> balanceUpdates);
 
     void deleteAll();
 
-    List<Account> findByCriteria(Set<String> cities, AccountType accountType,
-                                 Pair<BigDecimal, BigDecimal> range, int limit);
+    List<AccountEntity> findByCriteria(Set<String> cities,
+                                       AccountType accountType,
+                                       Pair<BigDecimal, BigDecimal> range,
+                                       int limit);
 
-    List<Account> findByCriteria(String city, AccountType accountType,
-                                 Pair<BigDecimal, BigDecimal> range, int limit);
+    List<AccountEntity> findById(Set<UUID> ids, boolean forUpdate);
 
-    List<Account> findById(Set<String> cities, Set<UUID> ids, boolean forUpdate);
-
-    Page<Account> findAll(AccountType accountType, Pageable page);
-
-    Page<Account> findAll(Set<String> cities, Pageable page);
+    Page<AccountEntity> findAll(AccountType accountType, Pageable page);
 }

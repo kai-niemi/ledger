@@ -1,5 +1,9 @@
 package se.cockroachdb.ledger;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Set;
+
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.jdbc.JdbcRepositoriesAutoConfiguration;
@@ -11,10 +15,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.util.StringUtils;
-
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Set;
 
 @EnableConfigurationProperties
 @ConfigurationPropertiesScan

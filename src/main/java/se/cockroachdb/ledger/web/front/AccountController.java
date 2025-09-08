@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
-import se.cockroachdb.ledger.domain.Transfer;
+import se.cockroachdb.ledger.domain.TransferEntity;
 import se.cockroachdb.ledger.service.account.AccountService;
 import se.cockroachdb.ledger.service.transfer.TransferService;
 
@@ -39,7 +39,7 @@ public class AccountController {
         return () -> {
             AccountType type = accountType != null ?accountType : AccountType.ASSET;
 
-            Page<Account> accountPage = accountService.findAll(type, page);
+            Page<AccountEntity> accountPage = accountService.findAll(type, page);
 
             model.addAttribute("accountPage", accountPage);
             model.addAttribute("form", new AccountFilterForm(type));
@@ -53,7 +53,7 @@ public class AccountController {
                                            @PageableDefault(size = 10) Pageable page,
                                            Model model) {
         return () -> {
-            Page<Account> accountPage = accountService.findAll(form.getAccountType(), page);
+            Page<AccountEntity> accountPage = accountService.findAll(form.getAccountType(), page);
 
             model.addAttribute("accountPage", accountPage);
             model.addAttribute("form", form);
@@ -67,7 +67,7 @@ public class AccountController {
                                            @PageableDefault(size = 10) Pageable page,
                                            Model model) {
         return () -> {
-            Page<Transfer> transferPage = transferService.findAllByAccountId(id, page);
+            Page<TransferEntity> transferPage = transferService.findAllByAccountId(id, page);
             model.addAttribute("transferPage", transferPage);
             model.addAttribute("form", accountService.findById(id));
             return "account-detail";

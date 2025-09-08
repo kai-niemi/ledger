@@ -191,9 +191,12 @@ public class Money implements Serializable, Comparable<Money> {
         return compareTo(right) <= 0;
     }
 
-    @JsonIgnore
     public boolean isNegative() {
         return amount.compareTo(ZERO) < 0;
+    }
+
+    public boolean isZero() {
+        return amount.compareTo(ZERO) == 0;
     }
 
     public boolean isSameCurrency(Money right) {

@@ -6,26 +6,26 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferType;
 
 public interface TransferRepository {
-    Transfer createTransfer(Transfer transfer);
+    TransferEntity createTransfer(TransferEntity transferEntity);
 
-    List<TransferItem> createTransferItems(List<TransferItem> items);
+    List<TransferItemEntity> createTransferItems(List<TransferItemEntity> items);
 
-    Transfer findTransferById(UUID transferId);
+    TransferEntity findTransferById(UUID transferId);
 
-    boolean checkTransferExists(UUID requestId, String city);
+    boolean checkTransferExists(UUID requestId);
 
-    Page<Transfer> findAllTransfersByAccountId(UUID accountId, Pageable pageable);
+    Page<TransferEntity> findAllTransfersByAccountId(UUID accountId, Pageable pageable);
 
-    Page<Transfer> findAllTransfersByCity(String city, Pageable pageable);
+    Page<TransferEntity> findAllTransfersByCity(String city, Pageable pageable);
 
-    Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable);
+    Page<TransferEntity> findAllTransfers(TransferType transferType, Pageable pageable);
 
-    Page<TransferItem> findAllTransferItems(UUID transferId, Pageable pageable);
+    Page<TransferItemEntity> findAllTransferItems(UUID transferId, Pageable pageable);
 
     void deleteAll();
 }

@@ -21,11 +21,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 
-import se.cockroachdb.ledger.event.WorkloadUpdatedEvent;
-import se.cockroachdb.ledger.web.push.SimpMessagePublisher;
-import se.cockroachdb.ledger.web.push.TopicName;
-import se.cockroachdb.ledger.workload.Workload;
-import se.cockroachdb.ledger.workload.WorkloadManager;
+import se.cockroachdb.ledger.push.SimpMessagePublisher;
+import se.cockroachdb.ledger.push.TopicName;
+import se.cockroachdb.ledger.web.model.WorkloadForm;
+import se.cockroachdb.ledger.service.workload.Workload;
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
+import se.cockroachdb.ledger.service.workload.WorkloadUpdatedEvent;
 
 @Controller
 @RequestMapping("/workload")
@@ -41,15 +42,10 @@ public class WorkloadController {
         messagePublisher.convertAndSend(TopicName.WORKLOAD_MODEL_UPDATE, null);
     }
 
-    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.SECONDS)
-    public void chartUpdate() {
-        messagePublisher.convertAndSend(TopicName.WORKLOAD_CHARTS_UPDATE, null);
-    }
-
     @EventListener
     public void handle(WorkloadUpdatedEvent event) {
         messagePublisher.convertAndSendThrottled(TopicName.WORKLOAD_REFRESH_PAGE,
-                null, "workloads", .25);
+                null, "workloads", .25); // every 4:th sec
     }
 
     @GetMapping

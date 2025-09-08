@@ -32,39 +32,50 @@
                 <hr/>
 
                 <div class="row row-cols-sm-auto row-cols-md-5 g-2">
-                    <div th:each="cityModel: ${region.cityModels}">
+                    <div th:each="balanceSheet: ${region.balanceSheets}">
                         <div class="col">
                             <div class="card text-center shadow-lg border-2"
-                                 th:id="${'city-' + cityModel.name}" >
+                                 th:id="${'city-' + balanceSheet.city.name}" >
                                 <div class="card-header">
                                     <img width="16" height="16"
-                                         th:src="@{/images/flags/{code}.png(code=${cityModel.countryCode})}">
+                                         th:src="@{/images/flags/{code}.png(code=${balanceSheet.city.country})}">
                                     <a role="button" class="link-offset-3 link-underline link-underline-opacity-50"
-                                       th:href="@{/transfer/city/{city}(city=${cityModel.name})}" th:text="${cityModel.name}"></a>
+                                       th:href="@{/transfer/city/{city}(city=${balanceSheet.city.name})}" th:text="${balanceSheet.city.name}"></a>
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text mb-1 small" title="Total sum of transfers for all accounts" rel="tooltip">
-                                        Turnover: <span class="text-info ledger-totalTurnover" th:text="${{cityModel.totalTurnover}}"></span>
+                                        Turnover: <span class="text-info ledger-totalTurnover" th:text="${{balanceSheet.totalTurnover}}"></span>
+                                    </p>
+
+                                    <p class="card-text mb-1 small" title="Sum of all accounts that must equal zero" rel="tooltip"
+                                       th:if="${balanceSheet.totalBalance.amount == 0}">
+                                        Balance: <span class="text-success ledger-totalBalance" th:text="${{balanceSheet.totalBalance}}" ></span>
                                     </p>
                                     <p class="card-text mb-1 small" title="Sum of all accounts that must equal zero" rel="tooltip"
-                                       th:if="${cityModel.totalBalance.amount == 0}">
-                                        Checksum: <span class="text-success ledger-totalBalance" th:text="${{cityModel.totalBalance}}" ></span>
+                                       th:unless="${balanceSheet.totalBalance.amount == 0}">
+                                        Balance: <span class="text-warning text-bg-danger ledger-totalBalance" th:text="${{balanceSheet.totalBalance}}"></span>
                                     </p>
-                                    <p class="card-text mb-1 small" title="Sum of all accounts that must equal zero" rel="tooltip"
-                                       th:unless="${cityModel.totalBalance.amount == 0}">
-                                        Checksum: <span class="text-warning text-bg-danger ledger-totalBalance" th:text="${{cityModel.totalBalance}}"></span>
+
+                                    <p class="card-text mb-1 small" title="Sum of all transfer legs that must equal zero" rel="tooltip"
+                                       th:if="${balanceSheet.totalChecksum.amount == 0}">
+                                        Checksum: <span class="text-success ledger-totalChecksum" th:text="${{balanceSheet.totalChecksum}}" ></span>
                                     </p>
+                                    <p class="card-text mb-1 small" title="Sum of all transfer legs that must equal zero" rel="tooltip"
+                                       th:unless="${balanceSheet.totalChecksum.amount == 0}">
+                                        Checksum: <span class="text-warning text-bg-danger ledger-totalChecksum" th:text="${{balanceSheet.totalChecksum}}"></span>
+                                    </p>
+
                                     <p class="card-text mb-1 small" title="Number of accounts" rel="tooltip">
-                                        Accounts: <span class="text-secondary ledger-numberOfAccounts" th:text="${cityModel.numberOfAccounts}"></span>
+                                        Accounts: <span class="text-secondary ledger-numberOfAccounts" th:text="${balanceSheet.numberOfAccounts}"></span>
                                     </p>
                                     <p class="card-text mb-1 small" title="Number of transfers" rel="tooltip">
-                                        Transfers: <span class="text-secondary ledger-numberOfTransfers" th:text="${cityModel.numberOfTransfers}"></span>
+                                        Transfers: <span class="text-secondary ledger-numberOfTransfers" th:text="${balanceSheet.numberOfTransfers}"></span>
                                     </p>
                                 </div>
 
                                 <div class="card-footer text-body-secondary">
                                     <div class="d-flex justify-content-between align-items-center" title="Last update on any account in this city" rel="tooltip">
-                                        <small class="ledger-last-active" th:text="${cityModel.lastActive}"></small>
+                                        <small class="ledger-last-active" th:text="${balanceSheet.lastActive}"></small>
                                         <div class="ledger-city-spinner" style="display: none">
                                             <span class="spinner-grow spinner-grow-sm text-success border-success" aria-hidden="true"></span>
                                         </div>

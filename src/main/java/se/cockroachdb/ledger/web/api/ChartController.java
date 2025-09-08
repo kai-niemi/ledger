@@ -1,5 +1,9 @@
 package se.cockroachdb.ledger.web.api;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,14 +15,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import se.cockroachdb.ledger.workload.Workload;
-import se.cockroachdb.ledger.workload.WorkloadManager;
+
 import se.cockroachdb.ledger.util.metrics.Metrics;
 import se.cockroachdb.ledger.util.metrics.TimeSeries;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import se.cockroachdb.ledger.service.workload.Workload;
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
 
 /**
  * Chart JS data paint callback methods.
@@ -72,26 +73,22 @@ public class ChartController {
     @GetMapping(value = "/data-points/workloads/p99",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody List<Map<String, Object>> getWorkloadDataPointsP99(Pageable page) {
-//        logger.info("Get workload P99 page: " + page);
         return workloadManager.getDataPoints(Metrics::getP99, page);
     }
 
     @GetMapping(value = "/data-points/workloads/tps",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody List<Map<String, Object>> getWorkloadDataPointsTPS(Pageable page) {
-//        logger.info("Get workload TPS page: " + page);
         return workloadManager.getDataPoints(Metrics::getOpsPerSec, page);
     }
 
     @GetMapping("/workloads/items")
     public @ResponseBody List<Workload> getWorkloadItems(Pageable page) {
-//        logger.info("Get workload items page: " + page);
         return workloadManager.getWorkloads(page, (x) -> true).getContent();
     }
 
     @GetMapping("/workloads/summary")
     public @ResponseBody Metrics getWorkloadSummary(Pageable page) {
-//        logger.info("Get workload items page: " + page);
         return workloadManager.getMetricsAggregate(page);
     }
 

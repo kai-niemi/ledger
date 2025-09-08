@@ -20,12 +20,12 @@ import org.springframework.shell.standard.ShellMethodAvailability;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.util.Assert;
 
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
-import se.cockroachdb.ledger.domain.Transfer;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferRequest;
 import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.model.City;
-import se.cockroachdb.ledger.model.TransferRequest;
 import se.cockroachdb.ledger.service.TransferServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.shell.support.RegionProvider;
@@ -33,9 +33,9 @@ import se.cockroachdb.ledger.util.CockroachFacts;
 import se.cockroachdb.ledger.util.DurationUtils;
 import se.cockroachdb.ledger.util.Money;
 import se.cockroachdb.ledger.util.RandomData;
-import se.cockroachdb.ledger.workload.Worker;
-import se.cockroachdb.ledger.workload.WorkloadDescription;
-import se.cockroachdb.ledger.workload.WorkloadManager;
+import se.cockroachdb.ledger.service.workload.Worker;
+import se.cockroachdb.ledger.service.workload.WorkloadDescription;
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
 
 @ShellComponent
 @ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
@@ -66,18 +66,19 @@ public class TransferCommands extends AbstractServiceCommand {
             @ShellOption(help = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
                     valueProvider = RegionProvider.class) String region,
-            @ShellOption(help = Constants.CITY_NAME_HELP,
-                    defaultValue = ShellOption.NULL) String cityName,
             @ShellOption(help = Constants.DURATION_HELP,
-                    defaultValue = Constants.DEFAULT_DURATION) String duration
-    ) {
+                    defaultValue = Constants.DEFAULT_DURATION) String duration,
+            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1") int concurrency
+            ) {
         if (legs < 2) {
             logger.info("Number of legs must be >= 2");
             return;
         }
 
-        final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.ASSET,
+        final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
+            return accountServiceFacade.findAccounts(city,
+                    AccountType.ASSET,
                     Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)),
                     limit);
         });
@@ -90,10 +91,10 @@ public class TransferCommands extends AbstractServiceCommand {
         final Instant stopTime = Instant.now().plus(DurationUtils.parseDuration(duration));
 
         accountIdsPerCity.forEach((city, accounts) -> {
-            workloadManager.submitWorker(
-                    new Worker<Transfer>() {
+            workloadManager.submitWorkers(
+                    new Worker<TransferEntity>() {
                         @Override
-                        public Transfer call() {
+                        public TransferEntity call() {
                             return transferFunds(city, accounts, min, max, legs, variance);
                         }
 
@@ -111,23 +112,23 @@ public class TransferCommands extends AbstractServiceCommand {
                         public String categoryValue() {
                             return city.getName();
                         }
-                    });
+                    }, concurrency);
         });
     }
 
-    private Transfer transferFunds(City city,
-                                   List<UUID> accountIds,
-                                   double min,
-                                   double max,
-                                   int legs,
-                                   int variance) {
+    private TransferEntity transferFunds(City city,
+                                         List<UUID> accountIds,
+                                         double min,
+                                         double max,
+                                         int legs,
+                                         int variance) {
         Currency currency = Currency.getInstance(city.getCurrency());
 
         Money transferAmount = RandomData.randomMoneyBetween(min, max, currency);
 
         TransferRequest.Builder builder = TransferRequest.builder()
                 .withId(UUID.randomUUID())
-                .withCity(city.getName())
+                .withCity(city)
                 .withTransferType(TransferType.BANK)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now().plusDays(1));
@@ -145,7 +146,6 @@ public class TransferCommands extends AbstractServiceCommand {
             UUID accountId = RandomData.selectRandom(accountIds);
             builder.addItem()
                     .withId(accountId)
-                    .withCity(city.getName())
                     .withAmount(value % 2 == 0 ? transferAmount.negate() : transferAmount)
                     .withNote(CockroachFacts.nextFact())
                     .then();
@@ -172,15 +172,16 @@ public class TransferCommands extends AbstractServiceCommand {
             @ShellOption(help = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
                     valueProvider = RegionProvider.class) String region,
-            @ShellOption(help = Constants.CITY_NAME_HELP,
-                    defaultValue = ShellOption.NULL) String cityName
+            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1") int concurrency
     ) {
         if (accountType.equals(AccountType.LIABILITY)) {
             throw new IllegalArgumentException("You are not allowed to target accounts of this type!");
         }
 
-        final Map<City, List<UUID>> accountIdsPerCity = findAccounts(region, cityName, cities -> {
-            return accountServiceFacade.findAccounts(cities, AccountType.LIABILITY,
+        final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
+            return accountServiceFacade.findAccounts(city,
+                    AccountType.LIABILITY,
                     Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
                     8192);
         });
@@ -191,26 +192,26 @@ public class TransferCommands extends AbstractServiceCommand {
         }
 
         accountIdsPerCity.forEach((city, liabilityAccounts) -> {
-            workloadManager.submitWorker(
-                    new Worker<Transfer>() {
-                        List<Account> accountPage;
+            workloadManager.submitWorkers(
+                    new Worker<TransferEntity>() {
+                        List<AccountEntity> accountEntityPage;
 
                         @Override
-                        public Transfer call() {
-                            Assert.notNull(accountPage, "accountPage is null");
+                        public TransferEntity call() {
+                            Assert.notNull(accountEntityPage, "accountPage is null");
                             if (logger.isTraceEnabled()) {
                                 logger.trace("Processing %,d asset accounts for city '%s'"
-                                        .formatted(accountPage.size(), city.getName()));
+                                        .formatted(accountEntityPage.size(), city));
                             }
-                            List<UUID> assetAccounts = accountPage.stream().map(Account::getId).toList();
+                            List<UUID> assetAccounts = accountEntityPage.stream().map(AccountEntity::getId).toList();
                             return grantFunds(city, liabilityAccounts, assetAccounts, BigDecimal.valueOf(amount));
                         }
 
                         @Override
                         public boolean test(Integer x) {
-                            accountPage = accountServiceFacade.findAccounts(city, accountType,
+                            accountEntityPage = accountServiceFacade.findAccounts(city, accountType,
                                     Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)), legs);
-                            return !accountPage.isEmpty();
+                            return !accountEntityPage.isEmpty();
                         }
                     }, new WorkloadDescription() {
                         @Override
@@ -222,21 +223,21 @@ public class TransferCommands extends AbstractServiceCommand {
                         public String categoryValue() {
                             return city.getName();
                         }
-                    });
+                    }, concurrency);
         });
     }
 
-    private Transfer grantFunds(City city,
-                                List<UUID> liabilityAccounts,
-                                List<UUID> assetAccounts,
-                                BigDecimal amount) {
+    private TransferEntity grantFunds(City city,
+                                      List<UUID> liabilityAccounts,
+                                      List<UUID> assetAccounts,
+                                      BigDecimal amount) {
         Currency currency = Currency.getInstance(city.getCurrency());
 
         Money transferAmount = Money.of(amount, currency);
 
         TransferRequest.Builder builder = TransferRequest.builder()
                 .withId(UUID.randomUUID())
-                .withCity(city.getName())
+                .withCity(city)
                 .withTransferType(TransferType.GRANT)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now().plusDays(3));
@@ -245,7 +246,6 @@ public class TransferCommands extends AbstractServiceCommand {
 
         builder.addItem()
                 .withId(id)
-                .withCity(city.getName())
                 .withAmount(transferAmount.multiply(assetAccounts.size()).negate())
                 .withNote("Grant from " + id)
                 .then();
@@ -253,7 +253,6 @@ public class TransferCommands extends AbstractServiceCommand {
         assetAccounts.forEach(uuid -> {
             builder.addItem()
                     .withId(uuid)
-                    .withCity(city.getName())
                     .withAmount(transferAmount)
                     .withNote(CockroachFacts.nextFact())
                     .then();

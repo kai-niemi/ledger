@@ -9,9 +9,9 @@ import org.springframework.shell.CompletionContext;
 import org.springframework.shell.CompletionProposal;
 import org.springframework.shell.standard.ValueProvider;
 
+import se.cockroachdb.ledger.domain.RegionCategory;
 import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.RegionCategory;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
 
 public class RegionProvider implements ValueProvider {
@@ -22,10 +22,10 @@ public class RegionProvider implements ValueProvider {
     public List<CompletionProposal> complete(CompletionContext completionContext) {
         List<CompletionProposal> result = new ArrayList<>();
 
-        result.add(new CompletionProposal(RegionCategory.all.name()).description("all region cities"));
-        result.add(new CompletionProposal(RegionCategory.gateway.name()).description("gateway node region cities"));
-        result.add(new CompletionProposal(RegionCategory.primary.name()).description("primary region cities"));
-        result.add(new CompletionProposal(RegionCategory.secondary.name()).description("secondary region cities"));
+        result.add(new CompletionProposal(RegionCategory.ALL.name()).description("all region cities"));
+        result.add(new CompletionProposal(RegionCategory.GATEWAY.name()).description("gateway node region cities"));
+        result.add(new CompletionProposal(RegionCategory.PRIMARY.name()).description("primary region cities"));
+        result.add(new CompletionProposal(RegionCategory.SECONDARY.name()).description("secondary region cities"));
 
         Optional<Region> gateway = regionServiceFacade.getGatewayRegion();
         Optional<Region> primary = regionServiceFacade.getPrimaryRegion();

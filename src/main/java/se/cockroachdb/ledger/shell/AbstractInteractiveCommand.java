@@ -1,5 +1,9 @@
 package se.cockroachdb.ledger.shell;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -9,10 +13,6 @@ import org.springframework.shell.component.SingleItemSelector;
 import org.springframework.shell.component.support.SelectorItem;
 import org.springframework.shell.standard.AbstractShellComponent;
 import org.springframework.shell.standard.ShellComponent;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @ShellComponent
 public abstract class AbstractInteractiveCommand extends AbstractShellComponent {

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import se.cockroachdb.ledger.ProfileNames;
 import se.cockroachdb.ledger.annotations.ControlService;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.repository.AccountRepository;
 import se.cockroachdb.ledger.service.NoSuchAccountException;
@@ -31,17 +31,17 @@ public class DefaultAccountService implements AccountService {
     private Environment environment;
 
     @Override
-    public Account createAccount(Account account) {
-        return accountRepository.createAccount(account);
+    public AccountEntity createAccount(AccountEntity accountEntity) {
+        return accountRepository.createAccount(accountEntity);
     }
 
     @Override
-    public List<UUID> createAccountBatch(Supplier<Account> factory, int batchSize) {
+    public List<UUID> createAccountBatch(Supplier<AccountEntity> factory, int batchSize) {
         return accountRepository.createAccounts(factory, batchSize);
     }
 
     @Override
-    public Account findById(UUID id) {
+    public AccountEntity findById(UUID id) {
         return accountRepository.getAccountById(id)
                 .orElseThrow(() -> new NoSuchAccountException(id));
     }
@@ -60,14 +60,14 @@ public class DefaultAccountService implements AccountService {
     }
 
     @Override
-    public Account openAccount(UUID id) {
+    public AccountEntity openAccount(UUID id) {
         accountRepository.openAccount(id);
         return accountRepository.getAccountById(id)
                 .orElseThrow(() -> new NoSuchAccountException(id));
     }
 
     @Override
-    public Account closeAccount(UUID id) {
+    public AccountEntity closeAccount(UUID id) {
         accountRepository.closeAccount(id);
         return accountRepository.getAccountById(id)
                 .orElseThrow(() -> new NoSuchAccountException(id));
@@ -78,26 +78,16 @@ public class DefaultAccountService implements AccountService {
         accountRepository.deleteAll();
     }
 
-
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType, Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
+    public List<AccountEntity> findByCriteria(Set<String> cities,
+                                              AccountType accountType,
+                                              Pair<BigDecimal, BigDecimal> range,
+                                              int limit) {
         return accountRepository.findByCriteria(cities, accountType, range, limit);
     }
 
     @Override
-    public List<Account> findByCriteria(String city, AccountType accountType, Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
-        return accountRepository.findByCriteria(city, accountType, range, limit);
-    }
-
-    @Override
-    public Page<Account> findAll(AccountType accountType, Pageable page) {
+    public Page<AccountEntity> findAll(AccountType accountType, Pageable page) {
         return accountRepository.findAll(accountType, page);
-    }
-
-    @Override
-    public Page<Account> findAll(Set<String> cities, Pageable page) {
-        return accountRepository.findAll(cities, page);
     }
 }

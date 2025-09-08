@@ -1,7 +1,3 @@
--------------------------
--- Adhoc lab DDL/DML
--------------------------
-
 -- set enable_multiregion_placement_policy = on;
 -- alter database ledger placement restricted;
 -- alter database ledger placement default;

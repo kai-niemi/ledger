@@ -1,5 +1,9 @@
 package se.cockroachdb.ledger.shell;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,17 +14,14 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.table.BeanListTableModel;
+
 import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.TableName;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.shell.support.ListTableModel;
 import se.cockroachdb.ledger.shell.support.RegionProvider;
 import se.cockroachdb.ledger.shell.support.TableUtils;
-
-import java.util.LinkedHashMap;
-import java.util.List;
 
 @ShellComponent
 @ShellCommandGroup(Constants.REGION_QUERY_COMMANDS)
@@ -51,7 +52,7 @@ public class RegionQueryCommands extends AbstractShellComponent {
             @ShellOption(help = "region name (gateway region if empty)",
                     defaultValue = "gateway",
                     valueProvider = RegionProvider.class) String region) {
-        final List<City> cities = Region.joinCities(regionServiceFacade.listRegions(region));
+        Set<City> cities = regionServiceFacade.listCities(region);
 
         logger.info("\n" + TableUtils.prettyPrint(
                 new ListTableModel<>(cities, List.of("Name"), (object, column) -> column == 0 ? object : "??")));

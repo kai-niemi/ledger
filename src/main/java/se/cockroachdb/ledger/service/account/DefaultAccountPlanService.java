@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.Assert;
 
 import se.cockroachdb.ledger.annotations.ControlService;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.model.AccountPlan;
 import se.cockroachdb.ledger.model.City;
@@ -56,7 +57,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
 
         jdbcTemplate.update("insert into account_plan(name) values (?)", "default");
 
-        final List<City> cities = Region.joinCities(regionServiceFacade.listAllRegions());
+        final Set<City> cities = Region.joinCities(regionServiceFacade.listAllRegions());
 
         final AtomicInteger total = new AtomicInteger(cities.size() * accountPlan.getAccountsPerCity());
         final AtomicInteger current = new AtomicInteger();
@@ -78,10 +79,10 @@ public class DefaultAccountPlanService implements AccountPlanService {
                     final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCity()).negate();
 
                     accountServiceFacade.createAccount(
-                            Account.builder()
+                            AccountEntity.builder()
                                     .withGeneratedId()
                                     .withCity(city.getName())
-                                    .withName("system-account-" + city.getName())
+                                    .withName("system-account-" + city.getName().toLowerCase())
                                     .withAllowNegative(true)
                                     .withBalance(totalBalance)
                                     .withAccountType(AccountType.LIABILITY)

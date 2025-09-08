@@ -3,8 +3,8 @@ package se.cockroachdb.ledger.repository;
 import java.util.List;
 import java.util.Optional;
 
+import se.cockroachdb.ledger.domain.SurvivalGoal;
 import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.SurvivalGoal;
 
 public interface MultiRegionRepository {
     void addDatabaseRegions(List<Region> regions);

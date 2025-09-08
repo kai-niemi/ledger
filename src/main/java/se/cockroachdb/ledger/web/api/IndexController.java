@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import se.cockroachdb.ledger.model.MessageModel;
+import se.cockroachdb.ledger.web.model.MessageModel;
 
 @RestController
 @RequestMapping(value = "/api")

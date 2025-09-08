@@ -40,50 +40,50 @@
                 and data domiciling capabilities.
             </p>
 
-            <div class="card-group">
-                <div class="card">
-                    <img class="card-img-top"
-                         alt=""
-                         th:src="@{/images/treats/scale.png}">
-                    <div class="card-body">
-                        <h5 class="card-title">Scalability</h5>
-                        <p class="card-text">
-                            A distributed system that feels like a single, logical database.
-                            Scale reads, writes, and database capacity by simply adding nodes.</p>
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="card h-100">
+                        <img class="card-img-top" th:src="@{/images/treats/scale.png}">
+                        <div class="card-body">
+                            <h5 class="card-title">Scalability</h5>
+                            <p class="card-text">
+                                A distributed system that feels like a single, logical database.
+                                Scale reads, writes, and database capacity by simply adding nodes.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <img class="card-img-top"
-                         alt=""
-                         th:src="@{/images/treats/survival.png}">
-                    <div class="card-body">
-                        <h5 class="card-title">Survival</h5>
-                        <p class="card-text">
-                            Continues to serve queries even when nodes, availability zones, and even entire regions fail
-                            and when performing maintenance.</p>
+                <div class="col">
+                    <div class="card h-100">
+                        <img class="card-img-top" th:src="@{/images/treats/survival.png}">
+                        <div class="card-body">
+                            <h5 class="card-title">Survival</h5>
+                            <p class="card-text">
+                                Continues to serve queries even when nodes, availability zones, and even entire regions fail
+                                and when performing maintenance.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <img class="card-img-top"
-                         alt=""
-                         th:src="@{/images/treats/consistency.png}">
-                    <div class="card-body">
-                        <h5 class="card-title">Consistency</h5>
-                        <p class="card-text">
-                            Every machine can serve both reads and writes for the entire keyspace
-                            and provides ACID compliant transactions without compromising
-                            consistency during failure or contention.</p>
+                <div class="col">
+                    <div class="card h-100">
+                        <img class="card-img-top" th:src="@{/images/treats/consistency.png}">
+                        <div class="card-body">
+                            <h5 class="card-title">Consistency</h5>
+                            <p class="card-text">
+                                Every machine can serve both reads and writes for the entire keyspace
+                                and provides ACID compliant transactions without compromising
+                                consistency during failure or contention.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <img class="card-img-top"
-                         alt=""
-                         th:src="@{/images/treats/domicile.png}">
-                    <div class="card-body">
-                        <h5 class="card-title">Locality</h5>
-                        <p class="card-text">
-                            Pin data to regions closest to end users to reduce latency and address placement
-                            compliance regulations with a multi-region deployment.</p>
+                <div class="col">
+                    <div class="card h-100">
+                        <img class="card-img-top" th:src="@{/images/treats/domicile.png}">
+                        <div class="card-body">
+                            <h5 class="card-title">Locality</h5>
+                            <p class="card-text">
+                                Pin data to regions closest to end users to reduce latency and address placement
+                                compliance regulations with a multi-region deployment.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,8 +104,6 @@
 <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
 
 <script th:src="@{/js/color-modes.js}"></script>
-<!--<script th:src="@{/js/main.js}"></script>-->
-<!--<script th:src="@{/js/region-dashboard.js}"></script>-->
 
 </body>
 </html>

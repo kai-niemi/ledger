@@ -15,8 +15,8 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.table.BeanListTableModel;
 
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.service.TransferServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
@@ -25,7 +25,7 @@ import se.cockroachdb.ledger.shell.support.TableUtils;
 @ShellComponent
 @ShellCommandGroup(Constants.REPORT_COMMANDS)
 public class TransferReportCommands extends AbstractInteractiveCommand {
-    public static String printTransferTable(List<Transfer> transfers) {
+    public static String printTransferTable(List<TransferEntity> transferEntities) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("city", "City");
@@ -33,10 +33,10 @@ public class TransferReportCommands extends AbstractInteractiveCommand {
         header.put("transferDate", "Transfer Date");
         header.put("bookingDate", "Booking Date");
 
-        return TableUtils.prettyPrint(new BeanListTableModel<>(transfers, header));
+        return TableUtils.prettyPrint(new BeanListTableModel<>(transferEntities, header));
     }
 
-    public static String printTransferItemsTable(List<TransferItem> items) {
+    public static String printTransferItemsTable(List<TransferItemEntity> items) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id.accountId", "Account Id");
         header.put("id.itemPos", "#");
@@ -61,7 +61,7 @@ public class TransferReportCommands extends AbstractInteractiveCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<Transfer> transferPage = transferServiceFacade.findTransfers(transferType, page);
+            final Page<TransferEntity> transferPage = transferServiceFacade.findTransfers(transferType, page);
             logger.info("\n" + printTransferTable(transferPage.getContent()));
             page = askForPage(transferPage).orElseGet(Pageable::unpaged);
         }
@@ -73,7 +73,7 @@ public class TransferReportCommands extends AbstractInteractiveCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<TransferItem> transferItemPage = transferServiceFacade.findTransferItems(id, page);
+            final Page<TransferItemEntity> transferItemPage = transferServiceFacade.findTransferItems(id, page);
             logger.info("\n" + printTransferItemsTable(transferItemPage.getContent()));
             page = askForPage(transferItemPage).orElseGet(Pageable::unpaged);
         }

@@ -16,12 +16,12 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.table.BeanListTableModel;
 
-import se.cockroachdb.ledger.workload.Problem;
-import se.cockroachdb.ledger.workload.Workload;
 import se.cockroachdb.ledger.shell.support.Constants;
-import se.cockroachdb.ledger.workload.WorkloadManager;
 import se.cockroachdb.ledger.shell.support.ListTableModel;
 import se.cockroachdb.ledger.shell.support.TableUtils;
+import se.cockroachdb.ledger.service.workload.Problem;
+import se.cockroachdb.ledger.service.workload.Workload;
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
 
 @ShellComponent
 @ShellCommandGroup(Constants.WORKLOAD_MODIFICATION_COMMANDS)
@@ -53,7 +53,7 @@ public class WorkloadCommands extends AbstractInteractiveCommand {
 
     @ShellMethod(value = "List all running workloads", key = {"list-workloads", "lw"},
             group = Constants.WORKLOAD_QUERY_COMMANDS)
-    public void listWorkloads(@ShellOption(help = "page size", defaultValue = "10") Integer pageSize) {
+    public void listWorkloads(@ShellOption(help = "page size", defaultValue = "20") Integer pageSize) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("title", "Title");

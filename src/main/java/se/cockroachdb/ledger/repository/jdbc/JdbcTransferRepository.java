@@ -23,9 +23,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import se.cockroachdb.ledger.ProfileNames;
-import se.cockroachdb.ledger.domain.Account;
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.AccountEntity;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.repository.TransferRepository;
 import se.cockroachdb.ledger.util.Money;
@@ -42,9 +42,9 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Transfer createTransfer(Transfer transfer) {
-        final LocalDate bookingDate = transfer.getBookingDate();
-        final LocalDate transferDate = transfer.getTransferDate();
+    public TransferEntity createTransfer(TransferEntity transferEntity) {
+        final LocalDate bookingDate = transferEntity.getBookingDate();
+        final LocalDate transferDate = transferEntity.getTransferDate();
 
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -53,32 +53,32 @@ public class JdbcTransferRepository implements TransferRepository {
                                                          + "(city,booking_date,transfer_date,transfer_type) "
                                                          + "VALUES(?,?,?,?::transfer_type) returning id::uuid",
                     PreparedStatement.RETURN_GENERATED_KEYS);
-            ps.setObject(1, transfer.getCity());
+            ps.setObject(1, transferEntity.getCity());
             ps.setObject(2, bookingDate != null ? bookingDate : LocalDate.now());
             ps.setObject(3, transferDate != null ? transferDate : LocalDate.now());
-            ps.setObject(4, transfer.getTransferType().getCode());
+            ps.setObject(4, transferEntity.getTransferType().getCode());
             return ps;
         }, keyHolder);
 
-        transfer.setId(keyHolder.getKeyAs(UUID.class));
+        transferEntity.setId(keyHolder.getKeyAs(UUID.class));
 
-        return transfer;
+        return transferEntity;
     }
 
     @Override
-    public List<TransferItem> createTransferItems(List<TransferItem> items) {
+    public List<TransferItemEntity> createTransferItems(List<TransferItemEntity> items) {
         jdbcTemplate.batchUpdate(
                 "INSERT INTO transfer_item "
                 + "(transfer_id, city, item_pos, account_id, amount, currency, note, running_balance) "
                 + "VALUES(?,?,?,?,?,?,?,?)", new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        TransferItem item = items.get(i);
+                        TransferItemEntity item = items.get(i);
 
-                        ps.setObject(1, item.getTransfer().getId());
+                        ps.setObject(1, item.getTransferEntity().getId());
                         ps.setString(2, item.getCity());
                         ps.setInt(3, i);
-                        ps.setObject(4, item.getAccount().getId());
+                        ps.setObject(4, item.getAccountEntity().getId());
                         ps.setBigDecimal(5, item.getAmount().getAmount());
                         ps.setString(6, item.getAmount().getCurrency().getCurrencyCode());
                         ps.setString(7, item.getNote());
@@ -94,7 +94,7 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Transfer findTransferById(UUID transferId) {
+    public TransferEntity findTransferById(UUID transferId) {
         return DataAccessUtils.singleResult(this.jdbcTemplate.query(
                 "SELECT * FROM transfer WHERE id=?",
                 (rs, rowNum) -> mapTransfer(rs, true),
@@ -102,15 +102,15 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public boolean checkTransferExists(UUID requestId, String city) {
+    public boolean checkTransferExists(UUID requestId) {
         return Boolean.TRUE.equals(this.jdbcTemplate.queryForObject(
-                "SELECT EXISTS(SELECT 1 FROM transfer WHERE id=? and city=?)",
+                "SELECT EXISTS(SELECT 1 FROM transfer WHERE id=?)",
                 Boolean.class,
-                requestId, city));
+                requestId));
     }
 
     @Override
-    public Page<Transfer> findAllTransfersByAccountId(UUID accountId, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfersByAccountId(UUID accountId, Pageable pageable) {
         List<Integer> results = this.jdbcTemplate.query(
                 "SELECT count(1) FROM transfer t JOIN transfer_item ti ON t.id = ti.transfer_id "
                 + "WHERE ti.account_id = ?",
@@ -119,7 +119,7 @@ public class JdbcTransferRepository implements TransferRepository {
 
         Integer count = DataAccessUtils.nullableSingleResult(results);
 
-        List<Transfer> content = this.jdbcTemplate.query(
+        List<TransferEntity> content = this.jdbcTemplate.query(
                 "SELECT t.* FROM transfer t JOIN transfer_item ti ON t.id = ti.transfer_id "
                 + "WHERE ti.account_id = ? "
                 + "ORDER BY transfer_date LIMIT ? OFFSET ?",
@@ -130,7 +130,7 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Page<Transfer> findAllTransfersByCity(String city, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfersByCity(String city, Pageable pageable) {
         List<Integer> results = this.jdbcTemplate.query(
                 "SELECT count(1) FROM transfer t "
                 + "WHERE t.city = ?",
@@ -139,7 +139,7 @@ public class JdbcTransferRepository implements TransferRepository {
 
         Integer count = DataAccessUtils.singleResult(results);
 
-        List<Transfer> content = this.jdbcTemplate.query(
+        List<TransferEntity> content = this.jdbcTemplate.query(
                 "SELECT t.*  FROM transfer t "
                 + "WHERE t.city = ? "
                 + "ORDER BY transfer_date LIMIT ? OFFSET ?",
@@ -150,9 +150,9 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Page<Transfer> findAllTransfers(TransferType transferType, Pageable pageable) {
+    public Page<TransferEntity> findAllTransfers(TransferType transferType, Pageable pageable) {
         int count = countAllTransfers(transferType);
-        List<Transfer> content = this.jdbcTemplate.query(
+        List<TransferEntity> content = this.jdbcTemplate.query(
                 "SELECT * FROM transfer "
                 + "WHERE transfer_type=? "
                 + "ORDER BY transfer_date LIMIT ? OFFSET ?",
@@ -173,10 +173,10 @@ public class JdbcTransferRepository implements TransferRepository {
     }
 
     @Override
-    public Page<TransferItem> findAllTransferItems(UUID transferId, Pageable pageable) {
+    public Page<TransferItemEntity> findAllTransferItems(UUID transferId, Pageable pageable) {
         long count = countItemsByTransferId(transferId);
 
-        List<TransferItem> content = this.jdbcTemplate.query(
+        List<TransferItemEntity> content = this.jdbcTemplate.query(
                 "SELECT * FROM transfer_item WHERE transfer_id=?",
                 (rs, rowNum) -> mapTransferItem(rs, rowNum),
                 transferId
@@ -195,7 +195,7 @@ public class JdbcTransferRepository implements TransferRepository {
         return DataAccessUtils.singleResult(results);
     }
 
-    private Transfer mapTransfer(ResultSet rs, boolean includeItems) throws SQLException {
+    private TransferEntity mapTransfer(ResultSet rs, boolean includeItems) throws SQLException {
         UUID transferId = (UUID) rs.getObject("id");
         String city = rs.getString("city");
         TransferType transferType = TransferType.of(rs.getString("transfer_type"));
@@ -204,7 +204,7 @@ public class JdbcTransferRepository implements TransferRepository {
 
         // N+1
 
-        Transfer t = Transfer.builder()
+        TransferEntity t = TransferEntity.builder()
                 .withId(transferId)
                 .withCity(city)
                 .withTransferType(transferType)
@@ -219,7 +219,7 @@ public class JdbcTransferRepository implements TransferRepository {
         return t;
     }
 
-    private List<TransferItem> findTransferItems(UUID id) {
+    private List<TransferItemEntity> findTransferItems(UUID id) {
         return this.jdbcTemplate.query(
                 "SELECT * FROM transfer_item WHERE transfer_id=?",
                 (rs, rowNum) -> mapTransferItem(rs, rowNum),
@@ -227,7 +227,7 @@ public class JdbcTransferRepository implements TransferRepository {
         );
     }
 
-    private TransferItem mapTransferItem(ResultSet rs, int rowNum) throws SQLException {
+    private TransferItemEntity mapTransferItem(ResultSet rs, int rowNum) throws SQLException {
         UUID accountId = (UUID) rs.getObject("account_id");
         UUID transferId = (UUID) rs.getObject("transfer_id");
         String city = rs.getString("city");
@@ -236,11 +236,11 @@ public class JdbcTransferRepository implements TransferRepository {
         String note = rs.getString("note");
 
         // Shallow to avoid N+1
-        Transfer transfer = Transfer.builder().withId(transferId).build();
+        TransferEntity transferEntity = TransferEntity.builder().withId(transferId).build();
         // Shallow to avoid N+1
-        Account account = Account.builder().withId(accountId).build();
+        AccountEntity accountEntity = AccountEntity.builder().withId(accountId).build();
 
-        TransferItem item = new TransferItem(transfer, account, rowNum);
+        TransferItemEntity item = new TransferItemEntity(transferEntity, accountEntity, rowNum);
         item.setCity(city);
         item.setAmount(amount);
         item.setRunningBalance(runningBalance);

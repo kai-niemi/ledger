@@ -1,10 +1,10 @@
 package se.cockroachdb.ledger.util;
 
+import javax.sql.DataSource;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
-
-import javax.sql.DataSource;
 
 public abstract class MetadataUtils {
     private MetadataUtils() {

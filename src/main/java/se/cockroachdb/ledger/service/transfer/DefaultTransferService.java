@@ -15,20 +15,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.util.Pair;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.annotations.ControlService;
-import se.cockroachdb.ledger.domain.Account;
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.AccountEntity;
+import se.cockroachdb.ledger.domain.AccountItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
+import se.cockroachdb.ledger.domain.TransferRequest;
 import se.cockroachdb.ledger.domain.TransferType;
-import se.cockroachdb.ledger.model.AccountItem;
-import se.cockroachdb.ledger.model.TransferRequest;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.repository.AccountRepository;
 import se.cockroachdb.ledger.repository.TransferRepository;
 import se.cockroachdb.ledger.service.BadRequestException;
@@ -51,7 +50,7 @@ public class DefaultTransferService implements TransferService {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY) // to signal txn required
-    public Transfer createTransfer(TransferRequest transferRequest) {
+    public TransferEntity createTransfer(TransferRequest transferRequest) {
         Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(),
                 "Expected transaction context");
 
@@ -60,23 +59,16 @@ public class DefaultTransferService implements TransferService {
 
         // Short-circuit if seen before with a shallow, transient copy.
         // For formally correct idempotency it's required to return the existing transfer with legs.
-        boolean exists = applicationModel.isIdempotencyCheck() && idempotencyCheck(transferRequest.getId(),
-                transferRequest.getCity());
-        if (exists) {
-            return Transfer.builder()
+        if (applicationModel.isIdempotencyCheck() && idempotencyCheck(transferRequest.getId())) {
+            return TransferEntity.builder()
                     .withId(transferRequest.getId())
-                    .withCity(transferRequest.getCity())
+                    .withCity(transferRequest.getCity().getName())
                     .build();
         }
 
         final Set<UUID> accountIds = transferRequest.getAccountItems()
                 .stream()
                 .map(AccountItem::getId)
-                .collect(Collectors.toSet());
-
-        final Set<String> accountCities = transferRequest.getAccountItems()
-                .stream()
-                .map(AccountItem::getCity)
                 .collect(Collectors.toSet());
 
         final Map<UUID, AccountItem> itemsPerAccountId = transferRequest.getAccountItems()
@@ -86,33 +78,33 @@ public class DefaultTransferService implements TransferService {
 
         // Business validation complete, let's go ahead with DB reads/writes and defer the rest to DB constraints
 
-        final List<Account> accounts
-                = accountRepository.findById(accountCities, accountIds, applicationModel.isUsingLocks());
+        final List<AccountEntity> accountEntities
+                = accountRepository.findById(accountIds, applicationModel.isUsingLocks());
 
-        if (accounts.size() != accountIds.size()) {
+        if (accountEntities.size() != accountIds.size()) {
             throw new BadRequestException("Expected %d accounts, found %d"
-                    .formatted(accountIds.size(), accounts.size()));
+                    .formatted(accountIds.size(), accountEntities.size()));
         }
 
-        final Transfer.Builder transferBuilder = Transfer.builder()
-                .withCity(transferRequest.getCity())
+        final TransferEntity.Builder transferBuilder = TransferEntity.builder()
+                .withCity(transferRequest.getCity().getName())
                 .withTransferType(transferRequest.getTransferType())
                 .withBookingDate(transferRequest.getBookingDate())
                 .withTransferDate(transferRequest.getTransferDate());
 
         // First create transfer record so we can use its ID to stitch the transfer legs
-        final Transfer transfer
+        final TransferEntity transferEntity
                 = transferRepository.createTransfer(transferBuilder.build());
 
         // Then create transfer items or legs, describing the monetary transfer and
         // storing a running balance (balance before update).
-        final TransferItem.Builder itemBuilder = TransferItem.builder().withTransfer(transfer);
+        final TransferItemEntity.Builder itemBuilder = TransferItemEntity.builder().withTransfer(transferEntity);
         {
-            accounts.forEach(account -> {
+            accountEntities.forEach(account -> {
                 AccountItem accountItem = itemsPerAccountId.get(account.getId());
                 itemBuilder
-                        .withTransfer(transfer)
-                        .withCity(transferRequest.getCity())
+                        .withTransfer(transferEntity)
+                        .withCity(transferRequest.getCity().getName())
                         .withAccount(account)
                         .withRunningBalance(account.getBalance())
                         .withAmount(accountItem.getAmount())
@@ -122,8 +114,7 @@ public class DefaultTransferService implements TransferService {
         }
 
         // Write the transfer items
-        List<TransferItem> items = transferRepository.createTransferItems(itemBuilder.build());
-        transfer.addItems(items);
+        transferEntity.addItems(transferRepository.createTransferItems(itemBuilder.build()));
 
         // Update the account balances in one batch
         try {
@@ -135,7 +126,7 @@ public class DefaultTransferService implements TransferService {
             throw new NegativeBalanceException("Negative balance check constraint failed - check log", e);
         }
 
-        return transfer;
+        return transferEntity;
     }
 
     private void preValidateInvariants(List<AccountItem> accountItems) {
@@ -148,8 +139,6 @@ public class DefaultTransferService implements TransferService {
 
         accountItems.forEach(accountItem -> {
             Assert.notNull(accountItem.getId(), "account leg id is null");
-            Assert.notNull(accountItem.getCity(), "account leg city is null");
-
             // Zero-balance invariant
             checksumPerCurrency.compute(accountItem.getAmount().getCurrency(),
                     (currency, checksum) ->
@@ -171,11 +160,10 @@ public class DefaultTransferService implements TransferService {
      * Simple point lookup for idempotency.
      *
      * @param transferId client specified transfer ID
-     * @param city       transfer record home
      * @return optional transfer
      */
-    private boolean idempotencyCheck(UUID transferId, String city) {
-        return transferRepository.checkTransferExists(transferId, city);
+    private boolean idempotencyCheck(UUID transferId) {
+        return transferRepository.checkTransferExists(transferId);
     }
 
     /**
@@ -184,15 +172,10 @@ public class DefaultTransferService implements TransferService {
      * @param accountItems the items
      * @return map of account IDs to update tuples (city and sum)
      */
-    private Map<UUID, Pair<String, BigDecimal>> coalesceItems(List<AccountItem> accountItems) {
-        final Map<UUID, AccountItem> itemsPerAccountId = accountItems
-                .stream()
-                .collect(Collectors.toMap(AccountItem::getId,
-                        accountItem -> accountItem, (x, b) -> b));
+    private Map<UUID, BigDecimal> coalesceItems(List<AccountItem> accountItems) {
+        Map<UUID, BigDecimal> balanceUpdates = new HashMap<>();
 
-        final Map<UUID, Pair<String, BigDecimal>> balanceUpdates = new HashMap<>();
-        Map<UUID, List<AccountItem>> accountsPerId = accountItems
-                .stream()
+        Map<UUID, List<AccountItem>> accountsPerId = accountItems.stream()
                 .collect(Collectors.groupingBy(AccountItem::getId));
 
         accountsPerId.forEach((uuid, items) -> {
@@ -200,35 +183,34 @@ public class DefaultTransferService implements TransferService {
                     .map(AccountItem::getAmount)
                     .map(Money::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            String city = itemsPerAccountId.get(uuid).getCity();
-            balanceUpdates.put(uuid, Pair.of(city, sum));
+            balanceUpdates.put(uuid, sum);
         });
 
         return balanceUpdates;
     }
 
     @Override
-    public Page<Transfer> findAll(TransferType transferType, Pageable page) {
+    public Page<TransferEntity> findAll(TransferType transferType, Pageable page) {
         return transferRepository.findAllTransfers(transferType, page);
     }
 
     @Override
-    public Page<Transfer> findAllByAccountId(UUID accountId, Pageable page) {
+    public Page<TransferEntity> findAllByAccountId(UUID accountId, Pageable page) {
         return transferRepository.findAllTransfersByAccountId(accountId, page);
     }
 
     @Override
-    public Page<Transfer> findAllByCity(String city, Pageable page) {
+    public Page<TransferEntity> findAllByCity(String city, Pageable page) {
         return transferRepository.findAllTransfersByCity(city, page);
     }
 
     @Override
-    public Transfer findById(UUID id) {
+    public TransferEntity findById(UUID id) {
         return transferRepository.findTransferById(id);
     }
 
     @Override
-    public Page<TransferItem> findAllItems(UUID transferId, Pageable page) {
+    public Page<TransferItemEntity> findAllItems(UUID transferId, Pageable page) {
         return transferRepository.findAllTransferItems(transferId, page);
     }
 

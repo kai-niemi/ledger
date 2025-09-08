@@ -16,10 +16,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
 import se.cockroachdb.ledger.domain.TransferType;
 import se.cockroachdb.ledger.service.transfer.TransferService;
+import se.cockroachdb.ledger.web.model.TransferFilterForm;
 
 @Controller
 @RequestMapping("/transfer")
@@ -34,7 +35,7 @@ public class TransferController {
         return () -> {
             TransferType type = transferType != null ? transferType : TransferType.BANK;
 
-            Page<Transfer> transferPage = transferService.findAll(type, page);
+            Page<TransferEntity> transferPage = transferService.findAll(type, page);
 
             model.addAttribute("transferPage", transferPage);
             model.addAttribute("form", new TransferFilterForm(type));
@@ -48,7 +49,7 @@ public class TransferController {
                                             @PageableDefault(size = 10) Pageable page,
                                             Model model) {
         return () -> {
-            Page<Transfer> transferPage = transferService.findAll(form.getTransferType(), page);
+            Page<TransferEntity> transferPage = transferService.findAll(form.getTransferType(), page);
 
             model.addAttribute("transferPage", transferPage);
             model.addAttribute("form", form);
@@ -63,7 +64,7 @@ public class TransferController {
             @PathVariable("city") String city,
             @PageableDefault(size = 30) Pageable page, Model model) {
         return () -> {
-            Page<Transfer> transferPage = transferService.findAllByCity(city, page);
+            Page<TransferEntity> transferPage = transferService.findAllByCity(city, page);
             model.addAttribute("transferPage", transferPage);
             model.addAttribute("city", city);
             model.addAttribute("form", form);
@@ -76,7 +77,7 @@ public class TransferController {
             @PathVariable("id") UUID id,
             @PageableDefault(size = 30) Pageable page, Model model) {
         return () -> {
-            Page<TransferItem> itemPage = transferService.findAllItems(id, page);
+            Page<TransferItemEntity> itemPage = transferService.findAllItems(id, page);
 
             model.addAttribute("form", transferService.findById(id));
             model.addAttribute("itemPage", itemPage);

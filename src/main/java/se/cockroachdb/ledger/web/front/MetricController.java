@@ -10,8 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import se.cockroachdb.ledger.web.push.SimpMessagePublisher;
-import se.cockroachdb.ledger.web.push.TopicName;
+import se.cockroachdb.ledger.push.SimpMessagePublisher;
+import se.cockroachdb.ledger.push.TopicName;
 
 @Controller
 @RequestMapping("/metric")

@@ -1,59 +1,18 @@
-############################################################################################
-# Ledger Application Configuration
-#
-# This file overrides the application configuration properties.
-# For all spring boot container properties, see:
-#  https://docs.spring.io/spring-boot/appendix/application-properties/index.html
-############################################################################################
-
 spring:
-  ## Default datasource (insecure)
   datasource:
     url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
     username: root
     password:
     hikari:
-      transaction-isolation: TRANSACTION_SERIALIZABLE
-
-  ## Default datasource (secure)
-  #  datasource:
-  #    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require
-  #    username: craig
-  #    password: cockroach
-  #    hikari:
-  #      transaction-isolation: TRANSACTION_SERIALIZABLE
-
-  ## Alternative datasource (Cloud)
-#  datasource:
-#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
-#    username: craig
-#    password: cockroach
-#    hikari:
 #      transaction-isolation: TRANSACTION_SERIALIZABLE
+      transaction-isolation: TRANSACTION_READ_COMMITTED
 
 application:
-  ## Use pre-emptive locks when reading with the intent to write.
-  # WARNING: It's imperative for correctness under READ_COMMITTED to set this to true.
-  # If set to false, you may see lost update (P4) anomalies under READ_COMMITTED.
-  # Under serializable (1SR), correctness is never compromised and locking may
-  # help to reduce contention.
-  using-locks: true
-  ## Enable idempotency check for each transfer request (one extra point read).
+  using-locks: false
   idempotency-check: false
-  ## Ledger is I/O bound and uses JDK21 virtual threads rather than thread pools.
-  task-executor:
-    # A negative value denotes an unbounded amount of concurrent tasks.
-    # For best performance on high-end machines, leave this value as-is.
-    concurrency-limit: -1
-  ## Sample period for time-series data points in graphs
-  sample-period-seconds: 300
-  ## Default account plan settings
   account-plan:
-    # Number of accounts per city
     accounts-per-city: 5_000
-    # Initial balance for user asset accounts (in local currency)
     initial-balance: 5000.00
-
   regions:
     - name: x-eu-central-1
       primary: true
@@ -150,7 +109,6 @@ application:
         - name: tallinn
           country: EST
           currency: EUR
-
   region-mappings:
     eu-north-1: x-eu-north-1
     eu-central-1: x-eu-central-1

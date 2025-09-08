@@ -17,15 +17,15 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.Tuple;
 
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.util.Money;
 
-public interface AccountJpaRepository extends JpaRepository<Account, UUID>,
-        JpaSpecificationExecutor<Account> {
+public interface AccountJpaRepository extends JpaRepository<AccountEntity, UUID>,
+        JpaSpecificationExecutor<AccountEntity> {
 
     @Query(value = "select a.balance "
-                   + "from Account a "
+                   + "from AccountEntity a "
                    + "where a.id = ?1")
     Money findBalanceById(UUID id);
 
@@ -37,7 +37,7 @@ public interface AccountJpaRepository extends JpaRepository<Account, UUID>,
                    + "max (a.balance.amount), "
                    + "max(a.updatedAt), "
                    + "a.balance.currency "
-                   + "from Account a "
+                   + "from AccountEntity a "
                    + "where a.city = ?1 "
                    + "group by a.city,a.balance.currency")
     List<Tuple> accountSummary(String city);
@@ -48,85 +48,85 @@ public interface AccountJpaRepository extends JpaRepository<Account, UUID>,
                    + "  sum (abs(ti.amount.amount)), "
                    + "  sum (ti.amount.amount), "
                    + "  ti.amount.currency "
-                   + "from Transfer t join TransferItem ti on t.id = ti.id.transferId "
+                   + "from TransferEntity t join TransferItemEntity ti on t.id = ti.id.transferId "
                    + "where ti.city = ?1 "
                    + "group by ti.city, ti.amount.currency")
     List<Tuple> transactionSummary(String city);
 
     @Query(value = "select a "
-                   + "from Account a "
-                   + "where a.id in (?1) and a.city in (?2)")
+                   + "from AccountEntity a "
+                   + "where a.id in (?1)")
     @Lock(LockModeType.PESSIMISTIC_READ)
-    List<Account> findAllWithLock(Set<UUID> ids, Set<String> cities);
+    List<AccountEntity> findAllWithLock(Set<UUID> ids);
 
     @Query(value = "select a "
-                   + "from Account a "
-                   + "where a.id in (?1) and a.city in (?2)")
-    List<Account> findAll(Set<UUID> ids, Set<String> cities);
+                   + "from AccountEntity a "
+                   + "where a.id in (?1)")
+    List<AccountEntity> findAll(Set<UUID> ids);
 
     @Query(value
             = "select a "
-              + "from Account a "
+              + "from AccountEntity a "
               + "where a.city in (:cities)",
             countQuery
                     = "select count(a.id) "
-                      + "from Account a "
+                      + "from AccountEntity a "
                       + "where a.city in (:cities)")
-    Page<Account> findAll(@Param("cities") Collection<String> cities, Pageable pageable);
+    Page<AccountEntity> findAll(@Param("cities") Collection<String> cities, Pageable pageable);
 
     @Query(value
             = "select a "
-              + "from Account a "
+              + "from AccountEntity a "
               + "where a.city in (:cities) and a.accountType = :type",
             countQuery
                     = "select count(a.id) "
-                      + "from Account a "
+                      + "from AccountEntity a "
                       + "where a.city in (:cities) and a.accountType = :type")
-    Page<Account> findAll(@Param("cities") Collection<String> cities,
-                          @Param("type") AccountType accountType,
-                          Pageable pageable);
+    Page<AccountEntity> findAll(@Param("cities") Collection<String> cities,
+                                @Param("type") AccountType accountType,
+                                Pageable pageable);
 
     @Query(value
             = "select a "
-              + "from Account a "
+              + "from AccountEntity a "
               + "where a.city in (:cities) and a.accountType = :type "
               + "and a.balance.amount between :min and :max",
             countQuery
                     = "select count(a.id) "
-                      + "from Account a "
+                      + "from AccountEntity a "
                       + "where a.city in (:cities) and a.accountType = :type "
                       + "and a.balance.amount between :min and :max")
-    Page<Account> findAll(@Param("cities") Collection<String> cities,
-                          @Param("type") AccountType accountType,
-                          @Param("min") BigDecimal min,
-                          @Param("max") BigDecimal max,
-                          Pageable pageable);
+    Page<AccountEntity> findAll(@Param("cities") Collection<String> cities,
+                                @Param("type") AccountType accountType,
+                                @Param("min") BigDecimal min,
+                                @Param("max") BigDecimal max,
+                                Pageable pageable);
 
     @Query(value
             = "select a "
-              + "from Account a "
+              + "from AccountEntity a "
               + "where a.city = :city "
               + "and a.accountType = :type "
               + "and a.balance.amount between :min and :max",
             countQuery
                     = "select count(a.id) "
-                      + "from Account a "
+                      + "from AccountEntity a "
                       + "where a.city = :city "
                       + "and a.accountType = :type "
                       + "and a.balance.amount between :min and :max")
-    Page<Account> findAll(@Param("city") String city,
-                          @Param("type") AccountType accountType,
-                          @Param("min") BigDecimal min,
-                          @Param("max") BigDecimal max,
-                          Pageable pageable);
+    Page<AccountEntity> findAll(@Param("city") String city,
+                                @Param("type") AccountType accountType,
+                                @Param("min") BigDecimal min,
+                                @Param("max") BigDecimal max,
+                                Pageable pageable);
 
     @Query(value
             = "select a "
-              + "from Account a "
+              + "from AccountEntity a "
               + "where a.accountType = :type",
             countQuery
                     = "select count(a.id) "
-                      + "from Account a "
+                      + "from AccountEntity a "
                       + "where a.accountType = :type")
-    Page<Account> findAll(@Param("type") AccountType type, Pageable pageable);
+    Page<AccountEntity> findAll(@Param("type") AccountType type, Pageable pageable);
 }

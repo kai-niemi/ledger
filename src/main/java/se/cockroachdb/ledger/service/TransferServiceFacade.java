@@ -15,10 +15,10 @@ import se.cockroachdb.ledger.annotations.ServiceFacade;
 import se.cockroachdb.ledger.annotations.TransactionExplicit;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
 import se.cockroachdb.ledger.annotations.TransactionPriority;
-import se.cockroachdb.ledger.domain.Transfer;
-import se.cockroachdb.ledger.domain.TransferItem;
+import se.cockroachdb.ledger.domain.TransferEntity;
+import se.cockroachdb.ledger.domain.TransferItemEntity;
+import se.cockroachdb.ledger.domain.TransferRequest;
 import se.cockroachdb.ledger.domain.TransferType;
-import se.cockroachdb.ledger.model.TransferRequest;
 import se.cockroachdb.ledger.service.transfer.TransferService;
 
 @ServiceFacade
@@ -30,18 +30,18 @@ public class TransferServiceFacade {
 
     @Retryable
     @TransactionExplicit(priority = TransactionPriority.HIGH, retryPriority = TransactionPriority.HIGH)
-    @ResponseOutboxEvent(value = Transfer.class)
-    public Transfer createTransfer(TransferRequest request) {
+    @ResponseOutboxEvent(value = TransferEntity.class)
+    public TransferEntity createTransfer(TransferRequest request) {
         return transferService.createTransfer(request);
     }
 
     @TransactionImplicit(readOnly = true)
-    public Page<Transfer> findTransfers(TransferType transferType, @PageableDefault(size = 5) Pageable page) {
+    public Page<TransferEntity> findTransfers(TransferType transferType, @PageableDefault(size = 5) Pageable page) {
         return transferService.findAll(transferType, page);
     }
 
     @TransactionImplicit(readOnly = true)
-    public Page<TransferItem> findTransferItems(UUID id, @PageableDefault(size = 5) Pageable page) {
+    public Page<TransferItemEntity> findTransferItems(UUID id, @PageableDefault(size = 5) Pageable page) {
         return transferService.findAllItems(id, page);
     }
 }

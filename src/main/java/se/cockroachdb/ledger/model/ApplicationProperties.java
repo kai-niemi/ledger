@@ -72,7 +72,7 @@ public class ApplicationProperties {
 
     public Optional<Region> findRegionByName(String name) {
         return regions.stream()
-                .filter(r -> r.getName().equals(name))
+                .filter(r -> r.getName().equalsIgnoreCase(name))
                 .findFirst();
     }
 

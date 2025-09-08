@@ -5,9 +5,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.zip.GZIPOutputStream;
@@ -27,16 +27,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import se.cockroachdb.ledger.model.ApplicationProperties;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.model.AccountPlan;
+import se.cockroachdb.ledger.model.ApplicationProperties;
 import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.model.Region;
 import se.cockroachdb.ledger.service.RegionServiceFacade;
 import se.cockroachdb.ledger.util.Money;
-import se.cockroachdb.ledger.web.api.csv.AccountCsvWriter;
-import se.cockroachdb.ledger.web.api.csv.CsvWriter;
 
 @RestController
 @RequestMapping(value = "/api/import")
@@ -74,7 +72,7 @@ public class ImportController {
                 .header("Pragma", "no-cache")
                 .header("Expires", "0");
 
-        final List<City> cities = Region.joinCities(regionServiceFacade.listRegions(region));
+        Set<City> cities = regionServiceFacade.listCities(region);
 
         logger.info("Region %s cities %s".formatted(region, cities.stream().map(City::getName).toList()));
 
@@ -87,7 +85,7 @@ public class ImportController {
             try (PrintWriter pw = new PrintWriter(
                     new BufferedWriter(new OutputStreamWriter(gzip
                             ? new GZIPOutputStream(outputStream, true) : outputStream)))) {
-                CsvWriter<Account> accountCsvWriter = new AccountCsvWriter(pw);
+                CsvWriter<AccountEntity> accountCsvWriter = new AccountCsvWriter(pw);
 
                 accountCsvWriter.writeHeader();
 
@@ -104,11 +102,11 @@ public class ImportController {
     private void generateAccounts(City city,
                                   Money initialBalance,
                                   int accountsPerCity,
-                                  Consumer<Account> consumer) {
+                                  Consumer<AccountEntity> consumer) {
 
         Money totalBalance = initialBalance.multiply(accountsPerCity);
 
-        Account systemAccount = Account.builder()
+        AccountEntity systemAccountEntity = AccountEntity.builder()
                 .withGeneratedId()
                 .withCity(city.getName())
                 .withName("system-account")
@@ -117,10 +115,10 @@ public class ImportController {
                 .withAccountType(AccountType.LIABILITY)
                 .withUpdated(LocalDateTime.now()).build();
 
-        consumer.accept(systemAccount);
+        consumer.accept(systemAccountEntity);
 
         IntStream.rangeClosed(1, accountsPerCity).forEach(value -> {
-            Account userAccount = Account.builder()
+            AccountEntity userAccountEntity = AccountEntity.builder()
                     .withGeneratedId()
                     .withCity(city.getName())
                     .withName("user-account:" + value)
@@ -129,7 +127,7 @@ public class ImportController {
                     .withAccountType(AccountType.ASSET)
                     .withUpdated(LocalDateTime.now()).build();
 
-            consumer.accept(userAccount);
+            consumer.accept(userAccountEntity);
         });
     }
 }

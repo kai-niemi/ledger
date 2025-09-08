@@ -100,9 +100,6 @@ WorkloadChartsDashboard.prototype = {
 
             stompClient.subscribe(_this.settings.topics.update, function () {
                 _this.handleModelUpdate();
-            });
-
-            stompClient.subscribe(_this.settings.topics.charts, function () {
                 _this.handleChartsUpdate();
             });
         });
@@ -222,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         topics: {
             update: '/topic/workload/update',
-            charts: '/topic/workload/charts',
             refresh: '/topic/workload/refresh',
         },
     });

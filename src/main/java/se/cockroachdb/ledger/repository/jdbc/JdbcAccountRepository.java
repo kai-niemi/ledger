@@ -33,7 +33,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.Assert;
 
 import se.cockroachdb.ledger.ProfileNames;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.repository.AccountRepository;
 import se.cockroachdb.ledger.util.Money;
@@ -53,45 +53,47 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Account createAccount(Account account) {
+    public AccountEntity createAccount(AccountEntity accountEntity) {
         jdbcTemplate.update("INSERT INTO account "
                             + "(id, city, balance, currency, name, description, type, closed, allow_negative) "
                             + "VALUES(?,?,?,?,?,?,?::account_type,?,?)",
-                account.getId(),
-                account.getCity(),
-                account.getBalance().getAmount(),
-                account.getBalance().getCurrency().getCurrencyCode(),
-                account.getName(),
-                account.getDescription(),
-                account.getAccountType().getCode(),
-                account.isClosed(),
-                account.getAllowNegative()
+                accountEntity.getId(),
+                accountEntity.getCity(),
+                accountEntity.getBalance().getAmount(),
+                accountEntity.getBalance().getCurrency().getCurrencyCode(),
+                accountEntity.getName(),
+                accountEntity.getDescription(),
+                accountEntity.getAccountType().getCode(),
+                accountEntity.isClosed(),
+                accountEntity.getAllowNegative()
         );
-        return account;
+        return accountEntity;
     }
 
     @Override
-    public List<UUID> createAccounts(Supplier<Account> factory, int batchSize) {
+    public List<UUID> createAccounts(Supplier<AccountEntity> factory, int batchSize) {
         Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(), "Expected no transaction");
         List<UUID> ids = new ArrayList<>();
         jdbcTemplate.batchUpdate(
                 "INSERT INTO account "
-                + "(id,city, balance, currency, name, description, type, closed, allow_negative) "
+                + "(id, city, balance, currency, name, description, type, closed, allow_negative) "
                 + "VALUES(?,?,?,?,?,?,?,?,?)", new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        Account account = factory.get();
+                        AccountEntity accountEntity = factory.get();
                         int idx = 1;
-                        ps.setObject(idx++, account.getId());
-                        ps.setString(idx++, account.getCity());
-                        ps.setBigDecimal(idx++, account.getBalance().getAmount());
-                        ps.setString(idx++, account.getBalance().getCurrency().getCurrencyCode());
-                        ps.setString(idx++, account.getName());
-                        ps.setString(idx++, account.getDescription());
-                        ps.setString(idx++, account.getAccountType().getCode());
-                        ps.setBoolean(idx++, account.isClosed());
-                        ps.setInt(idx, account.getAllowNegative());
-                        ids.add(account.getId());
+
+                        ps.setObject(idx++, accountEntity.getId());
+                        ps.setString(idx++, accountEntity.getCity());
+                        ps.setBigDecimal(idx++, accountEntity.getBalance().getAmount());
+                        ps.setString(idx++, accountEntity.getBalance().getCurrency().getCurrencyCode());
+                        ps.setString(idx++, accountEntity.getName());
+                        ps.setString(idx++, accountEntity.getDescription());
+                        ps.setString(idx++, accountEntity.getAccountType().getCode());
+                        ps.setBoolean(idx++, accountEntity.isClosed());
+                        ps.setInt(idx, accountEntity.getAllowNegative());
+
+                        ids.add(accountEntity.getId());
                     }
 
                     @Override
@@ -103,36 +105,31 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public void updateBalances(Map<UUID, Pair<String, BigDecimal>> accountUpdates) {
+    public void updateBalances(Map<UUID, BigDecimal> balanceUpdates) {
         int rows = jdbcTemplate.update(
                 "UPDATE account SET balance = account.balance + data_table.balance, updated_at=clock_timestamp() "
                 + "FROM "
-                + "(select unnest(?) as id, unnest(?) as balance, unnest(?) as city) as data_table "
+                + "(select unnest(?) as id, unnest(?) as balance) as data_table "
                 + "WHERE account.id=data_table.id "
-                + "AND account.city=data_table.city "
                 + "AND (account.balance + data_table.balance) * abs(account.allow_negative-1) >= 0",
                 ps -> {
                     List<UUID> ids = new ArrayList<>();
                     List<BigDecimal> balances = new ArrayList<>();
-                    List<String> cities = new ArrayList<>();
 
-                    accountUpdates
-                            .forEach((uuid, pair) -> {
+                    balanceUpdates
+                            .forEach((uuid, amount) -> {
                                 ids.add(uuid);
-                                cities.add(pair.getFirst());
-                                balances.add(pair.getSecond());
+                                balances.add(amount);
                             });
 
                     ps.setArray(1, ps.getConnection()
                             .createArrayOf("UUID", ids.toArray()));
                     ps.setArray(2, ps.getConnection()
                             .createArrayOf("DECIMAL", balances.toArray()));
-                    ps.setArray(3, ps.getConnection()
-                            .createArrayOf("VARCHAR", cities.toArray()));
                 });
 
-        if (rows != accountUpdates.size()) {
-            throw new IncorrectResultSizeDataAccessException(accountUpdates.size(), rows);
+        if (rows != balanceUpdates.size()) {
+            throw new IncorrectResultSizeDataAccessException(balanceUpdates.size(), rows);
         }
     }
 
@@ -169,7 +166,7 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public Optional<Account> getAccountById(UUID id) {
+    public Optional<AccountEntity> getAccountById(UUID id) {
         try {
             return Optional.ofNullable(this.jdbcTemplate.queryForObject(
                     "SELECT * FROM account WHERE id=?",
@@ -202,12 +199,12 @@ public class JdbcAccountRepository implements AccountRepository {
         );
     }
 
-    private Account readAccount(ResultSet rs) throws SQLException {
+    private AccountEntity readAccount(ResultSet rs) throws SQLException {
         Money balance = Money.of(
                 rs.getBigDecimal("balance"),
                 rs.getString("currency"));
 
-        return Account.builder()
+        return AccountEntity.builder()
                 .withId((UUID) rs.getObject("id"))
                 .withCity(rs.getString("city"))
                 .withName(rs.getString("name"))
@@ -226,9 +223,10 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public List<Account> findByCriteria(Set<String> cities, AccountType accountType,
-                                        Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
+    public List<AccountEntity> findByCriteria(Set<String> cities,
+                                              AccountType accountType,
+                                              Pair<BigDecimal, BigDecimal> range,
+                                              int limit) {
         if (cities.isEmpty()) {
             return List.of();
         }
@@ -269,44 +267,21 @@ public class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public List<Account> findByCriteria(String city, AccountType accountType,
-                                        Pair<BigDecimal, BigDecimal> range,
-                                        int limit) {
-        MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("type", accountType.getCode())
-                .addValue("city", city)
-                .addValue("min", range.getFirst())
-                .addValue("max", range.getSecond())
-                .addValue("limit", limit);
-
-        return this.namedParameterJdbcTemplate
-                .query("SELECT * "
-                       + "FROM account a "
-                       + "WHERE a.type = :type "
-                       + "and a.city = :city "
-                       + "and a.balance between :min and :max "
-                       + "ORDER BY id "
-                       + "LIMIT :limit",
-                        parameters, (rs, rowNum) -> readAccount(rs));
-    }
-
-    @Override
-    public List<Account> findById(Set<String> cities, Set<UUID> ids, boolean forUpdate) {
+    public List<AccountEntity> findById(Set<UUID> ids, boolean forUpdate) {
         Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(), "Expected transaction");
 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("ids", ids);
-        parameters.addValue("city", cities);
 
         return this.namedParameterJdbcTemplate.query(
-                "SELECT * FROM account WHERE id in (:ids) and city in (:city) "
+                "SELECT * FROM account WHERE id in (:ids) "
                 + (forUpdate ? " FOR UPDATE" : ""),
                 parameters,
                 (rs, rowNum) -> readAccount(rs));
     }
 
     @Override
-    public Page<Account> findAll(AccountType accountType, Pageable page) {
+    public Page<AccountEntity> findAll(AccountType accountType, Pageable page) {
         MapSqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("type", accountType.getCode())
                 .addValue("limit", page.getPageSize())
@@ -319,7 +294,7 @@ public class JdbcAccountRepository implements AccountRepository {
                 + "ORDER BY id, city "
                 + "LIMIT :limit OFFSET :offset ";
 
-        List<Account> accountEntities = this.namedParameterJdbcTemplate
+        List<AccountEntity> accountEntityEntities = this.namedParameterJdbcTemplate
                 .query(sql, parameters, (rs, rowNum) -> readAccount(rs));
 
         Long total = this.namedParameterJdbcTemplate.queryForObject(
@@ -328,31 +303,6 @@ public class JdbcAccountRepository implements AccountRepository {
                 parameters,
                 Long.class);
 
-        return new PageImpl<>(accountEntities, page, total);
-    }
-
-    @Override
-    public Page<Account> findAll(Set<String> cities, Pageable page) {
-        MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("cities", cities.stream())
-                .addValue("limit", page.getPageSize())
-                .addValue("offset", page.getOffset());
-
-        String sql =
-                "SELECT * "
-                + "FROM account "
-                + "WHERE account.city in (:cities) "
-                + "ORDER BY id, city "
-                + "LIMIT :limit OFFSET :offset ";
-
-        List<Account> accountEntities = this.namedParameterJdbcTemplate
-                .query(sql, parameters, (rs, rowNum) -> readAccount(rs));
-
-        Long total = this.namedParameterJdbcTemplate.queryForObject(
-                "SELECT count(id) FROM account WHERE city in (:cities)",
-                parameters,
-                Long.class);
-
-        return new PageImpl<>(accountEntities, page, total);
+        return new PageImpl<>(accountEntityEntities, page, total);
     }
 }

@@ -14,7 +14,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 import org.springframework.shell.table.BeanListTableModel;
 
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
 import se.cockroachdb.ledger.service.AccountServiceFacade;
 import se.cockroachdb.ledger.shell.support.Constants;
@@ -23,7 +23,7 @@ import se.cockroachdb.ledger.shell.support.TableUtils;
 @ShellComponent
 @ShellCommandGroup(Constants.REPORT_COMMANDS)
 public class AccountReportCommands extends AbstractInteractiveCommand {
-    public static String printAccountTable(List<Account> accounts) {
+    public static String printAccountTable(List<AccountEntity> accountEntities) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("name", "Name");
@@ -33,7 +33,7 @@ public class AccountReportCommands extends AbstractInteractiveCommand {
         header.put("allowNegative", "Allow Negative");
         header.put("closed", "Closed");
 
-        return TableUtils.prettyPrint(new BeanListTableModel<>(accounts, header));
+        return TableUtils.prettyPrint(new BeanListTableModel<>(accountEntities, header));
     }
 
     @Autowired
@@ -47,7 +47,7 @@ public class AccountReportCommands extends AbstractInteractiveCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<Account> accountPage = accountServiceFacade.findAccounts(accountType, page);
+            final Page<AccountEntity> accountPage = accountServiceFacade.findAccounts(accountType, page);
             logger.info("\n" + printAccountTable(accountPage.getContent()));
             page = askForPage(accountPage).orElseGet(Pageable::unpaged);
         }

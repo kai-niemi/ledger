@@ -2,20 +2,23 @@ package se.cockroachdb.ledger.model;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Region implements Comparable<Region> {
-    public static List<City> joinCities(Collection<Region> regions) {
+    public static Set<City> joinCities(Collection<Region> regions) {
         return regions.stream()
                 .flatMap(region -> region.getCities().stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @NotNull
@@ -26,7 +29,7 @@ public class Region implements Comparable<Region> {
     private String currency;
 
     @NotEmpty
-    private List<City> cities = new LinkedList<>();
+    private Set<City> cities = new HashSet<>();
 
     private final List<String> databaseRegions = new LinkedList<>();
 
@@ -97,15 +100,15 @@ public class Region implements Comparable<Region> {
         return this;
     }
 
-    public List<City> getCities() {
-        return Collections.unmodifiableList(cities);
+    public Set<City> getCities() {
+        return Collections.unmodifiableSet(cities);
     }
 
-    public List<String> getCityNames() {
-        return cities.stream().map(City::getName).toList();
+    public Set<String> getCityNames() {
+        return cities.stream().map(City::getName).collect(Collectors.toSet());
     }
 
-    public void setCities(List<City> cities) {
+    public void setCities(Set<City> cities) {
         this.cities = cities;
     }
 

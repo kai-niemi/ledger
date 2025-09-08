@@ -18,10 +18,12 @@
 <main>
     <div class="py-2 rounded bg-body-tertiary">
         <div class="container-xl">
+<!--
             <div class="alert alert-info alert-dismissible fade show" role="alert">
                 These workloads are server local and not shared across different instances.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+-->
 
             <h3>Workload Metrics</h3>
 
@@ -44,10 +46,6 @@
                                 <button class="btn btn-sm btn-outline-warning" type="button"
                                         data-bs-toggle="modal" data-bs-target="#confirmCancelAllModal">Cancel All
                                 </button>
-                            </div>
-                            <div class="col-auto">
-                                <a th:href="@{/workload/data-points/clear}" class="btn btn-sm btn-outline-info">Clear
-                                    Stats</a>
                             </div>
                             <div class="col-auto">
                                 <label for="workload-title" class="form-label">Title:</label>

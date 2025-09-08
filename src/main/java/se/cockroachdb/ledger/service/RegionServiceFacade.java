@@ -3,9 +3,12 @@ package se.cockroachdb.ledger.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Currency;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,16 +21,17 @@ import jakarta.annotation.PostConstruct;
 
 import se.cockroachdb.ledger.annotations.ServiceFacade;
 import se.cockroachdb.ledger.annotations.TransactionImplicit;
+import se.cockroachdb.ledger.domain.RegionCategory;
+import se.cockroachdb.ledger.domain.SurvivalGoal;
 import se.cockroachdb.ledger.model.ApplicationProperties;
+import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.model.Region;
-import se.cockroachdb.ledger.model.RegionCategory;
-import se.cockroachdb.ledger.model.SurvivalGoal;
 import se.cockroachdb.ledger.repository.MultiRegionRepository;
 import se.cockroachdb.ledger.repository.RegionRepository;
 
 @ServiceFacade
 public class RegionServiceFacade {
-    private static List<String> RBR_TABLES = List.of(
+    private static final List<String> PARTITION_TABLES = List.of(
             "account",
             "transfer",
             "transfer_item"
@@ -67,7 +71,7 @@ public class RegionServiceFacade {
             logger.info("Found %d region mappings".formatted(regionMappings.size()));
         }
 
-        applicationProperties.getVisibleRegions().forEach(region-> {
+        applicationProperties.getVisibleRegions().forEach(region -> {
             if (regions.stream()
                     .filter(x -> x.getName().equals(region))
                     .findFirst()
@@ -100,7 +104,7 @@ public class RegionServiceFacade {
                 if (!StringUtils.hasLength(city.getCurrency())) {
                     if (!StringUtils.hasLength(region.getCurrency())) {
                         errors.add("City '%s' in region '%s' missing currency code".formatted(city.getName(),
-                                        region.getName()));
+                                region.getName()));
                     } else {
                         city.setCurrency(region.getCurrency());
                     }
@@ -133,7 +137,8 @@ public class RegionServiceFacade {
 
         if (!errors.isEmpty()) {
             errors.forEach(logger::error);
-            throw new ApplicationContextException("There are configuration errors - check the config/application-<profile>.yml");
+            throw new ApplicationContextException(
+                    "There are configuration errors - check the config/application-<profile>.yml");
         }
     }
 
@@ -201,45 +206,57 @@ public class RegionServiceFacade {
     }
 
     @TransactionImplicit(readOnly = true)
+    public Set<City> listCities(String region) {
+        return Region.joinCities(listRegions(region));
+    }
+
+    @TransactionImplicit(readOnly = true)
     public List<Region> listRegions(String region) {
-        RegionCategory regionCategory;
+        Objects.requireNonNull(region);
+
+        List<Region> regions = List.of();
 
         try {
-            regionCategory = RegionCategory.valueOf(region);
-        } catch (IllegalArgumentException e) {
-            return applicationProperties.findRegionByName(region)
-                    .map(List::of).orElseGet(List::of);
-        }
+            RegionCategory regionCategory = RegionCategory.valueOf(region.toUpperCase());
+            if (regionCategory == RegionCategory.ALL) {
+                regions = listAllRegions();
+            } else {
+                Optional<String> databaseRegion = switch (regionCategory) {
+                    case GATEWAY -> regionRepository.getGatewayRegion();
+                    case PRIMARY -> regionRepository.getPrimaryRegion();
+                    case SECONDARY -> regionRepository.getSecondaryRegion();
+                    default -> throw new IllegalStateException("Unexpected value: " + regionCategory);
+                };
 
-        if (regionCategory == RegionCategory.all) {
-            return applicationProperties.getRegions();
-        } else {
-            Optional<String> singleton = switch (regionCategory) {
-                case gateway -> regionRepository.getGatewayRegion();
-                case primary -> regionRepository.getPrimaryRegion();
-                case secondary -> regionRepository.getSecondaryRegion();
-                default -> throw new IllegalStateException("Unexpected value: " + regionCategory);
-            };
-
-            if (singleton.isPresent()) {
-                Optional<Region> gatewayRegion = applicationProperties
-                        .findRegionByDatabaseRegion(singleton.get());
-                return gatewayRegion.map(List::of).orElseGet(List::of);
+                if (databaseRegion.isPresent()) {
+                    Optional<Region> actualRegion = applicationProperties
+                            .findRegionByDatabaseRegion(databaseRegion.get());
+                    regions = actualRegion.map(List::of).orElseGet(List::of);
+                }
             }
+        } catch (IllegalArgumentException e) {
+            regions = applicationProperties.findRegionByName(region).map(List::of).orElseGet(List::of);
         }
 
-        return List.of();
+        final Set<City> cities = new HashSet<>();
+        regions.stream().map(Region::getCities).forEach(cities::addAll);
+
+        logger.info("Resolved region '%s' to:\nregions (%d): %s\ncities (%d): %s"
+                .formatted(region,
+                        regions.size(),
+                        String.join(", ", regions.stream().map(Region::getName).toList()),
+                        cities.size(),
+                        String.join(", ", cities.stream().map(City::getName).toList())
+                ));
+
+        return regions;
     }
 
     @TransactionImplicit(readOnly = true)
     public List<Region> listAllRegions() {
         final List<Region> regions = new ArrayList<>(applicationProperties.getRegions());
-
         // Move gateway region to top of list
-        getGatewayRegion().ifPresent(region -> {
-            Collections.swap(regions, regions.indexOf(region), 0);
-        });
-
+        getGatewayRegion().ifPresent(region -> Collections.swap(regions, regions.indexOf(region), 0));
         return regions;
     }
 
@@ -255,8 +272,8 @@ public class RegionServiceFacade {
         );
         multiRegionRepository.addDatabaseRegions(applicationProperties.getRegions());
 
-        logger.info("Adding regional-by-row localities to tables: %s".formatted(String.join(",", RBR_TABLES)));
-        RBR_TABLES.forEach(
+        logger.info("Adding regional-by-row localities to tables: %s".formatted(String.join(",", PARTITION_TABLES)));
+        PARTITION_TABLES.forEach(
                 table -> multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
 
         logger.info("Setting survival goal: %s".formatted(goal));
@@ -268,10 +285,10 @@ public class RegionServiceFacade {
     @TransactionImplicit
     public void revertMultiRegion() {
         logger.info("Reverting table localities");
-        RBR_TABLES.forEach(table -> multiRegionRepository.setRegionalByTable(table));
+        PARTITION_TABLES.forEach(table -> multiRegionRepository.setRegionalByTable(table));
 
         logger.info("Dropping computed region columns");
-        RBR_TABLES.forEach(table -> multiRegionRepository.dropRegionColumn(table));
+        PARTITION_TABLES.forEach(table -> multiRegionRepository.dropRegionColumn(table));
 
         logger.info("Reverting survival goal to ZONE");
         multiRegionRepository.setSurvivalGoal(SurvivalGoal.ZONE);

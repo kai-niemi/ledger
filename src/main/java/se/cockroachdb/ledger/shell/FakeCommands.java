@@ -1,21 +1,22 @@
 package se.cockroachdb.ledger.shell;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
-import se.cockroachdb.ledger.workload.WorkloadDescription;
-import se.cockroachdb.ledger.workload.Worker;
-import se.cockroachdb.ledger.workload.WorkloadManager;
-import se.cockroachdb.ledger.shell.support.Constants;
-import se.cockroachdb.ledger.util.DurationUtils;
-
 import java.time.Instant;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.shell.standard.ShellCommandGroup;
+import org.springframework.shell.standard.ShellComponent;
+import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellOption;
+
+import se.cockroachdb.ledger.shell.support.Constants;
+import se.cockroachdb.ledger.util.DurationUtils;
+import se.cockroachdb.ledger.service.workload.Worker;
+import se.cockroachdb.ledger.service.workload.WorkloadDescription;
+import se.cockroachdb.ledger.service.workload.WorkloadManager;
 
 @ShellComponent
 @ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
@@ -36,14 +37,16 @@ public class FakeCommands {
             @ShellOption(help = "error probability (0-1)",
                     defaultValue = "0.0") double probability,
             @ShellOption(help = Constants.DURATION_HELP,
-                    defaultValue = Constants.DEFAULT_DURATION) String duration
+                    defaultValue = Constants.DEFAULT_DURATION) String duration,
+            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1") int concurrency
     ) {
         final Instant stopTime = Instant.now().plus(DurationUtils.parseDuration(duration));
 
         IntStream.rangeClosed(1, count).forEach(value -> {
             final int n = monotonicCounter.incrementAndGet();
 
-            workloadManager.submitWorker(
+            workloadManager.submitWorkers(
                     new Worker<Void>() {
                         @Override
                         public Void call() throws Exception {
@@ -71,7 +74,7 @@ public class FakeCommands {
                         public String categoryValue() {
                             return "Fakes";
                         }
-                    });
+                    },  concurrency);
         });
     }
 

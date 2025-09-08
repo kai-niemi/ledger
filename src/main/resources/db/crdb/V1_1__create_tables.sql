@@ -1,5 +1,3 @@
--- Leger DDL for CockroachDB
-
 drop type if exists account_type;
 create type account_type as enum ('Asset', 'Liability', 'Expense', 'Revenue', 'Equity');
 
@@ -12,7 +10,7 @@ create type transfer_type as enum ('Payment','Fee','Refund','Chargeback','Grant'
 
 create table account_plan
 (
-    name       string (32)     not null,
+    name       string(32) not null,
     created_at timestamptz not null default clock_timestamp(),
 
     primary key (name)
@@ -45,7 +43,7 @@ create index if not exists account_city_storing_rec_idx on account (city)
 create table transfer
 (
     id            uuid          not null default gen_random_uuid(),
-    city          string(128)        not null,
+    city          string(128)   not null,
     booking_date  date          not null default current_date(),
     transfer_date date          not null default current_date(),
     transfer_type transfer_type not null,
@@ -60,9 +58,9 @@ create table transfer_item
     transfer_id           uuid           not null,
     account_id            uuid           not null,
     item_pos              int            not null,
-    city                  string(128)        not null,
+    city                  string(128)    not null,
     amount                decimal(19, 3) not null,
-    currency              string(3)         not null,
+    currency              string(3)      not null,
     amount_money          string as (concat(amount::string, ' ', currency)) virtual,
     note                  string,
     running_balance       decimal(19, 3) not null,
@@ -78,7 +76,7 @@ create table if not exists outbox
     id             uuid as ((payload ->> 'eventId')::UUID) stored,
     aggregate_id   uuid as ((payload ->> 'entityId')::UUID) stored,
     inserted_at    timestamptz not null default clock_timestamp(),
-    aggregate_type varchar(32) not null,
+    aggregate_type string(32) not null,
     payload        jsonb       not null,
 
     primary key (id)

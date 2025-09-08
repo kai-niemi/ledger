@@ -1,7 +1,5 @@
 ############################################################################################
 # Ledger Application Configuration
-#
-# This file overrides the application configuration properties.
 # For all spring boot container properties, see:
 #  https://docs.spring.io/spring-boot/appendix/application-properties/index.html
 ############################################################################################
@@ -40,13 +38,6 @@ application:
   using-locks: true
   ## Enable idempotency check for each transfer request (one extra point read).
   idempotency-check: false
-  ## Ledger is I/O bound and uses JDK21 virtual threads rather than thread pools.
-  task-executor:
-    # A negative value denotes an unbounded amount of concurrent tasks.
-    # For best performance on high-end machines, leave this value as-is.
-    concurrency-limit: -1
-  ## Sample period for time-series data points in graphs
-  sample-period-seconds: 300
   ## Default account plan settings
   account-plan:
     # Number of accounts per city
@@ -58,7 +49,7 @@ application:
 
   # Include only the specified regions (all if omitted)
   # Example:
-  # visible-regions: eu-north-1,us-east-1
+  # visible-regions: us-east-1,us-east-2,us-west-1, ..
 
   # A region name SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..) but can also be mapped in 'region-mappings'.
   # A region MAY have e ISO-3166-1 country code and ISO-4217 currency code for all its cities.

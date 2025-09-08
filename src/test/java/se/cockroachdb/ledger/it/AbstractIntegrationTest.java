@@ -19,8 +19,9 @@ import org.springframework.shell.boot.ShellRunnerAutoConfiguration;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import se.cockroachdb.ledger.Application;
-import se.cockroachdb.ledger.domain.Account;
+import se.cockroachdb.ledger.domain.AccountEntity;
 import se.cockroachdb.ledger.domain.AccountType;
+import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.service.account.AccountService;
 import se.cockroachdb.ledger.service.transfer.TransferService;
 import se.cockroachdb.ledger.util.Money;
@@ -45,75 +46,87 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected AccountService accountService;
 
-    protected Account sekAccount1;
+    protected AccountEntity sekAccountEntity1;
 
-    protected Account sekAccount2;
+    protected AccountEntity sekAccountEntity2;
 
-    protected Account sekSystemAccount;
+    protected AccountEntity sekSystemAccountEntity;
 
-    protected Account usdAccount1;
+    protected AccountEntity usdAccountEntity1;
 
-    protected Account usdAccount2;
+    protected AccountEntity usdAccountEntity2;
 
-    protected Account usdSystemAccount;
+    protected AccountEntity usdSystemAccountEntity;
+
+    public static final City STH = City.of("stockholm", "swe", "SEK");
+
+    public static final City GTB = City.of("gothenburg", "swe", "SEK");
+
+    public static final City UME = City.of("umeå", "swe", "SEK");
+
+    public static final City NYC = City.of("new york", "usa", "USD");
+
+    public static final City BOS = City.of("boston", "usa", "USD");
+
+    public static final City CHK = City.of("chicago", "usa", "USD");
 
     protected void createInitialTestAccounts() {
         Assertions.assertTrue(TransactionSynchronizationManager.isActualTransactionActive());
 
-        sekAccount1 = accountService.createAccount(
-                        Account.builder()
-                                .withGeneratedId()
-                                .withCity("stockholm")
-                                .withName("test-swe-1")
-                                .withAllowNegative(false)
-                                .withBalance(Money.of("0.00", "SEK"))
-                                .withAccountType(AccountType.ASSET)
-                                .withUpdated(LocalDateTime.now()).build());
+        sekAccountEntity1 = accountService.createAccount(
+                AccountEntity.builder()
+                        .withGeneratedId()
+                        .withCity(STH.getName())
+                        .withName("test-swe-1")
+                        .withAllowNegative(false)
+                        .withBalance(Money.of("0.00", "SEK"))
+                        .withAccountType(AccountType.ASSET)
+                        .withUpdated(LocalDateTime.now()).build());
 
-        sekAccount2 = accountService.createAccount(
-                        Account.builder()
-                                .withGeneratedId()
-                                .withCity("stockholm")
-                                .withName("test-swe-2")
-                                .withBalance(Money.of("0.00", "SEK"))
-                                .withAccountType(AccountType.EXPENSE)
-                                .withUpdated(LocalDateTime.now()).build());
+        sekAccountEntity2 = accountService.createAccount(
+                AccountEntity.builder()
+                        .withGeneratedId()
+                        .withCity(GTB.getName())
+                        .withName("test-swe-2")
+                        .withBalance(Money.of("0.00", "SEK"))
+                        .withAccountType(AccountType.EXPENSE)
+                        .withUpdated(LocalDateTime.now()).build());
 
-        sekSystemAccount = accountService.createAccount(
-                        Account.builder()
-                                .withGeneratedId()
-                                .withCity("gothenburg")
-                                .withName("test-swe-3")
-                                .withAllowNegative(true)
-                                .withBalance(Money.of("0.00", "SEK"))
-                                .withAccountType(AccountType.LIABILITY)
-                                .withUpdated(LocalDateTime.now()).build());
+        sekSystemAccountEntity = accountService.createAccount(
+                AccountEntity.builder()
+                        .withGeneratedId()
+                        .withCity(UME.getName())
+                        .withName("test-swe-3")
+                        .withAllowNegative(true)
+                        .withBalance(Money.of("0.00", "SEK"))
+                        .withAccountType(AccountType.LIABILITY)
+                        .withUpdated(LocalDateTime.now()).build());
 
-        usdAccount1 = accountService.createAccount(
-                        Account.builder()
-                                .withGeneratedId()
-                                .withCity("new york")
-                                .withName("test-usa-1")
-                                .withAllowNegative(false)
-                                .withBalance(Money.of("0.00", "USD"))
-                                .withAccountType(AccountType.ASSET)
-                                .withUpdated(LocalDateTime.now()).build());
+        usdAccountEntity1 = accountService.createAccount(
+                AccountEntity.builder()
+                        .withGeneratedId()
+                        .withCity(NYC.getName())
+                        .withName("test-usa-1")
+                        .withAllowNegative(false)
+                        .withBalance(Money.of("0.00", "USD"))
+                        .withAccountType(AccountType.ASSET)
+                        .withUpdated(LocalDateTime.now()).build());
 
-        usdAccount2 = accountService.createAccount(
-                        Account.builder().withGeneratedId()
-                                .withCity("new york")
-                                .withName("test-usa-2")
-                                .withBalance(Money.of("0.00", "USD"))
-                                .withAccountType(AccountType.EXPENSE)
-                                .withUpdated(LocalDateTime.now()).build());
+        usdAccountEntity2 = accountService.createAccount(
+                AccountEntity.builder().withGeneratedId()
+                        .withCity(BOS.getName())
+                        .withName("test-usa-2")
+                        .withBalance(Money.of("0.00", "USD"))
+                        .withAccountType(AccountType.EXPENSE)
+                        .withUpdated(LocalDateTime.now()).build());
 
-        usdSystemAccount = accountService.createAccount(
-                        Account.builder().withGeneratedId()
-                                .withCity("chicago")
-                                .withName("test-usa-3")
-                                .withAllowNegative(true)
-                                .withBalance(Money.of("0.00", "USD"))
-                                .withAccountType(AccountType.LIABILITY)
-                                .withUpdated(LocalDateTime.now()).build());
+        usdSystemAccountEntity = accountService.createAccount(
+                AccountEntity.builder().withGeneratedId()
+                        .withCity(CHK.getName())
+                        .withName("test-usa-3")
+                        .withAllowNegative(true)
+                        .withBalance(Money.of("0.00", "USD"))
+                        .withAccountType(AccountType.LIABILITY)
+                        .withUpdated(LocalDateTime.now()).build());
     }
 }

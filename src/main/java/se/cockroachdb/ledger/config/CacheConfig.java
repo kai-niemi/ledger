@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Role;
 @Configuration
 @EnableCaching
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+@Deprecated
 public class CacheConfig implements CachingConfigurer {
     public static final String CACHE_ACCOUNT_REPORT_SUMMARY = "accountReportSummary";
 

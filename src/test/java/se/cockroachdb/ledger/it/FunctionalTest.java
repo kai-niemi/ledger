@@ -11,18 +11,17 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 
 import se.cockroachdb.ledger.annotations.TransactionExplicit;
-import se.cockroachdb.ledger.domain.Account;
-import se.cockroachdb.ledger.domain.Transfer;
+import se.cockroachdb.ledger.domain.AccountEntity;
+import se.cockroachdb.ledger.domain.TransferEntity;
 import se.cockroachdb.ledger.domain.TransferType;
-import se.cockroachdb.ledger.model.TransferRequest;
+import se.cockroachdb.ledger.domain.TransferRequest;
 import se.cockroachdb.ledger.service.BadRequestException;
 import se.cockroachdb.ledger.service.NegativeBalanceException;
 import se.cockroachdb.ledger.util.Money;
 import static se.cockroachdb.ledger.util.Money.SEK;
 import static se.cockroachdb.ledger.util.Money.USD;
 
-@ActiveProfiles({"default", "integration-test", "jpa"})
-//@ActiveProfiles({"default", "integration-test"})
+@ActiveProfiles({"default", "integration-test"})
 public class FunctionalTest extends AbstractIntegrationTest {
     @Test
     @Order(0)
@@ -38,45 +37,45 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @Commit
     public void givenExistingAccounts_whenReadingBalances_thenInitialSums() {
         {
-            Account account = accountService.findById(sekAccount1.getId());
-            Assertions.assertEquals(0, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", SEK), account.getBalance());
-            Assertions.assertEquals("test-swe-1", account.getName());
+            AccountEntity accountEntity = accountService.findById(sekAccountEntity1.getId());
+            Assertions.assertEquals(0, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", SEK), accountEntity.getBalance());
+            Assertions.assertEquals("test-swe-1", accountEntity.getName());
         }
 
         {
-            Account account = accountService.findById(sekAccount2.getId());
-            Assertions.assertEquals(0, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", SEK), account.getBalance());
-            Assertions.assertEquals("test-swe-2", account.getName());
+            AccountEntity accountEntity = accountService.findById(sekAccountEntity2.getId());
+            Assertions.assertEquals(0, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", SEK), accountEntity.getBalance());
+            Assertions.assertEquals("test-swe-2", accountEntity.getName());
         }
 
         {
-            Account account = accountService.findById(sekSystemAccount.getId());
-            Assertions.assertEquals(1, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", SEK), account.getBalance());
-            Assertions.assertEquals("test-swe-3", account.getName());
+            AccountEntity accountEntity = accountService.findById(sekSystemAccountEntity.getId());
+            Assertions.assertEquals(1, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", SEK), accountEntity.getBalance());
+            Assertions.assertEquals("test-swe-3", accountEntity.getName());
         }
 
         {
-            Account account = accountService.findById(usdAccount1.getId());
-            Assertions.assertEquals(0, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", USD), account.getBalance());
-            Assertions.assertEquals("test-usa-1", account.getName());
+            AccountEntity accountEntity = accountService.findById(usdAccountEntity1.getId());
+            Assertions.assertEquals(0, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", USD), accountEntity.getBalance());
+            Assertions.assertEquals("test-usa-1", accountEntity.getName());
         }
 
         {
-            Account account = accountService.findById(usdAccount2.getId());
-            Assertions.assertEquals(0, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", USD), account.getBalance());
-            Assertions.assertEquals("test-usa-2", account.getName());
+            AccountEntity accountEntity = accountService.findById(usdAccountEntity2.getId());
+            Assertions.assertEquals(0, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", USD), accountEntity.getBalance());
+            Assertions.assertEquals("test-usa-2", accountEntity.getName());
         }
 
         {
-            Account account = accountService.findById(usdSystemAccount.getId());
-            Assertions.assertEquals(1, account.getAllowNegative());
-            Assertions.assertEquals(Money.of("0.00", USD), account.getBalance());
-            Assertions.assertEquals("test-usa-3", account.getName());
+            AccountEntity accountEntity = accountService.findById(usdSystemAccountEntity.getId());
+            Assertions.assertEquals(1, accountEntity.getAllowNegative());
+            Assertions.assertEquals(Money.of("0.00", USD), accountEntity.getBalance());
+            Assertions.assertEquals("test-usa-3", accountEntity.getName());
         }
     }
 
@@ -85,45 +84,42 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @TransactionExplicit
     @Commit
     public void givenInitialSEKAccountBalances_whenIssuingBalancedFundsTransfer_thenBalancesUpdatedAndTransferRecordCreated() {
-        Account accountA = accountService.findById(sekAccount1.getId());
-        Account accountB = accountService.findById(sekAccount2.getId());
-        Account accountC = accountService.findById(sekSystemAccount.getId());
+        AccountEntity accountEntityA = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(sekAccountEntity2.getId());
+        AccountEntity accountEntityC = accountService.findById(sekSystemAccountEntity.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
-        Assertions.assertNotEquals(accountA, accountC);
-        Assertions.assertNotEquals(accountB, accountC);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityC);
+        Assertions.assertNotEquals(accountEntityB, accountEntityC);
 
         TransferRequest request = TransferRequest.builder()
                 .withTransferType(TransferType.BANK)
                 .withId(UUID.randomUUID())
-                .withCity(accountC.getCity())
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity(accountA.getCity())
-                .withAmount(Money.of("500.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("500.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity(accountB.getCity())
-                .withAmount(Money.of("250.00", accountB.getBalance().getCurrency()))
+                .withId(accountEntityB.getId())
+                .withAmount(Money.of("250.00", accountEntityB.getBalance().getCurrency()))
                 .withNote("credit B")
                 .then()
                 .addItem()
-                .withId(accountC.getId())
-                .withCity(accountC.getCity())
-                .withAmount(Money.of("-750.00", accountC.getBalance().getCurrency()))
+                .withId(accountEntityC.getId())
+                .withAmount(Money.of("-750.00", accountEntityC.getBalance().getCurrency()))
                 .withNote("debit A+B")
                 .then()
                 .build();
 
-        Transfer transfer = transferService.createTransfer(request);
-        Assertions.assertNotNull(transfer);
-        Assertions.assertEquals(3, transfer.getItems().size());
-        Assertions.assertEquals(TransferType.BANK, transfer.getTransferType());
-        Assertions.assertTrue(transfer.isNew());
+        TransferEntity transferEntity = transferService.createTransfer(request);
+        Assertions.assertNotNull(transferEntity);
+        Assertions.assertEquals(3, transferEntity.getItems().size());
+        Assertions.assertEquals(TransferType.BANK, transferEntity.getTransferType());
+        Assertions.assertTrue(transferEntity.isNew());
     }
 
     @Test
@@ -131,45 +127,42 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @TransactionExplicit
     @Commit
     public void givenInitialUSDAccountBalances_whenIssuingBalancedFundsTransfer_thenBalancesUpdatedAndTransferRecordCreated() {
-        Account accountA = accountService.findById(usdAccount1.getId());
-        Account accountB = accountService.findById(usdAccount2.getId());
-        Account accountC = accountService.findById(usdSystemAccount.getId());
+        AccountEntity accountEntityA = accountService.findById(usdAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(usdAccountEntity2.getId());
+        AccountEntity accountEntityC = accountService.findById(usdSystemAccountEntity.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
-        Assertions.assertNotEquals(accountA, accountC);
-        Assertions.assertNotEquals(accountB, accountC);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityC);
+        Assertions.assertNotEquals(accountEntityB, accountEntityC);
 
         TransferRequest request = TransferRequest.builder()
                 .withTransferType(TransferType.BANK)
                 .withId(UUID.randomUUID())
-                .withCity(accountC.getCity())
+                .withCity(NYC)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity(accountA.getCity())
-                .withAmount(Money.of("500.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("500.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity(accountB.getCity())
-                .withAmount(Money.of("250.00", accountB.getBalance().getCurrency()))
+                .withId(accountEntityB.getId())
+                .withAmount(Money.of("250.00", accountEntityB.getBalance().getCurrency()))
                 .withNote("credit B")
                 .then()
                 .addItem()
-                .withId(accountC.getId())
-                .withCity(accountC.getCity())
-                .withAmount(Money.of("-750.00", accountC.getBalance().getCurrency()))
+                .withId(accountEntityC.getId())
+                .withAmount(Money.of("-750.00", accountEntityC.getBalance().getCurrency()))
                 .withNote("debit A+B")
                 .then()
                 .build();
 
-        Transfer transfer = transferService.createTransfer(request);
-        Assertions.assertNotNull(transfer);
-        Assertions.assertEquals(3, transfer.getItems().size());
-        Assertions.assertEquals(TransferType.BANK, transfer.getTransferType());
-        Assertions.assertTrue(transfer.isNew());
+        TransferEntity transferEntity = transferService.createTransfer(request);
+        Assertions.assertNotNull(transferEntity);
+        Assertions.assertEquals(3, transferEntity.getItems().size());
+        Assertions.assertEquals(TransferType.BANK, transferEntity.getTransferType());
+        Assertions.assertTrue(transferEntity.isNew());
     }
 
     @Test
@@ -177,36 +170,34 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @TransactionExplicit
     @Commit
     public void givenCurrentAccountBalances_whenIssuingOneBalancedFundsTransfer_thenBalancesUpdatedAndTransferRecordCreated() {
-        Account accountA = accountService.findById(sekAccount1.getId());
-        Account accountB = accountService.findById(sekAccount2.getId());
+        AccountEntity accountEntityA = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(sekAccountEntity2.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
 
         TransferRequest request = TransferRequest.builder()
                 .withId(UUID.randomUUID())
                 .withTransferType(TransferType.PAYMENT)
-                .withCity("stockholm")
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity(accountA.getCity())
-                .withAmount(Money.of("-50.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("-50.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity(accountB.getCity())
-                .withAmount(Money.of("50.00", accountB.getBalance().getCurrency()))
+                .withId(accountEntityB.getId())
+                .withAmount(Money.of("50.00", accountEntityB.getBalance().getCurrency()))
                 .withNote("credit A")
                 .then()
                 .build();
 
-        Transfer transfer = transferService.createTransfer(request);
-        Assertions.assertNotNull(transfer);
-        Assertions.assertEquals(2, transfer.getItems().size());
-        Assertions.assertEquals(TransferType.PAYMENT, transfer.getTransferType());
-        Assertions.assertTrue(transfer.isNew());
+        TransferEntity transferEntity = transferService.createTransfer(request);
+        Assertions.assertNotNull(transferEntity);
+        Assertions.assertEquals(2, transferEntity.getItems().size());
+        Assertions.assertEquals(TransferType.PAYMENT, transferEntity.getTransferType());
+        Assertions.assertTrue(transferEntity.isNew());
     }
 
     private void assertZeroOrPositive(Money money, String addend) {
@@ -219,10 +210,10 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @TransactionExplicit
     @Commit
     public void givenCurrentAccountBalances_whenIssuingMultiLeggedFundsTransfer_thenBalancesUpdatedAndTransferRecordCreated() {
-        Account sekFrom = accountService.findById(sekAccount1.getId());
-        Account sekTo = accountService.findById(sekAccount2.getId());
-        Account usdFrom = accountService.findById(usdAccount1.getId());
-        Account usdTo = accountService.findById(usdAccount2.getId());
+        AccountEntity sekFrom = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity sekTo = accountService.findById(sekAccountEntity2.getId());
+        AccountEntity usdFrom = accountService.findById(usdAccountEntity1.getId());
+        AccountEntity usdTo = accountService.findById(usdAccountEntity2.getId());
 
         Assertions.assertNotEquals(sekFrom, sekTo);
         Assertions.assertNotEquals(usdFrom, usdTo);
@@ -234,59 +225,52 @@ public class FunctionalTest extends AbstractIntegrationTest {
 
         TransferRequest request = TransferRequest.builder()
                 .withId(UUID.randomUUID())
-                .withCity("stockholm")
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .withTransferType(TransferType.PAYMENT)
                 .addItem()
                 .withId(sekFrom.getId())
-                .withCity(sekFrom.getCity())
                 .withAmount(Money.of("-50.00", sekFrom.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
                 .withId(sekFrom.getId())
-                .withCity(sekFrom.getCity())
                 .withAmount(Money.of("-100.00", sekFrom.getBalance().getCurrency()))
                 .withNote("debit B")
                 .then()
                 .addItem()
                 .withId(sekTo.getId())
-                .withCity(sekTo.getCity())
                 .withAmount(Money.of("150.00", sekTo.getBalance().getCurrency()))
                 .withNote("credit A+B")
                 .then()
                 .addItem()
                 .withId(usdFrom.getId())
-                .withCity(usdFrom.getCity())
                 .withAmount(Money.of("-250.05", usdFrom.getBalance().getCurrency()))
                 .withNote("debit C")
                 .then()
                 .addItem()
                 .withId(usdFrom.getId())
-                .withCity(usdFrom.getCity())
                 .withAmount(Money.of("-0.55", usdFrom.getBalance().getCurrency()))
                 .withNote("debit D.1")
                 .then()
                 .addItem()
                 .withId(usdFrom.getId())
-                .withCity(usdFrom.getCity())
                 .withAmount(Money.of("0.55", usdFrom.getBalance().getCurrency()))
                 .withNote("debit D.2 - revert D.1")
                 .then()
                 .addItem()
                 .withId(usdTo.getId())
-                .withCity(usdTo.getCity())
                 .withAmount(Money.of("250.05", usdTo.getBalance().getCurrency()))
                 .withNote("credit C+D")
                 .then()
                 .build();
 
-        Transfer transfer = transferService.createTransfer(request);
-        Assertions.assertNotNull(transfer);
-        Assertions.assertEquals(4, transfer.getItems().size());
-        Assertions.assertEquals(TransferType.PAYMENT, transfer.getTransferType());
-        Assertions.assertTrue(transfer.isNew());
+        TransferEntity transferEntity = transferService.createTransfer(request);
+        Assertions.assertNotNull(transferEntity);
+        Assertions.assertEquals(4, transferEntity.getItems().size());
+        Assertions.assertEquals(TransferType.PAYMENT, transferEntity.getTransferType());
+        Assertions.assertTrue(transferEntity.isNew());
     }
 
     @Test
@@ -294,27 +278,25 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @Rollback
     @Order(6)
     public void givenCurrentAccountBalances_whenIssuingUnbalancedFundsTransfer_thenFail() {
-        Account accountA = accountService.findById(sekAccount1.getId());
-        Account accountB = accountService.findById(sekAccount2.getId());
+        AccountEntity accountEntityA = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(sekAccountEntity2.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
 
         TransferRequest form = TransferRequest.builder()
                 .withId(UUID.randomUUID())
                 .withTransferType(TransferType.PAYMENT)
-                .withCity("stockholm")
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity("stockholm")
-                .withAmount(Money.of("-50.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("-50.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity("stockholm")
-                .withAmount(Money.of("50.05", accountB.getBalance().getCurrency()))
+                .withId(accountEntityB.getId())
+                .withAmount(Money.of("50.05", accountEntityB.getBalance().getCurrency()))
                 .withNote("credit A")
                 .then()
                 .build();
@@ -329,26 +311,24 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @Rollback
     @Order(7)
     public void givenCurrentAccountBalances_whenIssuingUnbalancedMultiCurrencyFundsTransfer_thenFail() {
-        Account accountA = accountService.findById(sekAccount1.getId());
-        Account accountB = accountService.findById(usdAccount1.getId());
+        AccountEntity accountEntityA = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(usdAccountEntity1.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
 
         TransferRequest form = TransferRequest.builder()
                 .withId(UUID.randomUUID())
                 .withTransferType(TransferType.PAYMENT)
-                .withCity("stockholm")
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity("stockholm")
-                .withAmount(Money.of("-50.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("-50.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity("stockholm")
+                .withId(accountEntityB.getId())
                 .withAmount(Money.of("50.00", "USD"))
                 .withNote("credit A")
                 .then()
@@ -364,27 +344,25 @@ public class FunctionalTest extends AbstractIntegrationTest {
     @Rollback
     @Order(8)
     public void givenCurrentAccountBalances_whenIssuingFundsTransferWithNegativeBalance_thenFail() {
-        Account accountA = accountService.findById(sekAccount1.getId());
-        Account accountB = accountService.findById(sekAccount2.getId());
+        AccountEntity accountEntityA = accountService.findById(sekAccountEntity1.getId());
+        AccountEntity accountEntityB = accountService.findById(sekAccountEntity2.getId());
 
-        Assertions.assertNotEquals(accountA, accountB);
+        Assertions.assertNotEquals(accountEntityA, accountEntityB);
 
         TransferRequest form = TransferRequest.builder()
                 .withId(UUID.randomUUID())
                 .withTransferType(TransferType.PAYMENT)
-                .withCity("stockholm")
+                .withCity(STH)
                 .withBookingDate(LocalDate.now())
                 .withTransferDate(LocalDate.now())
                 .addItem()
-                .withId(accountA.getId())
-                .withCity("stockholm")
-                .withAmount(Money.of("-5000.00", accountA.getBalance().getCurrency()))
+                .withId(accountEntityA.getId())
+                .withAmount(Money.of("-5000.00", accountEntityA.getBalance().getCurrency()))
                 .withNote("debit A")
                 .then()
                 .addItem()
-                .withId(accountB.getId())
-                .withCity("stockholm")
-                .withAmount(Money.of("5000.00", accountB.getBalance().getCurrency()))
+                .withId(accountEntityB.getId())
+                .withAmount(Money.of("5000.00", accountEntityB.getBalance().getCurrency()))
                 .withNote("credit A")
                 .then()
                 .build();

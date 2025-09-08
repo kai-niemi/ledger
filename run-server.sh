@@ -3,7 +3,8 @@
 db_url="jdbc:postgresql://localhost:26257/ledger?sslmode=disable"
 db_user=root
 db_password=
-spring_profile="default"
+#spring_profile="default"
+spring_profile="test"
 
 ######################################################
 

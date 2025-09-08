@@ -1,5 +1,10 @@
 package se.cockroachdb.ledger.repository.jdbc;
 
+import java.math.BigDecimal;
+import java.util.Currency;
+
+import javax.sql.DataSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,17 +17,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
+
 import se.cockroachdb.ledger.ProfileNames;
-import se.cockroachdb.ledger.model.AccountSummary;
-import se.cockroachdb.ledger.model.TransferSummary;
+import se.cockroachdb.ledger.domain.AccountSummary;
+import se.cockroachdb.ledger.domain.TransferSummary;
+import se.cockroachdb.ledger.model.City;
 import se.cockroachdb.ledger.repository.ReportingRepository;
 import se.cockroachdb.ledger.util.MetadataUtils;
 import se.cockroachdb.ledger.util.Money;
-
-import javax.sql.DataSource;
-import java.math.BigDecimal;
-import java.util.Currency;
-import java.util.Optional;
 
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS) // to support both explicit and implicit
@@ -45,85 +47,92 @@ public class JdbcReportingRepository implements ReportingRepository {
     }
 
     @Override
-//    @Cacheable(value = CacheConfig.CACHE_ACCOUNT_REPORT_SUMMARY)
-    public Optional<AccountSummary> accountSummary(String city) {
+    public AccountSummary accountSummary(City city) {
         assertNoTransactionContext();
 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("city", city);
+        parameters.addValue("city", city.getName());
 
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(
+            return namedParameterJdbcTemplate.queryForObject(
                     "SELECT "
-                            + "  count(a.id) as tot_accounts, "
-                            + "  sum(a.balance) as tot_balance, "
-                            + "  min(a.balance) as min_balance, "
-                            + "  max(a.balance) as max_balance, "
-                            + "  max(a.updated_at) as last_update, "
-                            + "  a.currency as currency "
-                            + "FROM account a "
-                            + (usingCockroachDB ? "AS OF SYSTEM TIME follower_read_timestamp()" : "")
-                            + "WHERE a.city = :city "
-                            + "GROUP BY a.currency "
-                            + "LIMIT 1", // Assuming single currency
+                    + "  count(a.id) as tot_accounts, "
+                    + "  sum(a.balance) as tot_balance, "
+                    + "  min(a.balance) as min_balance, "
+                    + "  max(a.balance) as max_balance, "
+                    + "  max(a.updated_at) as last_update, "
+                    + "  a.currency as currency "
+                    + "FROM account a "
+                    + (usingCockroachDB ? "AS OF SYSTEM TIME follower_read_timestamp()" : "")
+                    + "WHERE a.city = :city "
+                    + "GROUP BY a.currency "
+                    + "LIMIT 1", // Assuming single currency
                     parameters,
                     (rs, rowNum) -> {
                         Currency currency = Currency.getInstance(rs.getString(6));
 
                         AccountSummary summary = new AccountSummary();
-                        summary.setCity(city);
+                        summary.setCity(city.getName());
                         summary.setNumberOfAccounts(rs.getInt(1));
                         summary.setTotalBalance(Money.of(rs.getBigDecimal(2), currency));
                         summary.setMinBalance(Money.of(rs.getBigDecimal(3), currency));
                         summary.setMaxBalance(Money.of(rs.getBigDecimal(4), currency));
                         summary.setUpdatedAt(rs.getTimestamp(5).toLocalDateTime());
                         return summary;
-                    }));
+                    });
         } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
+            return AccountSummary.empty(city);
         }
     }
 
     @Override
-//    @Cacheable(value = CacheConfig.CACHE_TRANSACTION_REPORT_SUMMARY)
-    public Optional<TransferSummary> transactionSummary(String city) {
+    public TransferSummary transferSummary(City city) {
         assertNoTransactionContext();
 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("city", city);
+        parameters.addValue("city", city.getName());
 
-        // Break down per currency and use parallel queries
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(
+            return namedParameterJdbcTemplate.queryForObject(
                     "SELECT "
-                            + "  count(distinct t.id) as id, "
-                            + "  count(ti.transfer_id) as transfer_count, "
-                            + "  sum(abs(ti.amount)) as total_turnover, "
-                            + "  sum(ti.amount) as total_amount, "
-                            + "  ti.currency as currency "
-                            + "FROM transfer t "
-                            + "  JOIN transfer_item ti ON t.id=ti.transfer_id "
-                            + (usingCockroachDB ? "AS OF SYSTEM TIME follower_read_timestamp()" : "")
-                            + "WHERE ti.city = :city "
-                            + "GROUP BY ti.city, ti.currency "
-                            + "LIMIT 1", // Assuming single currency
+                    + "  ti.city as city, "
+                    + "  count(distinct t.id) as transfer_total, "
+                    + "  count(ti.transfer_id) as total_legs, "
+                    + "  sum(abs(ti.amount)) as total_turnover, "
+                    + "  sum(ti.amount) as total_amount, "
+                    + "  ti.currency as currency "
+                    + "FROM transfer t "
+                    + "  JOIN transfer_item ti ON t.id=ti.transfer_id "
+                    + (usingCockroachDB ? "AS OF SYSTEM TIME follower_read_timestamp()" : "")
+                    + "WHERE ti.city = :city "
+                    + "GROUP BY ti.city, ti.currency "
+                    + "LIMIT 1", // Assuming single currency
                     parameters,
                     (rs, rowNum) -> {
-                        BigDecimal sum = rs.getBigDecimal(3);
-                        BigDecimal checksum = rs.getBigDecimal(4);
-                        Currency currency = Currency.getInstance(rs.getString(5));
+                        int colNum = 1;
+
+                        String cityActual = rs.getString(colNum++);
+                        int totalTransfers = rs.getInt(colNum++);
+                        int totalLegs = rs.getInt(colNum++);
+                        BigDecimal totalTurnover = rs.getBigDecimal(colNum++);
+                        BigDecimal totalAmount = rs.getBigDecimal(colNum++);
+                        Currency currency = Currency.getInstance(rs.getString(colNum));
+
+                        Money turnover = Money.of(totalTurnover != null ? totalTurnover : BigDecimal.ZERO, currency);
+                        // If total amount is not zero, we have a major problem (can only happen in RC w/o locks)!
+                        Money checksum = Money.of(totalAmount != null ? totalAmount : BigDecimal.ZERO, currency);
 
                         TransferSummary summary = new TransferSummary();
-                        summary.setCity(city);
-                        summary.setNumberOfTransfers(rs.getInt(1));
-                        summary.setNumberOfLegs(rs.getInt(2));
-                        summary.setTotalTurnover(Money.of(sum != null ? sum : BigDecimal.ZERO, currency));
-                        summary.setTotalCheckSum(Money.of(checksum != null ? checksum : BigDecimal.ZERO, currency));
+                        summary.setCity(cityActual);
+                        summary.setNumberOfTransfers(totalTransfers);
+                        summary.setNumberOfLegs(totalLegs);
+                        summary.setTotalTurnover(turnover);
+                        summary.setTotalCheckSum(checksum);
 
                         return summary;
-                    }));
+                    });
         } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
+            return TransferSummary.empty(city);
         }
     }
 }

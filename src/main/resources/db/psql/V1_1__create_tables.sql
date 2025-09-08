@@ -1,20 +1,9 @@
--- Leger DDL for PostgreSQL 10+
-
--- drop table if exists transfer_item cascade;
--- drop table if exists transfer cascade;
--- drop table if exists account cascade;
--- drop table if exists account_plan;
--- drop table if exists outbox cascade;
-
 create extension if not exists pgcrypto;
 
 drop function if exists gateway_region();
 
 create function gateway_region() returns text
-as
-$$
-select 'default'
-$$
+as $$ select 'default' $$
     language sql
     immutable
     returns null on null input;
@@ -70,6 +59,7 @@ create table transfer
 
     primary key (id)
 );
+
 create index on transfer (city);
 
 create table transfer_item

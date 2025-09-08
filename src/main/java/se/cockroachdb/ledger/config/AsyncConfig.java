@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -26,26 +25,23 @@ import org.springframework.web.context.request.async.TimeoutCallableProcessingIn
 public class AsyncConfig implements AsyncConfigurer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${application.task-executor.concurrency-limit}")
-    private int concurrencyLimit;
-
     @Override
     public AsyncTaskExecutor getAsyncExecutor() {
-        return workloadTaskExecutor();
+        return applicationTaskExecutor();
     }
 
-    @Bean(name = "workloadTaskExecutor")
-    public SimpleAsyncTaskExecutor workloadTaskExecutor() {
+    @Bean(name = "applicationTaskExecutor")
+    public SimpleAsyncTaskExecutor applicationTaskExecutor() {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor();
-        executor.setThreadNamePrefix("workload-");
-        executor.setConcurrencyLimit(concurrencyLimit);
+        executor.setThreadNamePrefix("ledger-");
+        executor.setConcurrencyLimit(-1);
         executor.setVirtualThreads(true);
         return executor;
     }
 
     @Bean("applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster(
-            @Autowired @Qualifier("workloadTaskExecutor") Executor executor) {
+            @Autowired @Qualifier("applicationTaskExecutor") Executor executor) {
         SimpleApplicationEventMulticaster eventMulticaster = new SimpleApplicationEventMulticaster();
         eventMulticaster.setTaskExecutor(executor);
         eventMulticaster.setErrorHandler(t -> {

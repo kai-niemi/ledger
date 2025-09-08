@@ -82,19 +82,19 @@ spring:
     password:
     name: Ledger
     hikari:
-      pool-name: ledger-pool
-      connection-init-sql: SELECT 1
-      initialization-fail-timeout: -1
-      connection-timeout: 5000
-      validation-timeout: 20000
-      max-lifetime: 180000
-      idle-timeout: 60000
       maximum-pool-size: 256
-      minimum-idle: 10
+      minimum-idle: 64
+      initialization-fail-timeout: -1
+      connection-timeout: 30000
+      validation-timeout: 5000
+      max-lifetime: 295000
+      idle-timeout: 290000
+      keepalive-time: 120000
       transaction-isolation: TRANSACTION_SERIALIZABLE
+      pool-name: ledger-pool
       data-source-properties:
         reWriteBatchedInserts: true
-        application_name: Ledger
+        ApplicationName: Ledger
   # Enable JDK21 virtual threads
   threads:
     virtual:

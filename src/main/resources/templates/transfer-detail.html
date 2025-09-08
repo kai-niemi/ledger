@@ -70,8 +70,8 @@
                         <td th:text="${item.note}"></td>
                         <td th:text="${item.runningBalance}"></td>
                         <td>
-                            <a th:href="@{/account/{id}(id=${item.account.id})}"
-                               th:text="${item.account.id}"></a>
+                            <a th:href="@{/account/{id}(id=${item.accountEntity.id})}"
+                               th:text="${item.accountEntity.id}"></a>
                         </td>
                     </tr>
                     </tbody>

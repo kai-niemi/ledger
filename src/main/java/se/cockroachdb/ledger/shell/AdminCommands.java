@@ -20,6 +20,7 @@ import org.springframework.shell.standard.commands.Quit;
 import ch.qos.logback.classic.Level;
 
 import se.cockroachdb.ledger.config.DataSourceConfig;
+import se.cockroachdb.ledger.repository.RegionRepository;
 import se.cockroachdb.ledger.shell.support.Constants;
 import se.cockroachdb.ledger.util.DurationUtils;
 
@@ -30,6 +31,9 @@ public class AdminCommands implements Quit.Command {
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
+
+    @Autowired
+    private RegionRepository regionRepository;
 
     @ShellMethod(value = "Toggle SQL trace logging (extremely verbose)", key = {"sql-trace"})
     public void toggleSqlTraceLogging() {
@@ -63,6 +67,17 @@ public class AdminCommands implements Quit.Command {
         logger.info("%s".formatted(DurationUtils.millisecondsToDisplayString(uptime)));
     }
 
+    @ShellMethod(value = "Print database information", key = {"db-info", "di"})
+    public void databaseInfo() {
+        logger.info("Database version: " + regionRepository.databaseVersion());
+        logger.info("Transaction isolation: " + regionRepository.databaseIsolation());
+        logger.info("Gateway region: " + regionRepository.getGatewayRegion().orElse("n/a"));
+        logger.info("Primary region: " + regionRepository.getPrimaryRegion().orElse("n/a"));
+        logger.info("Secondary region: " + regionRepository.getSecondaryRegion().orElse("n/a"));
+        logger.info("Cluster regions: " + regionRepository.listClusterRegions());
+        logger.info("Database regions: " + regionRepository.listDatabaseRegions());
+    }
+
     @ShellMethod(value = "Print system information", key = {"system-info", "si"})
     public void systemInfo() {
         OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
@@ -73,6 +88,7 @@ public class AdminCommands implements Quit.Command {
 
         RuntimeMXBean r = ManagementFactory.getRuntimeMXBean();
         logger.info(">> Runtime");
+        logger.info(" Pid: %s".formatted(r.getPid()));
         logger.info(" Uptime: %s".formatted(r.getUptime()));
         logger.info(
                 " VM name: %s | Vendor: %s | Version: %s".formatted(r.getVmName(), r.getVmVendor(), r.getVmVersion()));
