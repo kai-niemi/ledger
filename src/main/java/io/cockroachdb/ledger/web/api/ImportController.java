@@ -32,7 +32,6 @@ import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.model.AccountPlan;
 import io.cockroachdb.ledger.model.ApplicationProperties;
 import io.cockroachdb.ledger.model.City;
-import io.cockroachdb.ledger.model.Region;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.util.Money;
 
@@ -54,49 +53,56 @@ public class ImportController {
             @RequestParam(required = false) MultiValueMap<String, String> valueMap,
             @RequestHeader(value = HttpHeaders.ACCEPT_ENCODING,
                     required = false, defaultValue = "") String acceptEncoding) {
-
-        Map<String, String> allParams = Objects.requireNonNull(valueMap, "params required").toSingleValueMap();
+        boolean gzip = "gzip".equalsIgnoreCase(acceptEncoding);
 
         AccountPlan accountPlan = applicationProperties.getAccountPlan();
 
+        Map<String, String> allParams = Objects.requireNonNull(valueMap, "params required")
+                .toSingleValueMap();
+
         BigDecimal initialBalance = new BigDecimal(allParams.getOrDefault("initialBalance",
                 "" + accountPlan.getAccountsPerCity()));
-
-        int accountsPerCity = Integer.valueOf(allParams.getOrDefault("accountsPerCity",
+        int accountsPerCity = Integer.parseInt(allParams.getOrDefault("accountsPerCity",
                 "" + accountPlan.getAccountsPerCity()));
-
-        ResponseEntity.BodyBuilder bb = ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                .header("Pragma", "no-cache")
-                .header("Expires", "0");
 
         Set<City> cities = regionServiceFacade.listCities(region);
 
-        logger.info("Region %s cities %s".formatted(region, cities.stream().map(City::getName).toList()));
+        logger.info("""
+                >> Received account import request <<
+                Region: %s
+                Resolved %d cities: %s
+                Initial account balance: %s
+                Accounts per city: %,d
+                Total accounts: %,d
+                """.formatted(region,
+                cities.size(),
+                cities.stream().map(City::getName).toList(),
+                initialBalance,
+                accountsPerCity,
+                accountsPerCity * cities.size() * 2));
 
-        return bb.body(outputStream -> {
-            boolean gzip = false;//acceptEncoding.equalsIgnoreCase("gzip");
-//            if (gzip) {
-//                bb.header(HttpHeaders.CONTENT_ENCODING, "gzip");
-//            }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header(HttpHeaders.CONTENT_ENCODING, gzip ? "gzip" : "identity")
+                .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                .header("Pragma", "no-cache")
+                .header("Expires", "0")
+                .body(outputStream -> {
+                    try (PrintWriter pw = new PrintWriter(
+                            new BufferedWriter(new OutputStreamWriter(gzip
+                                    ? new GZIPOutputStream(outputStream, true) : outputStream)))) {
+                        CsvWriter<AccountEntity> csvWriter = new AccountCsvWriter(pw);
+                        csvWriter.writeHeader();
 
-            try (PrintWriter pw = new PrintWriter(
-                    new BufferedWriter(new OutputStreamWriter(gzip
-                            ? new GZIPOutputStream(outputStream, true) : outputStream)))) {
-                CsvWriter<AccountEntity> accountCsvWriter = new AccountCsvWriter(pw);
+                        cities.forEach(city -> {
+                            Money balance = Money.of(initialBalance, city.getCurrencyInstance());
+                            generateAccounts(city, balance, accountsPerCity, csvWriter::writeItem);
+                        });
 
-                accountCsvWriter.writeHeader();
-
-                cities.forEach(city -> {
-                    final Money balance = Money.of(initialBalance, city.getCurrencyInstance());
-                    generateAccounts(city, balance, accountsPerCity, accountCsvWriter::writeItem);
+                        csvWriter.writeFooter();
+                    }
                 });
-
-                accountCsvWriter.writeFooter();
-            }
-        });
     }
 
     private void generateAccounts(City city,
@@ -113,7 +119,8 @@ public class ImportController {
                 .withAllowNegative(true)
                 .withBalance(totalBalance.negate())
                 .withAccountType(AccountType.LIABILITY)
-                .withUpdated(LocalDateTime.now()).build();
+                .withUpdated(LocalDateTime.now())
+                .build();
 
         consumer.accept(systemAccountEntity);
 
@@ -125,7 +132,8 @@ public class ImportController {
                     .withAllowNegative(false)
                     .withBalance(initialBalance)
                     .withAccountType(AccountType.ASSET)
-                    .withUpdated(LocalDateTime.now()).build();
+                    .withUpdated(LocalDateTime.now())
+                    .build();
 
             consumer.accept(userAccountEntity);
         });

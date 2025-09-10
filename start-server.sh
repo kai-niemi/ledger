@@ -27,4 +27,5 @@ nohup java -jar $app_jarfile \
 --spring.profiles.active="${spring_profile}" \
 > ledger-stdout.log 2>&1 &
 
-tail -f ledger-stdout.log
+echo "Server started - check status in log:"
+echo "tail -f ledger-stdout.log"
