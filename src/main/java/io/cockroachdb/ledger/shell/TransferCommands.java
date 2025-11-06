@@ -85,7 +85,7 @@ public class TransferCommands extends AbstractServiceCommand {
         });
 
         if (accountIdsPerCity.isEmpty()) {
-            logger.warn("No cities found in region '%s' matching criteria".formatted(region));
+            logger.warn("No cities found in region '%s' (region mapping may be needed)".formatted(region));
             return;
         }
 

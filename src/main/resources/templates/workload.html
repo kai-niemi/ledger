@@ -51,8 +51,7 @@
                                 <label for="workload-title" class="form-label">Title:</label>
                             </div>
                             <div class="col-auto">
-                                <select th:field="*{title}" class="form-select" aria-label="Default select"
-                                        id="workload-title">
+                                <select th:field="*{title}" class="form-select" id="workload-title">
                                     <option th:each="t : ${workloadTitles}"
                                             th:value="${t}"
                                             th:text="${t}"
