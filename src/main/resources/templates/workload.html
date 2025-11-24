@@ -125,11 +125,11 @@
                         <th>-</th>
                         <th>-</th>
                         <th>-</th>
-                        <th th:text="${aggregatedMetrics.p90}" class="p90">0</th>
-                        <th th:text="${aggregatedMetrics.p99}" class="p99">0</th>
-                        <th th:text="${aggregatedMetrics.p999}" class="p999">0</th>
-                        <th th:text="${aggregatedMetrics.opsPerSec}" class="opsPerSec">0</th>
-                        <th th:text="${aggregatedMetrics.opsPerMin}" class="opsPerMin">0</th>
+                        <th th:text="${#numbers.formatDecimal(aggregatedMetrics.p90,1,1)}" class="p90">0</th>
+                        <th th:text="${#numbers.formatDecimal(aggregatedMetrics.p99,1,1)}" class="p99">0</th>
+                        <th th:text="${#numbers.formatDecimal(aggregatedMetrics.p999,1,1)}" class="p999">0</th>
+                        <th th:text="${#numbers.formatDecimal(aggregatedMetrics.opsPerSec,1,1)}" class="opsPerSec">0</th>
+                        <th th:text="${#numbers.formatDecimal(aggregatedMetrics.opsPerMin,1,1)}" class="opsPerMin">0</th>
                         <th th:text="${aggregatedMetrics.success}" class="success">0</th>
                         <th th:text="${aggregatedMetrics.transientFail}" class="transientFail">0</th>
                         <th th:text="${aggregatedMetrics.nonTransientFail}" class="nonTransientFail">0</th>
