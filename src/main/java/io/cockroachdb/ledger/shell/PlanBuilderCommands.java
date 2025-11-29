@@ -28,7 +28,7 @@ public class PlanBuilderCommands extends AbstractServiceCommand {
     ) {
         AccountPlan accountPlan = applicationModel.getAccountPlan();
         if (ShellOption.NULL.equals(accounts)) {
-            accountPlan.setAccountsPerCity(Multiplier.parseInt(accounts));
+            accountPlan.setAccountsPerCity(accounts);
         }
         if (initialBalance != null) {
             accountPlan.setInitialBalance(initialBalance);
