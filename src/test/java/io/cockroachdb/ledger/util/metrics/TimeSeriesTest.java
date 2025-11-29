@@ -1,14 +1,12 @@
 package io.cockroachdb.ledger.util.metrics;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.cockroachdb.ledger.shell.support.JsonHelper;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -35,11 +33,6 @@ public class TimeSeriesTest {
             sleep1s();
         });
         System.out.println();
-
-        List<Map<String, Object>> dataPoints1 = ts.getDataPoints();
-        System.out.println(JsonHelper.toFormattedJSON(dataPoints1));
-//        System.out.println();
-//        System.out.println(JsonHelper.toFormattedJSON(dataPoints2));
     }
 
     private void sleep1s() {

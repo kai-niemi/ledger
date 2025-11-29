@@ -8,7 +8,7 @@ This tutorial does not cover any CockroachDB cluster setups, see:
 - https://www.cockroachlabs.com/docs/stable/manual-deployment
 - https://www.cockroachlabs.com/docs/cockroachcloud
 
-Let's assume you have a 9 node cluster with 8-32 vCPUs per node across 3 different regions, as follows.
+Assume you have a 9 node cluster with 8-32 vCPUs per node across 3 different regions, as follows.
 
 | Region       | Primary | Secondary | Zones                                     | Nodes | Clients |
 |--------------|:--------|:----------|-------------------------------------------|-------|:--------|
@@ -19,12 +19,9 @@ Let's assume you have a 9 node cluster with 8-32 vCPUs per node across 3 differe
 The _Nodes_ column refers to the CockroachDB node numbers. The _Clients_ column refers to the VMs/machines
 hosting the ledger server, a CockroachDB binary and HAProxy load balancer in case it's a self-hosted cluster.
 
-For CockroachDB Cloud, you don't need the binary or HAProxy. The client(s) can be deployed
-in any of the region zones, or all of them. 
-
 ## Deploy the clients
 
-Assuming each client is already prepared with the required dependencies:
+Assume each client (10-12) is already prepared with the required dependencies:
 
 - CockroachDB binary
 - Ledger JAR file
@@ -34,74 +31,77 @@ The rest of this tutorial assumes a self-hosted, secure CockroachDB cluster.
 
 ### Client 10
 
-Use this client to create the database:
-
+SSH to the client and create the database:
+                      
+    ssh <client-host-10>
     ./cockroach sql --certs-dir=certs --host=<ip> -e "CREATE DATABASE ledger; ALTER ROLE root WITH PASSWORD 'cockroach'"
 
-Generate a haproxy config file for `us-east-1` and start it:
+Generate a config file for `us-east-1` region and start haproxy:
 
     ./cockroach gen haproxy --certs-dir=certs --host <ip> --external --locality=region=us-east-1
     nohup haproxy -f haproxy.cfg > /dev/null 2>&1 &
 
 ### Client 11
 
-Generate a haproxy config file for `eu-central-1` and start it:
+Generate a config file for `eu-central-1` region and start haproxy:
 
+    ssh <client-host-11>
     ./cockroach gen haproxy --certs-dir=certs --host <ip> --external --locality=region=eu-central-1
     nohup haproxy -f haproxy.cfg > /dev/null 2>&1 &
 
 ### Client 12
 
-Generate a haproxy config file for `eu-north-1` and start it:
-
+Generate a config file for `eu-north-1` region and start haproxy:
+                        
+    ssh <client-host-12>
     ./cockroach gen haproxy --certs-dir=certs --host <ip> --external --locality=region=eu-north-1
     nohup haproxy -f haproxy.cfg > /dev/null 2>&1 &
 
 ## Start the servers
 
-### Client 10
+In a multi-region setup like this, you should enable the multi-region capabilities including:
 
-In a setup like this, you want to enable the multi-region capabilities including:
-
-- Adding regions (primary and secondary)
+- Primary and secondary regions
 - Table localities (global and regional-by-row)
-- Survival goal (from zone to region)
+- (optional) Survival goal from zone to region
+
+There is a single shell command `apply-multi-region` that will enable all of the above.
+
+### Client 10
 
 Start the server and build the account plan:
 
+    ssh <client-host-10>
     java -jar ledger.jar
     :$ build-account-plan
 
-Ledger is optimized both for single and multi-region CockroachDB deployments. It can add regions,
-table localities and survival goals automatically by DDL statements. 
-
-This command will enable all these features in one go:
+Enable multi-region features in one go:
 
     :$ apply-multi-region
 
-It will add the database regions, set the survival goal to `REGION` and also set
-table localities to `regional-by-row`. This will make the table rows home region
-to be determined by the value of its city column (using the `region` computed 
-column as partition key). 
+This will add database regions, set the survival goal to `REGION` and also set
+table localities to `regional-by-row`. It will make the home region of a table
+row to be determined by the value of its city column by using the `region` computed 
+column as partition key. 
 
-Note that this can be a heavy operation so it may take a while to run and 
-for the cluster then re-balance the data as necessary. You can observe this
-activity in the DB Console.
+Notice that the DDL operations can be quite heavyso it may take a while to run and 
+for the database to re-balance the data accordingly to the placement constraints. 
+You can observe this activity in the DB Console.
 
-Next, start some workloads for this region, for example:
+After things have settled, start a few workloads for the first region, for example:
 
     :$ transfer-funds 
     :$ read-balance
 
-You should notice that it picks the cities for the local region (us-east-1).
-
+You should notice that it picks the cities for the local region, in this case `us-east-1`.
 As a later exercise, you can change the survival goal back to `zone` (the default) 
-and observe its effect on forward progress.
+and observe its effect.
 
 ### Client 11
 
 Start the server shell and some workloads:
-
+                   
+    ssh <client-host-11>
     java -jar ledger.jar 
     :$ transfer-funds 
     :$ read-balance
@@ -111,55 +111,59 @@ You should notice that it picks the cities of the local region (eu-central-1).
 ### Client 12
 
 Start the server shell and some workloads:
-
+                        
+    ssh <client-host-12>
     java -jar ledger.jar 
     :$ transfer-funds 
     :$ read-balance
 
 You should notice that it picks the cities of the local region (eu-north-1).
 
-## Conclusions
+## Takeaways
 
-Expected application behavior in this setup.
-                                          
+Key takeaways in running ledger in a multi-region setup.
+                                         
 ### Performance
 
-You should observe local read and write latencies for all transactions towards 
-the "in-region" accounts, since these accounts have been optimized for access
-from the local regions. By the same token, you should observe higher latencies when
-for example transferring funds across EU accounts from a US client and vice versa.
+Granted that you are using zone survival, you should observe local read and write 
+latencies for all transactions towards "in-region" accounts since the accounts 
+have been optimized for access from local regions. If you are using region survival,
+then the write latency is affected by at most one cross-region link latency. 
+You should also observe higher read and write latencies when transferring 
+funds across remote regions.
 
-For reference, a 3x16 vCPU single-region cluster with a 2GB dataset should 
-provide approximately:
+A 3x16 vCPU single-region cluster with a 2GB dataset should provide approximately:
 
 - 60K QPS at P99 <1ms for point balance reads.
 - 40K QPS at P99 20ms P99 for read-write transactions (transfers).
 
+A 9x16 vCPU multi-region cluster should provide similar latencies and a higher
+QPS number.
+
 ### Survival
 
-With regional survival, you should be able to observe forward progress for all 
-accounts also during a full single region outage.
+With zone survival you will observe forward progress for all accounts homed 
+in each region in the event of 1 of 3 zones being out. With regional survival, 
+you will observe forward progress for all accounts across the entire keyspace 
+in the event of 1 of 3 regions being out.
 
-With zone survival, you should be able to observe forward progress for
-all accounts homed in the other two operational regions. The accounts "homed" 
-in the downed region will stop making progress until that region has recovered.
-
-Making progress in this context means transfer and balance transactions
-towards the accounts will succeed rather than timeout or fail.
+Forward progress in this context means account transfers and balance requests
+will succeed rather than timeout or error out.
 
 ### Consistency
 
-With serializable isolation you will always observe consistent outcomes 
-and zero balance sums per city (the checksum). With read committed isolation,
-given that locking is enabled, you will also observe only correct transfer
-fund outcomes.
+With serializable isolation you will always observe consistent transfer 
+outcomes and zero balance sums per city (called checksums). 
+
+With read committed isolation, given that locking is enabled, you will 
+also observe correct transfer fund outcomes. Without locking, you may 
+observe P4 lost update anomalies with negative balances as an outcome.
 
 ### Locality
 
-With table localities set to `regional-by-row`, you will observe predictable
-low read and write latencies in the local regions. Replicas are however placed 
-outside the row's home region for performance and survival. 
-
-Complete data domiciling, where all voting and non-voting replicas are pinned 
-to their respective home regions require the use of _super regions_ which is
-out of scope for this tutorial.
+Tables with locality set to `regional-by-row` will observe predictable
+low read and write latencies in the local regions. Non-voting replicas 
+are still placed outside the row's home region for performance and survival,
+hence there's no data domiciling enabled. Data domiciling, where all voting 
+and non-voting replicas are pinned to their respective home regions, would 
+require the use of _super regions_ which is out of scope for this tutorial.

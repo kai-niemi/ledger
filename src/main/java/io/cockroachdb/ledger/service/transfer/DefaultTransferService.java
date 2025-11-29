@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.cockroachdb.ledger.annotations.ControlService;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountItem;
@@ -47,6 +49,9 @@ public class DefaultTransferService implements TransferService {
 
     @Autowired
     private ApplicationProperties applicationModel;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY) // to signal txn required
@@ -115,7 +120,7 @@ public class DefaultTransferService implements TransferService {
             accountRepository.updateBalances(coalesceItems(transferRequest.getAccountItems()));
         } catch (IncorrectResultSizeDataAccessException e) {
             logger.warn("Negative balance update outcome:\n%s".formatted(
-                    JsonHelper.toFormattedJSON(transferRequest)
+                    JsonHelper.toFormattedJSON(objectMapper, transferRequest)
             ));
             throw new NegativeBalanceException("Negative balance constraint failed - check log", e);
         }

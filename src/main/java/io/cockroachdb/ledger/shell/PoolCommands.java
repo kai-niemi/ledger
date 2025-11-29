@@ -10,6 +10,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariConfigMXBean;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
@@ -77,6 +78,9 @@ public class PoolCommands extends AbstractShellComponent {
     @Autowired
     private HikariDataSource hikariDataSource;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private ConnectionPoolState getConnectionPoolSize() {
         return from(hikariDataSource.getHikariPoolMXBean());
     }
@@ -88,21 +92,21 @@ public class PoolCommands extends AbstractShellComponent {
     @ShellMethod(value = "Show connection pool config", key = {"show-pool-config", "spc"})
     public void showPoolConfig() {
         logger.info("Connection pool config:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(getConnectionPoolConfig())));
+                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
     }
 
     @ShellMethod(value = "Show connection pool status", key = {"show-pool-status", "sps"})
     public void showPoolSize() {
         logger.info("Connection pool state:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(getConnectionPoolSize())));
+                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
     }
 
     @ShellMethod(value = "Set connection pool sizes", key = {"pool-size", "ps"})
-    public void setPoolSize(@ShellOption(help = "min idle") int minIdle,
-                            @ShellOption(help = "max size") int maxSize) {
-        hikariDataSource.setMinimumIdle(minIdle);
+    public void setPoolSize(@ShellOption(help = "max pool size") Integer maxSize,
+                            @ShellOption(help = "min idle size (same as max if omitted)",
+                                    defaultValue = ShellOption.NULL) Integer minIdle) {
         hikariDataSource.setMaximumPoolSize(maxSize);
-
-        logger.info("Set connection pool max size %d and min idle to %d".formatted(maxSize, minIdle));
+        hikariDataSource.setMinimumIdle(minIdle != null ? minIdle : maxSize);
+        logger.info("Set connection pool max size %d and min idle %d".formatted(maxSize, minIdle));
     }
 }

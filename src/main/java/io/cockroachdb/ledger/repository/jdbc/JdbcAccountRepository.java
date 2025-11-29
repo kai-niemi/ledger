@@ -40,7 +40,7 @@ import io.cockroachdb.ledger.util.Money;
 
 @Repository
 @Transactional(propagation = Propagation.SUPPORTS) // to support both explicit and implicit
-@Profile(ProfileNames.JDBC)
+@Profile(ProfileNames.NOT_JPA)
 public class JdbcAccountRepository implements AccountRepository {
     private JdbcTemplate jdbcTemplate;
 

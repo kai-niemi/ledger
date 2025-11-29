@@ -22,7 +22,7 @@ import io.cockroachdb.ledger.aspect.AdvisorOrder;
 @Configuration
 @EnableTransactionManagement(order = AdvisorOrder.TRANSACTION_MANAGER_ADVISOR, proxyTargetClass = true)
 @EnableJdbcRepositories(basePackageClasses = {Application.class})
-@Profile(ProfileNames.JDBC)
+@Profile(ProfileNames.NOT_JPA)
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class JdbcTransactionConfig implements TransactionManagementConfigurer {
     @Autowired

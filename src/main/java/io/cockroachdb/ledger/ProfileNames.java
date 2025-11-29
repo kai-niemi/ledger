@@ -11,7 +11,7 @@ public abstract class ProfileNames {
 
     public static final String JPA = "jpa";
 
-    public static final String JDBC = "!jpa";
+    public static final String NOT_JPA = "!jpa";
 
     public static final String OUTBOX = "outbox";
 

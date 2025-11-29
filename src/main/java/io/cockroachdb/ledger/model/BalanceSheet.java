@@ -12,7 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import io.cockroachdb.ledger.util.Money;
 
 /**
- * A city scoped balance sheet .
+ * A city scoped balance sheet.
  */
 @Validated
 @JsonInclude(JsonInclude.Include.NON_NULL)

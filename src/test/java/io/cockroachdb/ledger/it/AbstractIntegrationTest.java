@@ -9,12 +9,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.jdbc.JdbcRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.boot.data.jdbc.autoconfigure.DataJdbcRepositoriesAutoConfiguration;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.shell.boot.ShellRunnerAutoConfiguration;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -31,8 +31,8 @@ import io.cockroachdb.ledger.util.Money;
 @SpringBootApplication(exclude = {
         TransactionAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class,
-        JdbcRepositoriesAutoConfiguration.class,
-        JpaRepositoriesAutoConfiguration.class,
+        DataJdbcRepositoriesAutoConfiguration.class,
+        DataJpaRepositoriesAutoConfiguration.class,
         DataSourceAutoConfiguration.class,
         ShellRunnerAutoConfiguration.class // disable shell for it
 })

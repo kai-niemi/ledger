@@ -262,21 +262,26 @@ public class RegionServiceFacade {
 
     @TransactionImplicit
     public void applyMultiRegion(SurvivalGoal goal) {
-        logger.info("Adding database regions: %s".formatted(
-                        String.join(",", applicationProperties.getRegions()
-                                .stream()
-                                .filter(r -> !r.getDatabaseRegions().isEmpty())
-                                .map(Region::getDatabaseRegionSingleton)
-                                .collect(Collectors.toSet()))
-                )
+        logger.info("""
+                -- Apply multi-region configuration --
+                   Setting survival goal: %s
+                 Adding database regions: %s
+                Adding RBR localities to: %s
+                """.formatted(
+                goal,
+                String.join(",", PARTITION_TABLES),
+                String.join(",", applicationProperties.getRegions()
+                        .stream()
+                        .filter(r -> !r.getDatabaseRegions().isEmpty())
+                        .map(Region::getDatabaseRegionSingleton)
+                        .collect(Collectors.toSet())))
         );
+
         multiRegionRepository.addDatabaseRegions(applicationProperties.getRegions());
 
-        logger.info("Adding regional-by-row localities to tables: %s".formatted(String.join(",", PARTITION_TABLES)));
-        PARTITION_TABLES.forEach(
-                table -> multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
+        PARTITION_TABLES.forEach(table ->
+                multiRegionRepository.setRegionalByRowTable(applicationProperties.getRegions(), table));
 
-        logger.info("Setting survival goal: %s".formatted(goal));
         multiRegionRepository.setSurvivalGoal(goal);
 
         updateRegionMappings();
@@ -302,18 +307,14 @@ public class RegionServiceFacade {
     @TransactionImplicit
     public void addDatabaseRegions() {
         List<Region> regions = applicationProperties.getRegions();
-
         multiRegionRepository.addDatabaseRegions(regions);
-
         updateRegionMappings();
     }
 
     @TransactionImplicit
     public void dropDatabaseRegions() {
         List<Region> regions = applicationProperties.getRegions();
-
         multiRegionRepository.dropDatabaseRegions(regions);
-
         updateRegionMappings();
     }
 
@@ -331,14 +332,12 @@ public class RegionServiceFacade {
         Region r = applicationProperties.findRegionByName(region)
                 .orElseThrow(() -> new IllegalArgumentException("No such region: " + region));
         multiRegionRepository.setSecondaryRegion(r);
-
         updateRegionMappings();
     }
 
     @TransactionImplicit
     public void dropSecondaryRegion() {
         multiRegionRepository.dropSecondaryRegion();
-
         updateRegionMappings();
     }
 

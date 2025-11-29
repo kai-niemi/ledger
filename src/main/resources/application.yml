@@ -46,12 +46,19 @@ spring:
           max-age: 0
           no-cache: true
           no-store: true
+    error:
+      whitelabel:
+        enabled: false
+      path: /error
+      include-exception: true
+      include-message: always
+      include-stacktrace: always
+      include-binding-errors: always
   #############################
   flyway:
     enabled: true
     locations: classpath:db/crdb,classpath:db/common
     connect-retries: 15
-    clean-on-validation-error: true
     baseline-on-migrate: true
     clean-disabled: false
   #############################
@@ -118,12 +125,3 @@ management:
 #############################
 server:
   port: 9090
-  error:
-    whitelabel:
-      enabled: false
-    path: /error
-    include-exception: true
-    include-message: always
-    include-stacktrace: always
-    include-binding-errors: always
-

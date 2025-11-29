@@ -6,19 +6,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
 
+import io.cockroachdb.ledger.util.Multiplier;
+
 @Validated
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountPlan {
-    private int accountsPerCity;
+    private String accountsPerCity;
 
     @NotNull
     private Double initialBalance;
 
-    public int getAccountsPerCity() {
+    public String getAccountsPerCity() {
         return accountsPerCity;
     }
 
-    public void setAccountsPerCity(int accountsPerCity) {
+    public int getAccountsPerCityNum() {
+        return Multiplier.parseInt(accountsPerCity);
+    }
+
+    public void setAccountsPerCity(String accountsPerCity) {
         this.accountsPerCity = accountsPerCity;
     }
 

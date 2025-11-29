@@ -6,7 +6,7 @@
 
 title="CockroachDB 3-region EU deployment"
 # CRDB release version
-releaseversion="v25.3.0"
+releaseversion="v25.4.0"
 # AWS/GCE cloud (aws|gce)
 cloud="aws"
 # Number of node instances in total including clients
@@ -32,7 +32,9 @@ eu-west-1a,\
 eu-central-1a,\
 eu-west-2a"
 # AWS/GCE machine types
-machinetypes="m6i.2xlarge"
+# https://aws.amazon.com/ec2/instance-types/m6i/
+# 4xl = 16vcpu
+machinetypes="m6i.4xlarge"
 
 # Dry run mode
 dryrun=off

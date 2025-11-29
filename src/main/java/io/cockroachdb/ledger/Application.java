@@ -1,19 +1,20 @@
 package io.cockroachdb.ledger;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.jdbc.JdbcRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.data.jdbc.autoconfigure.DataJdbcRepositoriesAutoConfiguration;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.util.StringUtils;
 
 @EnableConfigurationProperties
@@ -21,8 +22,8 @@ import org.springframework.util.StringUtils;
 @SpringBootApplication(exclude = {
         TransactionAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class,
-        JdbcRepositoriesAutoConfiguration.class,
-        JpaRepositoriesAutoConfiguration.class,
+        DataJdbcRepositoriesAutoConfiguration.class,
+        DataJpaRepositoriesAutoConfiguration.class,
         DataSourceAutoConfiguration.class
 })
 public class Application {
@@ -32,14 +33,6 @@ public class Application {
         System.out.println("Options:");
         System.out.println("--help                    this help");
         System.out.println("--profiles [profile,..]   spring profiles to activate");
-        System.out.println("  Available profiles:");
-        System.out.println("    default *) - use account plan and region definitions in 'config/application-default.yml'.");
-        System.out.println("    test    *) - use account plan and region definitions in 'config/application-test.yml'.");
-        System.out.println("    outbox     - enable writing to outbox table for CDC.");
-        System.out.println("    retries    - enable aspect-oriented transaction retries.");
-        System.out.println("    jpa        - enable JPA and Hibernate repositories.");
-        System.out.println();
-        System.out.println("*) Pick either one or another named profile in 'config/' directory. Default is used when empty.");
         System.out.println();
         System.out.println("All other options are passed directly to spring container.");
         System.out.println();
@@ -52,8 +45,7 @@ public class Application {
         LinkedList<String> argsList = new LinkedList<>(Arrays.asList(args));
         LinkedList<String> passThroughArgs = new LinkedList<>();
 
-        Set<String> profiles =
-                StringUtils.commaDelimitedListToSet(System.getProperty("spring.profiles.active"));
+        Set<String> profiles = new HashSet<>();
 
         while (!argsList.isEmpty()) {
             String arg = argsList.pop();

@@ -17,7 +17,7 @@
 * [Running](#running)
   * [Run with an interactive shell](#run-with-an-interactive-shell)
   * [Start in the background](#start-in-the-background)
-  * [Enable PostgreSQL](#enable-postgresql)
+  * [Use PostgreSQL](#use-postgresql)
 * [Single-region Tutorial](#single-region-tutorial)
   * [Basics](#basics)
   * [Create an account plan](#create-an-account-plan)

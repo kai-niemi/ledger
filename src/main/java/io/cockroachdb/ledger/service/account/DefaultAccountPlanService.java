@@ -59,7 +59,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
 
         final Set<City> cities = Region.joinCities(regionServiceFacade.listAllRegions());
 
-        final AtomicInteger total = new AtomicInteger(cities.size() * accountPlan.getAccountsPerCity());
+        final AtomicInteger total = new AtomicInteger(cities.size() * accountPlan.getAccountsPerCityNum());
         final AtomicInteger current = new AtomicInteger();
 
         cities.parallelStream()
@@ -76,7 +76,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
                     final Money initialBalance = Money.of(
                             BigDecimal.valueOf(accountPlan.getInitialBalance()), currency);
                     // Compute total balance for all accounts in this city
-                    final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCity()).negate();
+                    final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCityNum()).negate();
 
                     accountServiceFacade.createAccount(
                             AccountEntity.builder()
@@ -107,7 +107,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
                             initialBalance.getCurrency().getCurrencyCode(),
                             AccountType.ASSET.getCode(),
                             LocalDateTime.now(),
-                            accountPlan.getAccountsPerCity());
+                            accountPlan.getAccountsPerCityNum());
 
                     // Tick
 

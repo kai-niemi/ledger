@@ -1,7 +1,5 @@
 package io.cockroachdb.ledger.shell;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.EnumValueProvider;
 import org.springframework.shell.standard.ShellCommandGroup;
@@ -17,8 +15,6 @@ import io.cockroachdb.ledger.shell.support.RegionProvider;
 @ShellComponent
 @ShellCommandGroup(Constants.REGION_MODIFICATION_COMMANDS)
 public class RegionModifyCommands {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     @Autowired
     private RegionServiceFacade regionServiceFacade;
 

@@ -5,53 +5,40 @@
 ############################################################################################
 
 spring:
-  ## Default datasource (insecure)
   datasource:
+    # Insecure:
     url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
-#    url: jdbc:postgresql://192.168.1.99:26257/ledger?sslmode=disable
+    # Secure:
+#    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require
+    # Cloud:
+#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
     username: root
     password:
     hikari:
       transaction-isolation: TRANSACTION_SERIALIZABLE
 #      transaction-isolation: TRANSACTION_READ_COMMITTED
 
-  ## Default datasource (secure)
-#  datasource:
-#    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require
-#    username: craig
-#    password: cockroach
-#    hikari:
-#      transaction-isolation: TRANSACTION_SERIALIZABLE
-
-  ## Alternative datasource (Cloud)
-#  datasource:
-#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
-#    username: craig
-#    password: cockroach
-#    hikari:
-#      transaction-isolation: TRANSACTION_SERIALIZABLE
-
 application:
-  ## Use pre-emptive locks when reading with the intent to write.
+  ## Use pre-emptive locks when reading accounts with the intent to write.
   # WARNING: It's imperative for correctness under READ_COMMITTED to set this to true.
-  # If set to false, you may see lost update (P4) anomalies under READ_COMMITTED.
-  # Under serializable (1SR), correctness is never compromised and locking may
-  # help to reduce contention.
+  # If set to false you may see lost update (P4) anomalies under READ_COMMITTED.
+  # Under serializable (1SR), correctness is never compromised but locking may help to reduce retries
+  # under high contention.
   using-locks: true
-  ## Enable idempotency check for each transfer request (one extra point read).
+  ## Enable idempotency check for each transfer request (one extra primary index read per write).
   idempotency-check: false
+
   ## Default account plan settings
   account-plan:
     # Number of accounts per city
-    accounts-per-city: 5_000
+    accounts-per-city: 10k
     # Initial balance for user asset accounts (in local currency)
     initial-balance: 5000.00
 
   ## Region to city mappings.
 
   # Include only the specified regions (all if omitted)
-  # Example:
-  # visible-regions: us-east-1,us-east-2,us-west-1, ..
+#  visible-regions: us-east-1,us-east-2,us-west-1, ..
 
   # A region name SHOULD match an existing locality region tier (--locality=region=aws-us-east-1,..) but can also be mapped in 'region-mappings'.
   # A region MAY have e ISO-3166-1 country code and ISO-4217 currency code for all its cities.

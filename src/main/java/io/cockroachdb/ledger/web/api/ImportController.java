@@ -61,9 +61,9 @@ public class ImportController {
                 .toSingleValueMap();
 
         BigDecimal initialBalance = new BigDecimal(allParams.getOrDefault("initialBalance",
-                "" + accountPlan.getAccountsPerCity()));
+                "" + accountPlan.getAccountsPerCityNum()));
         int accountsPerCity = Integer.parseInt(allParams.getOrDefault("accountsPerCity",
-                "" + accountPlan.getAccountsPerCity()));
+                "" + accountPlan.getAccountsPerCityNum()));
 
         Set<City> cities = regionServiceFacade.listCities(region);
 
