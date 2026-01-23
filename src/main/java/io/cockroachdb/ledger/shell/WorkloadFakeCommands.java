@@ -7,39 +7,45 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.stereotype.Component;
 
-import io.cockroachdb.ledger.shell.support.Constants;
-import io.cockroachdb.ledger.util.DurationUtils;
 import io.cockroachdb.ledger.service.workload.Worker;
 import io.cockroachdb.ledger.service.workload.WorkloadDescription;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
+import io.cockroachdb.ledger.shell.support.Constants;
+import io.cockroachdb.ledger.util.DurationUtils;
 
-@ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
-public class FakeCommands {
+@Component
+public class WorkloadFakeCommands extends AbstractShellCommand {
     private final AtomicInteger monotonicCounter = new AtomicInteger();
 
     @Autowired
     private WorkloadManager workloadManager;
 
-    @ShellMethod(value = "Create fake workload with random sleep durations", key = {"fake", "f"})
+    @Command(description = "Start fake workload with random sleep durations",
+            name = {"workload","start", "fake"},
+            group = Constants.WORKLOAD_COMMANDS)
     public void createFakeWorkloads(
-            @ShellOption(help = "number of workloads",
-                    defaultValue = "5") int count,
-            @ShellOption(help = "min sleep time in ms",
-                    defaultValue = "10") int min,
-            @ShellOption(help = "max sleep time in ms",
-                    defaultValue = "150") int max,
-            @ShellOption(help = "error probability (0-1)",
-                    defaultValue = "0.0") double probability,
-            @ShellOption(help = Constants.DURATION_HELP,
-                    defaultValue = Constants.DEFAULT_DURATION) String duration,
-            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
-                    defaultValue = "1") int concurrency
+            @Option(description = "number of workloads",
+                    defaultValue = "5",
+                    longName = "count") int count,
+            @Option(description = "min sleep time in ms",
+                    defaultValue = "10",
+                    longName = "min") int min,
+            @Option(description = "max sleep time in ms",
+                    defaultValue = "150",
+                    longName = "max") int max,
+            @Option(description = "error probability (0-1)",
+                    defaultValue = "0.0",
+                    longName = "probability") double probability,
+            @Option(description = Constants.DURATION_HELP,
+                    defaultValue = Constants.DEFAULT_DURATION,
+                    longName = "duration") String duration,
+            @Option(description = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1",
+                    longName = "concurrency") int concurrency
     ) {
         final Instant stopTime = Instant.now().plus(DurationUtils.parseDuration(duration));
 
@@ -74,7 +80,7 @@ public class FakeCommands {
                         public String categoryValue() {
                             return "Fakes";
                         }
-                    },  concurrency);
+                    }, concurrency);
         });
     }
 

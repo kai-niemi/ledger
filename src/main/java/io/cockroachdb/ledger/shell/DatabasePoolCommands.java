@@ -3,11 +3,9 @@ package io.cockroachdb.ledger.shell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.standard.AbstractShellComponent;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,9 +16,53 @@ import com.zaxxer.hikari.HikariPoolMXBean;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.JsonHelper;
 
-@ShellComponent
-@ShellCommandGroup(Constants.CONNECTION_POOL_COMMANDS)
-public class PoolCommands extends AbstractShellComponent {
+@Component
+public class DatabasePoolCommands extends AbstractShellCommand {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Autowired
+    private HikariDataSource hikariDataSource;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private ConnectionPoolState getConnectionPoolSize() {
+        return from(hikariDataSource.getHikariPoolMXBean());
+    }
+
+    private ConnectionPoolConfig getConnectionPoolConfig() {
+        return from(hikariDataSource.getHikariConfigMXBean());
+    }
+
+    @Command(description = "Show connection pool config",
+            name = {"db", "pool", "config"},
+            group = Constants.DB_COMMANDS)
+    public void showPoolConfig() {
+        logger.info("Connection pool config:\n%s"
+                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
+    }
+
+    @Command(description = "Show connection pool status",
+            name = {"db", "pool", "status"},
+            group = Constants.DB_COMMANDS)
+    public void showPoolSize() {
+        logger.info("Connection pool state:\n%s"
+                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
+    }
+
+    @Command(description = "Set connection pool size",
+            name = {"db", "pool", "size"},
+            group = Constants.DB_COMMANDS)
+    public void setPoolSize(@Option(description = "max pool size", required = true,
+                                        longName = "maxSize") Integer maxSize,
+                            @Option(description = "min idle size (same as max if omitted)",
+                                    longName = "minIdle") Integer minIdle) {
+        hikariDataSource.setMaximumPoolSize(maxSize);
+        hikariDataSource.setMinimumIdle(minIdle != null ? minIdle : maxSize);
+
+        logger.info("Set connection pool max size %d and min idle %d".formatted(maxSize, minIdle));
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class ConnectionPoolState {
         public int activeConnections;
@@ -73,40 +115,4 @@ public class PoolCommands extends AbstractShellComponent {
         return instance;
     }
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    @Autowired
-    private HikariDataSource hikariDataSource;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private ConnectionPoolState getConnectionPoolSize() {
-        return from(hikariDataSource.getHikariPoolMXBean());
-    }
-
-    private ConnectionPoolConfig getConnectionPoolConfig() {
-        return from(hikariDataSource.getHikariConfigMXBean());
-    }
-
-    @ShellMethod(value = "Show connection pool config", key = {"show-pool-config", "spc"})
-    public void showPoolConfig() {
-        logger.info("Connection pool config:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
-    }
-
-    @ShellMethod(value = "Show connection pool status", key = {"show-pool-status", "sps"})
-    public void showPoolSize() {
-        logger.info("Connection pool state:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
-    }
-
-    @ShellMethod(value = "Set connection pool sizes", key = {"pool-size", "ps"})
-    public void setPoolSize(@ShellOption(help = "max pool size") Integer maxSize,
-                            @ShellOption(help = "min idle size (same as max if omitted)",
-                                    defaultValue = ShellOption.NULL) Integer minIdle) {
-        hikariDataSource.setMaximumPoolSize(maxSize);
-        hikariDataSource.setMinimumIdle(minIdle != null ? minIdle : maxSize);
-        logger.info("Set connection pool max size %d and min idle %d".formatted(maxSize, minIdle));
-    }
 }

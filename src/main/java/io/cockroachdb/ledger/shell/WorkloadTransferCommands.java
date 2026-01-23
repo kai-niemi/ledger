@@ -9,16 +9,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
-import org.springframework.shell.standard.EnumValueProvider;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellMethodAvailability;
-import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import io.cockroachdb.ledger.domain.AccountEntity;
@@ -28,49 +24,59 @@ import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferType;
 import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.service.TransferServiceFacade;
+import io.cockroachdb.ledger.service.workload.Worker;
+import io.cockroachdb.ledger.service.workload.WorkloadDescription;
+import io.cockroachdb.ledger.service.workload.WorkloadManager;
 import io.cockroachdb.ledger.shell.support.Constants;
-import io.cockroachdb.ledger.shell.support.RegionProvider;
 import io.cockroachdb.ledger.util.CockroachFacts;
 import io.cockroachdb.ledger.util.DurationUtils;
 import io.cockroachdb.ledger.util.Money;
 import io.cockroachdb.ledger.util.RandomData;
-import io.cockroachdb.ledger.service.workload.Worker;
-import io.cockroachdb.ledger.service.workload.WorkloadDescription;
-import io.cockroachdb.ledger.service.workload.WorkloadManager;
 
-@ShellComponent
-@ShellCommandGroup(Constants.WORKLOAD_START_COMMANDS)
-public class TransferCommands extends AbstractServiceCommand {
+@Component
+public class WorkloadTransferCommands extends AbstractShellCommand {
     @Autowired
     private TransferServiceFacade transferServiceFacade;
 
     @Autowired
     private WorkloadManager workloadManager;
 
-    @ShellMethod(value = "Transfer funds between non-negative balance asset accounts", key = {"transfer-funds", "tf"})
-    @ShellMethodAvailability(ACCOUNT_PLAN_EXIST)
+    @Command(description = "Transfer funds between non-negative balance asset accounts",
+            name = {"workload", "start", "transfer", "funds"},
+            availabilityProvider = ACCOUNT_PLAN_EXIST,
+            completionProvider = "regionProvider",
+            group = Constants.WORKLOAD_COMMANDS)
     public void transferFunds(
-            @ShellOption(help = "minimum transfer amount in account currency",
-                    defaultValue = "0.05") final double min,
-            @ShellOption(help = "maximum transfer amount in account currency",
-                    defaultValue = "10.00") final double max,
-            @ShellOption(help = "number of legs per transfer (must be at least 2)",
-                    defaultValue = "2") final int legs,
-            @ShellOption(help = "additional number of legs per transfer",
-                    defaultValue = "0") final int variance,
-            @ShellOption(help = "minimum account balance for inclusion",
-                    defaultValue = "100.00") final double minBalance,
-            @ShellOption(help = "maximum account balance for inclusion",
-                    defaultValue = "999999999.00") final double maxBalance,
-            @ShellOption(help = Constants.ACCOUNT_LIMIT_HELP,
-                    defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT) int limit,
-            @ShellOption(help = Constants.REGIONS_HELP,
+            @Option(description = "minimum transfer amount in account currency",
+                    defaultValue = "0.05",
+                    longName = "min") final double min,
+            @Option(description = "maximum transfer amount in account currency",
+                    defaultValue = "10.00",
+                    longName = "max") final double max,
+            @Option(description = "number of legs per transfer (must be at least 2)",
+                    defaultValue = "2",
+                    longName = "legs") final int legs,
+            @Option(description = "additional number of legs per transfer",
+                    defaultValue = "0",
+                    longName = "variance") final int variance,
+            @Option(description = "minimum account balance for inclusion",
+                    defaultValue = "100.00",
+                    longName = "minBalance") final double minBalance,
+            @Option(description = "maximum account balance for inclusion",
+                    defaultValue = "999999999.00",
+                    longName = "maxBalance") final double maxBalance,
+            @Option(description = Constants.ACCOUNT_LIMIT_HELP,
+                    defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT,
+                    longName = "limit") int limit,
+            @Option(description = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
-                    valueProvider = RegionProvider.class) String region,
-            @ShellOption(help = Constants.DURATION_HELP,
-                    defaultValue = Constants.DEFAULT_DURATION) String duration,
-            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
-                    defaultValue = "1") int concurrency
+                    longName = "region") String region,
+            @Option(description = Constants.DURATION_HELP,
+                    defaultValue = Constants.DEFAULT_DURATION,
+                    longName = "duration") String duration,
+            @Option(description = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1",
+                    longName = "concurrency") int concurrency
     ) {
         if (legs < 2) {
             logger.info("Number of legs must be >= 2");
@@ -154,26 +160,33 @@ public class TransferCommands extends AbstractServiceCommand {
         return transferServiceFacade.createTransfer(builder.build());
     }
 
-    @ShellMethod(value = "Transfer grants from liability accounts to user accounts", key = {
-            "transfer-grants", "tg"})
-    @ShellMethodAvailability(ACCOUNT_PLAN_EXIST)
+    @Command(description = "Transfer grants from liability accounts to user accounts",
+            name = {"workload", "start", "transfer", "grants"},
+            availabilityProvider = ACCOUNT_PLAN_EXIST,
+            completionProvider = "accountTypeAndRegionCompletionProvider",
+            group = Constants.WORKLOAD_COMMANDS)
     public void transferGrants(
-            @ShellOption(help = "transfer amount debited liability accounts and credited asset accounts",
-                    defaultValue = "500.00") final double amount,
-            @ShellOption(help = "minimum asset account balance for inclusion",
-                    defaultValue = "0.00") final double minBalance,
-            @ShellOption(help = "maximum asset account balance for inclusion",
-                    defaultValue = "50.00") final double maxBalance,
-            @ShellOption(help = "max number of transfer legs per batch",
-                    defaultValue = "128") final int legs,
-            @ShellOption(help = "target account type (any but LIABILITY)",
+            @Option(description = "transfer amount debited liability accounts and credited asset accounts",
+                    defaultValue = "500.00",
+                    longName = "amount") final double amount,
+            @Option(description = "minimum asset account balance for inclusion",
+                    defaultValue = "0.00",
+                    longName = "minBalance") final double minBalance,
+            @Option(description = "maximum asset account balance for inclusion",
+                    defaultValue = "50.00",
+                    longName = "maxBalance") final double maxBalance,
+            @Option(description = "max number of transfer legs per batch",
+                    defaultValue = "128",
+                    longName = "legs") final int legs,
+            @Option(description = "target account type (any but LIABILITY)",
                     defaultValue = "ASSET",
-                    valueProvider = EnumValueProvider.class) AccountType accountType,
-            @ShellOption(help = Constants.REGIONS_HELP,
+                    longName = "accountType") AccountType accountType,
+            @Option(description = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
-                    valueProvider = RegionProvider.class) String region,
-            @ShellOption(help = "concurrency level, i.e. number of threads to start per city",
-                    defaultValue = "1") int concurrency
+                    longName = "region") String region,
+            @Option(description = "concurrency level, i.e. number of threads to start per city",
+                    defaultValue = "1",
+                    longName = "concurrency") int concurrency
     ) {
         if (accountType.equals(AccountType.LIABILITY)) {
             throw new IllegalArgumentException("You are not allowed to target accounts of this type!");

@@ -3,7 +3,6 @@
 # For all spring boot container properties, see:
 #  https://docs.spring.io/spring-boot/appendix/application-properties/index.html
 ############################################################################################
-
 spring:
   datasource:
     # Insecure:

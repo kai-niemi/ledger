@@ -1,8 +1,6 @@
 ##############################################
 # Spring boot properties
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
-#
-# See README.md for available Spring Profiles
 ##############################################
 spring:
   config:
@@ -15,19 +13,8 @@ spring:
     active: default
   #############################
   shell:
-    command:
-      stacktrace:
-        enabled: true
-      version:
-        enabled: true
-        showBuildName: true
-        showGitBranch: true
-    script:
-      enabled: true
-    interactive:
-      enabled: true
-    noninteractive:
-      enabled: false
+    context:
+      close: true
     history:
       name: .log/ledger.history
   #############################

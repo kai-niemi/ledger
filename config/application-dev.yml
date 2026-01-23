@@ -6,7 +6,6 @@
     hikari:
       transaction-isolation: TRANSACTION_SERIALIZABLE
 #      transaction-isolation: TRANSACTION_READ_COMMITTED
-
 application:
   using-locks: false
   idempotency-check: false

@@ -15,7 +15,7 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
-import org.springframework.shell.boot.ShellRunnerAutoConfiguration;
+import org.springframework.shell.core.autoconfigure.ShellRunnerAutoConfiguration;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import io.cockroachdb.ledger.Application;

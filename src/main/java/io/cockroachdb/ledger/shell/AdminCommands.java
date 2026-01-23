@@ -1,5 +1,6 @@
 package io.cockroachdb.ledger.shell;
 
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
@@ -7,38 +8,32 @@ import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.commands.Quit;
+import org.springframework.shell.core.command.CommandContext;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.stereotype.Component;
 
 import ch.qos.logback.classic.Level;
 
 import io.cockroachdb.ledger.config.DataSourceConfig;
-import io.cockroachdb.ledger.repository.RegionRepository;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.util.DurationUtils;
 
-@ShellComponent
-@ShellCommandGroup(Constants.ADMIN_COMMANDS)
-public class AdminCommands implements Quit.Command {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
+@Component
+public class AdminCommands extends AbstractShellCommand {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
-    @Autowired
-    private RegionRepository regionRepository;
-
-    @ShellMethod(value = "Toggle SQL trace logging (extremely verbose)", key = {"sql-trace"})
-    public void toggleSqlTraceLogging() {
+    @Command(description = "Toggle SQL trace logging",
+            name = {"admin", "sql", "trace"},
+            group = Constants.ADMIN_COMMANDS)
+    public void toggleSqlTraceLogging(CommandContext commandContext) {
         boolean enabled = toggleLogLevel(DataSourceConfig.SQL_TRACE_LOGGER);
-        logger.info("SQL Trace Logging {}", enabled ? "ENABLED" : "DISABLED");
+        commandContext.outputWriter()
+                .println("SQL Trace Logging %s".formatted(enabled ? "ENABLED" : "DISABLED"));
     }
 
     private boolean toggleLogLevel(String name) {
@@ -54,62 +49,60 @@ public class AdminCommands implements Quit.Command {
         }
     }
 
-    @ShellMethod(value = "Exit the shell", key = {"quit", "exit", "q"})
+    @Command(description = "Exit the shell",
+            name = {"admin", "quit"},
+            alias = "q",
+            group = Constants.ADMIN_COMMANDS)
     public void quit() {
-        logger.info("Quitting");
         SpringApplication.exit(applicationContext, () -> 0);
         System.exit(0);
     }
 
-    @ShellMethod(value = "Print application uptime")
-    public void uptime() {
+    @Command(description = "Print application uptime",
+            name = {"admin", "uptime"},
+            group = Constants.ADMIN_COMMANDS)
+    public void uptime(CommandContext commandContext) {
         long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
-        logger.info("%s".formatted(DurationUtils.millisecondsToDisplayString(uptime)));
+        commandContext.outputWriter()
+                .println(DurationUtils.millisecondsToDisplayString(uptime));
     }
 
-    @ShellMethod(value = "Print database information", key = {"db-info", "di"})
-    public void databaseInfo() {
-        logger.info("Database version: " + regionRepository.databaseVersion());
-        logger.info("Transaction isolation: " + regionRepository.databaseIsolation());
-        logger.info("Gateway region: " + regionRepository.getGatewayRegion().orElse("n/a"));
-        logger.info("Primary region: " + regionRepository.getPrimaryRegion().orElse("n/a"));
-        logger.info("Secondary region: " + regionRepository.getSecondaryRegion().orElse("n/a"));
-        logger.info("Cluster regions: " + regionRepository.listClusterRegions());
-        logger.info("Database regions: " + regionRepository.listDatabaseRegions());
-    }
+    @Command(description = "Print system information",
+            name = {"admin", "info"},
+            group = Constants.ADMIN_COMMANDS)
+    public void systemInfo(CommandContext commandContext) {
+        PrintWriter pw = commandContext.outputWriter();
 
-    @ShellMethod(value = "Print system information", key = {"system-info", "si"})
-    public void systemInfo() {
         OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-        logger.info(">> OS");
-        logger.info(" Arch: %s | OS: %s | Version: %s".formatted(os.getArch(), os.getName(), os.getVersion()));
-        logger.info(" Available processors: %d".formatted(os.getAvailableProcessors()));
-        logger.info(" Load avg: %f".formatted(os.getSystemLoadAverage()));
+        pw.println(">> OS");
+        pw.println(" Arch: %s | OS: %s | Version: %s".formatted(os.getArch(), os.getName(), os.getVersion()));
+        pw.println(" Available processors: %d".formatted(os.getAvailableProcessors()));
+        pw.println(" Load avg: %f".formatted(os.getSystemLoadAverage()));
 
         RuntimeMXBean r = ManagementFactory.getRuntimeMXBean();
-        logger.info(">> Runtime");
-        logger.info(" Pid: %s".formatted(r.getPid()));
-        logger.info(" Uptime: %s".formatted(r.getUptime()));
-        logger.info(
-                " VM name: %s | Vendor: %s | Version: %s".formatted(r.getVmName(), r.getVmVendor(), r.getVmVersion()));
+        pw.println(">> Runtime");
+        pw.println(" Pid: %s".formatted(r.getPid()));
+        pw.println(" Uptime: %s".formatted(r.getUptime()));
+        pw.println(" VM name: %s | Vendor: %s | Version: %s"
+                        .formatted(r.getVmName(), r.getVmVendor(), r.getVmVersion()));
 
         ThreadMXBean t = ManagementFactory.getThreadMXBean();
-        logger.info(">> Runtime");
-        logger.info(" Peak threads: %d".formatted(t.getPeakThreadCount()));
-        logger.info(" Thread #: %d".formatted(t.getThreadCount()));
-        logger.info(" Total started threads: %d".formatted(t.getTotalStartedThreadCount()));
+        pw.println(">> Runtime");
+        pw.println(" Peak threads: %d".formatted(t.getPeakThreadCount()));
+        pw.println(" Thread #: %d".formatted(t.getThreadCount()));
+        pw.println(" Total started threads: %d".formatted(t.getTotalStartedThreadCount()));
 
         Arrays.stream(t.getAllThreadIds()).sequential().forEach(value -> {
-            logger.info(" Thread (%d): %s %s".formatted(value,
+            pw.println(" Thread (%d): %s %s".formatted(value,
                     t.getThreadInfo(value).getThreadName(),
                     t.getThreadInfo(value).getThreadState().toString()
             ));
         });
 
         MemoryMXBean m = ManagementFactory.getMemoryMXBean();
-        logger.info(">> Memory");
-        logger.info(" Heap: %s".formatted(m.getHeapMemoryUsage().toString()));
-        logger.info(" Non-heap: %s".formatted(m.getNonHeapMemoryUsage().toString()));
-        logger.info(" Pending GC: %s".formatted(m.getObjectPendingFinalizationCount()));
+        pw.println(">> Memory");
+        pw.println(" Heap: %s".formatted(m.getHeapMemoryUsage().toString()));
+        pw.println(" Non-heap: %s".formatted(m.getNonHeapMemoryUsage().toString()));
+        pw.println(" Pending GC: %s".formatted(m.getObjectPendingFinalizationCount()));
     }
 }

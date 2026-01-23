@@ -44,7 +44,7 @@ fn_stage_clients() {
   done
 
   fn_failcheck roachprod run ${CLUSTER}:$clientnodes 'sudo apt-get -qq update'
-  fn_failcheck roachprod run ${CLUSTER}:$clientnodes 'sudo apt-get -qq install -y openjdk-21-jre-headless htop dstat haproxy'
+  fn_failcheck roachprod run ${CLUSTER}:$clientnodes 'sudo apt-get -qq install -y openjdk-25-jre-headless htop dstat haproxy'
   fn_failcheck roachprod run ${CLUSTER}:$clientnodes 'nohup haproxy -f haproxy.cfg > /dev/null 2>&1 &'
 }
 

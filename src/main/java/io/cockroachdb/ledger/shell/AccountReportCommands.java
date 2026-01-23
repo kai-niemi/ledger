@@ -3,27 +3,40 @@ package io.cockroachdb.ledger.shell;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.shell.standard.EnumValueProvider;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
-import org.springframework.shell.table.BeanListTableModel;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.shell.jline.tui.table.BeanListTableModel;
+import org.springframework.stereotype.Component;
 
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.service.AccountServiceFacade;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.TableUtils;
 
-@ShellComponent
-@ShellCommandGroup(Constants.REPORT_COMMANDS)
-public class AccountReportCommands extends AbstractInteractiveCommand {
-    public static String printAccountTable(List<AccountEntity> accountEntities) {
+@Component
+public class AccountReportCommands extends AbstractShellCommand {
+    @Command(description = "List accounts",
+            name = {"report", "accounts"},
+            completionProvider = "accountTypeProvider",
+            group = Constants.REPORTING_COMMANDS)
+    public void listAccounts(@Option(description = "account type",
+                                     defaultValue = "LIABILITY",
+                                     longName = "accountType") AccountType accountType,
+                             @Option(description = "page size", defaultValue = "10",
+                                     longName = "pageSize") Integer pageSize) {
+        Pageable page = PageRequest.ofSize(pageSize);
+
+        while (page.isPaged()) {
+            final Page<AccountEntity> accountPage = accountServiceFacade.findAccounts(accountType, page);
+            logger.info("\n" + printAccountTable(accountPage.getContent()));
+            page = askForPage(accountPage).orElseGet(Pageable::unpaged);
+        }
+    }
+
+    private static String printAccountTable(List<AccountEntity> accountEntities) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("name", "Name");
@@ -34,23 +47,6 @@ public class AccountReportCommands extends AbstractInteractiveCommand {
         header.put("closed", "Closed");
 
         return TableUtils.prettyPrint(new BeanListTableModel<>(accountEntities, header));
-    }
-
-    @Autowired
-    private AccountServiceFacade accountServiceFacade;
-
-    @ShellMethod(value = "List accounts", key = {"list-accounts", "la"})
-    public void listAccounts(@ShellOption(help = "account type",
-                                     defaultValue = "LIABILITY",
-                                     valueProvider = EnumValueProvider.class) AccountType accountType,
-                             @ShellOption(help = "page size", defaultValue = "10") Integer pageSize) {
-        Pageable page = PageRequest.ofSize(pageSize);
-
-        while (page.isPaged()) {
-            final Page<AccountEntity> accountPage = accountServiceFacade.findAccounts(accountType, page);
-            logger.info("\n" + printAccountTable(accountPage.getContent()));
-            page = askForPage(accountPage).orElseGet(Pageable::unpaged);
-        }
     }
 }
 

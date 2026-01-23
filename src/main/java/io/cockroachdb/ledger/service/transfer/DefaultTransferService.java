@@ -69,7 +69,7 @@ public class DefaultTransferService implements TransferService {
         }
 
         // Validate request and get account IDs
-        final Set<UUID> accountIds =  validateAccountItems(transferRequest.getAccountItems());
+        final Set<UUID> accountIds = validateAccountItems(transferRequest.getAccountItems());
 
         final Map<UUID, AccountItem> itemsPerAccountId = transferRequest.getAccountItems()
                 .stream().collect(Collectors.toMap(AccountItem::getId,
@@ -96,8 +96,8 @@ public class DefaultTransferService implements TransferService {
 
         // Then create transfer items or legs, describing the monetary transfer and
         // storing a running balance (balance before update).
-        final TransferItemEntity.Builder itemBuilder
-                = TransferItemEntity.builder().withTransfer(transferEntity);
+        final TransferItemEntity.Builder itemBuilder = TransferItemEntity.builder()
+                .withTransfer(transferEntity);
         {
             accountEntities.forEach(account -> {
                 AccountItem accountItem = itemsPerAccountId.get(account.getId());

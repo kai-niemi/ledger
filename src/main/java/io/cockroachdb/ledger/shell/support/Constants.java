@@ -3,21 +3,11 @@ package io.cockroachdb.ledger.shell.support;
 public abstract class Constants {
     public static final String ADMIN_COMMANDS = "1) Admin Commands";
 
-    public static final String CONNECTION_POOL_COMMANDS = "2) Connection Pool Commands";
+    public static final String DB_COMMANDS = "2) Database Commands";
 
-    public static final String REGION_QUERY_COMMANDS = "3) Region Query Commands";
+    public static final String REPORTING_COMMANDS = "3) Reporting Commands";
 
-    public static final String REGION_MODIFICATION_COMMANDS = "4) Region Modification Commands";
-
-    public static final String REPORT_COMMANDS = "5) Reporting Commands";
-
-    public static final String PLAN_COMMANDS = "6) Account Plan Commands";
-
-    public static final String WORKLOAD_QUERY_COMMANDS = "7) Workload Query Commands";
-
-    public static final String WORKLOAD_MODIFICATION_COMMANDS = "8) Workload Modification Commands";
-
-    public static final String WORKLOAD_START_COMMANDS = "9) Workload Commands";
+    public static final String WORKLOAD_COMMANDS = "4) Workload Commands";
 
     public static final String DEFAULT_DURATION = "120m";
 

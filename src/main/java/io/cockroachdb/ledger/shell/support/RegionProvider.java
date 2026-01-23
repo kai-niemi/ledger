@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.core.command.completion.CompletionContext;
 import org.springframework.shell.core.command.completion.CompletionProposal;
 import org.springframework.shell.core.command.completion.CompletionProvider;
@@ -14,13 +13,14 @@ import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.model.Region;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 
-public class RegionProvider implements ValueProvider, CompletionProvider {
-    @Autowired
-    private RegionServiceFacade regionServiceFacade;
+public class RegionProvider implements CompletionProvider {
+    private final RegionServiceFacade regionServiceFacade;
 
-    @Override
-    public Object getValue(Object object, int column) {
-        return null;
+    private final String prefix;
+
+    public RegionProvider(RegionServiceFacade regionServiceFacade, String prefix) {
+        this.regionServiceFacade = regionServiceFacade;
+        this.prefix = prefix;
     }
 
     @Override
@@ -37,7 +37,8 @@ public class RegionProvider implements ValueProvider, CompletionProvider {
 
         for (Region r : regionServiceFacade.listAllRegions()) {
             String desc = String.join(",", r.getCities().stream().map(City::getName).toList());
-            CompletionProposal p = new CompletionProposal(r.getName()).description(desc);
+            CompletionProposal p = new CompletionProposal(prefix + "=" + r.getName())
+                    .description(desc);
             if (gateway.isPresent() && gateway.get().equals(r)) {
                 result.add(0, p);
             } else if (primary.isPresent() && primary.get().equals(r)) {
