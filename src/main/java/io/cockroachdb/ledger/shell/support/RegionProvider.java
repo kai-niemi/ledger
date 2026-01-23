@@ -5,21 +5,26 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.CompletionContext;
-import org.springframework.shell.CompletionProposal;
-import org.springframework.shell.standard.ValueProvider;
+import org.springframework.shell.core.command.completion.CompletionContext;
+import org.springframework.shell.core.command.completion.CompletionProposal;
+import org.springframework.shell.core.command.completion.CompletionProvider;
 
 import io.cockroachdb.ledger.domain.RegionCategory;
 import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.model.Region;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 
-public class RegionProvider implements ValueProvider {
+public class RegionProvider implements ValueProvider, CompletionProvider {
     @Autowired
     private RegionServiceFacade regionServiceFacade;
 
     @Override
-    public List<CompletionProposal> complete(CompletionContext completionContext) {
+    public Object getValue(Object object, int column) {
+        return null;
+    }
+
+    @Override
+    public List<CompletionProposal> apply(CompletionContext completionContext) {
         List<CompletionProposal> result = new ArrayList<>();
 
         result.add(new CompletionProposal(RegionCategory.ALL.name()).description("all region cities"));

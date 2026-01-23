@@ -221,15 +221,15 @@ or single-host CockroachDB cluster.
 
 Ledger is operated through its built-in shell, or by a command file passed at startup
 time, in which case the shell is disabled (see [running](#running) instructions).
-For a complete list of commands, run the `help` command in the shell.
+For a complete list of commands, run the `help` command in the shell. There's also 
+a reactive web UI available at http://localhost:9090 (by default) to display 
+account activities and different charts.
 
-There's also a reactive web UI available at http://localhost:9090 (by default)
-to display account activities and different metric charts.
-
-It organizes monetary accounts around cities within regions. A region maps to an 
-actual CockroachDB `--locality` region name like `aws-us-east-1`. One region has one or 
-more cities, and a city has a country and currency code. This allows for optimal data 
-distribution and simple data partitioning for multi-region load test scenarios. 
+Ledger binds monetary accounts to named cities within regions. A region maps to an 
+actual CockroachDB `--locality` region tier like `aws-us-east-1`. One region has one or 
+more cities with accounts, and each city has a country and currency code. This allows 
+for optimal data distribution and simple data partitioning for multi-region load 
+test scenarios. 
 
 The default configuration includes all current CockroachDB Cloud regions for AWS, GCP 
 and Azure. You can easily add custom region ot city mappings through a 
@@ -282,89 +282,76 @@ For example:
 ```
 
 Ledger initially attempts to match the cluster's `--locality` region tier to an application
-region name in `application.regions.name`. If none is found, it checks the `region-mappings`
-section for a matching key. If none is found there either, it logs a warning that the
-database cluster locality doesnt match any application region.
-
-For a multi-region use case / demo, its required to use at least 3 separate regions preferably
-with disjoint cities for best data distribution.
+region name in `application.regions.name`. If no region is found, it checks the `region-mappings`
+section for a matching key. If none is found there either, it logs a warning that the database 
+cluster's locality tiers doesnt match any application region. For a multi-region use case / demo, 
+its required to use at least 3 separate regions preferably with disjoint cities for best data 
+distribution.
 
 For more guidance, see the [Multi-region Tutorial](TUTORIAL.md).
 
 ## Create an account plan
     
-A financial ledger always operates towards a pre-defined account plan. An account plan
-is simply a collection of accounts of different types with an initial balance and 
-a total balance of zero (negative balances are used to simplify the credit/debit rule).
+Ledger operates towards a pre-defined account plan, which is simply a collection of accounts of 
+different types with an initial balance and a total balance of zero per currency. Negative balances 
+are used to simplify the concepts within accounting called credit and debit, which are never of 
+negative value.
 
-The first step is therefore to build an account plan, derived from the list of regions
-and cities in the selected application.yml:
+This command will create one _liability_ account and 5,000 _asset_ accounts per city, by default:
 
     build-account-plan
 
-This command will create one _liability_ account and 5,000 _asset_ accounts per city, by default. The account plan
-is organized in such a way that the total balance of all accounts for a given city (and currency) amounts to zero. 
-
-Thus, if a non-zero total balance is ever observed it means money has either been invented or destroyed and 
-we can't have that *). 
-
-The account plan can be dropped and recreated which is a destructive operation 
-since it truncates the tables.
-
-*) You can allow this to happen just for fun by running in `read committed` isolation without 
-pre-emptive locks. Under 1SR (default) its however impossible.
+The account plan is organized in such a way that the total balance of all accounts for a given 
+city and currency amounts to zero. Thus, if a non-zero total balance is ever observed it means 
+money has either been invented or destroyed and we can't have that. Under serializable (default) 
+isolation this is impossible. You can however allow such anomalies just for fun by running 
+in `read committed` isolation without locks. That would make this ledger exposed to P4
+lost updates with non-zero balance sums as a result.
       
 ## Transfer funds
 
-An existing account plan unlocks the different workload commands, such as: 
+This is a read-write intensive workload that transfer funds between accounts picked by random.
 
     transfer-funds
 
-This is the primary read-write workload that transfer funds between asset accounts 
-selected by random. It is done by balanced, multi-legged transfers executed 
-in parallel. 
-
-One transfer `leg` equals one account balance update, thus the minimum number of 
-legs required is two. A balance update can hold a positive or negative value for simplicity, 
-rather than a _credit_ or _debit_ in real accounting (which is never negative).
-
-By default, all workloads select the cities in the gateway node's region
-(local region to the client). You can however pick any region, or all of them,
-affectively starting a transfer workload for every city, like:
+One transfer `leg` equals to one account balance update, thus the minimum number of 
+transfer legs is two. A balance update can hold a positive or negative value for simplicity, 
+rather than a _credit_ or _debit_ in real accounting. By default, all workloads select the cities 
+in the gateway node's region (local region to the client). You can however pick any region, 
+or all of them, affectively starting a transfer workload for every city, like:
 
     transfer-funds --region all
 
 ## Read balance
 
-This workload is purely read-only and executes point lookups on accounts to 
-retrieve the current authoritative balance.
+This is a purely read-only command that executes point lookups on accounts to retrieve the current balance.
 
     read-balance
 
-Another variant is to use a historical follower read, which, if you are familiar with CockroachDB, 
-means that any node receiving a request hosting a range replica for the requested key 
-can service the request, at the expense of the returned value being potentially stale 
-with up to ~5s (called a _bounded staleness read_). Normally only the lease holder replica
-can service reads.
+Another variant is to use historical follower reads, which, if you are familiar with CockroachDB, means 
+that any node receiving a request hosting a range replica for the requested key can service the request, 
+at the expense of the returned value being potentially stale with up to ~5s 
+(called a _bounded staleness read_). Normally only the lease holder replica can service reads which
+are authoritative.
 
     read-balance-historical
 
 ## Create accounts
 
 This is a write-only command to create new asset accounts in batches. It can be used to 
-populate the database with more accounts than included in the account plan. 
+populate the database with more accounts than included in the account plan.
+
+    create-accounts
 
 Notice that these accounts will have a zero balance and are not allowed to go negative. 
 To fund these accounts, you need to run the `transfer-grants` command to grant funds 
 from liability accounts.
 
-    create-accounts
-
 ## Transfer grants
 
-Similar to the `transfer-funds` command, this one will move money from liability accounts to 
-asset accounts withing a specified balance range. It's useful to run this after 
-creating new accounts to allow these to become part of workload selections.
+This command will move money from **liability** accounts to **asset** accounts withing 
+a specified balance range. It's useful to run this after creating new accounts to allow 
+these to become part of workload selections.
 
     transfer-grants
   

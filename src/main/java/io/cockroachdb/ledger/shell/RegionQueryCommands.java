@@ -7,13 +7,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.shell.standard.AbstractShellComponent;
-import org.springframework.shell.standard.EnumValueProvider;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
-import org.springframework.shell.table.BeanListTableModel;
+import org.springframework.shell.jline.tui.table.BeanListTableModel;
+import org.springframework.stereotype.Component;
 
 import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.model.Region;
@@ -23,8 +18,8 @@ import io.cockroachdb.ledger.shell.support.ListTableModel;
 import io.cockroachdb.ledger.shell.support.RegionProvider;
 import io.cockroachdb.ledger.shell.support.TableUtils;
 
-@ShellComponent
-@ShellCommandGroup(Constants.REGION_QUERY_COMMANDS)
+//@ShellCommandGroup(Constants.REGION_QUERY_COMMANDS)
+@Component
 public class RegionQueryCommands extends AbstractShellComponent {
     public static String printRegionTable(List<Region> regions) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
@@ -55,7 +50,8 @@ public class RegionQueryCommands extends AbstractShellComponent {
         Set<City> cities = regionServiceFacade.listCities(region);
 
         logger.info("\n" + TableUtils.prettyPrint(
-                new ListTableModel<>(cities, List.of("Name"), (object, column) -> column == 0 ? object : "??")));
+                new ListTableModel<>(cities,
+                        List.of("Name"), (object, column) -> column == 0 ? object : "??")));
     }
 
     @ShellMethod(value = "Show gateway region", key = {"show-gateway-region", "sgr"})

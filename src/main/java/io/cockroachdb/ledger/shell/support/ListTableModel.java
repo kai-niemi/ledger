@@ -3,7 +3,7 @@ package io.cockroachdb.ledger.shell.support;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.shell.table.TableModel;
+import org.springframework.shell.jline.tui.table.TableModel;
 
 public class ListTableModel<T> extends TableModel {
     private final List<T> data;
@@ -17,6 +17,7 @@ public class ListTableModel<T> extends TableModel {
                           ValueProvider<T> provider) {
         this.data = new ArrayList<>();
         list.forEach(data::add);
+
         this.headerRow = new ArrayList<>(header);
         this.provider = provider;
     }

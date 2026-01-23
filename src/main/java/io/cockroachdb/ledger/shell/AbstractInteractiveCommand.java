@@ -9,12 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.shell.component.SingleItemSelector;
-import org.springframework.shell.component.support.SelectorItem;
-import org.springframework.shell.standard.AbstractShellComponent;
-import org.springframework.shell.standard.ShellComponent;
+import org.springframework.shell.jline.tui.component.support.SelectorItem;
 
-@ShellComponent
 public abstract class AbstractInteractiveCommand extends AbstractShellComponent {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
