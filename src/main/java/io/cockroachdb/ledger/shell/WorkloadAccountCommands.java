@@ -22,7 +22,8 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Create new zero-balance asset accounts in batches",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Create new zero-balance asset accounts in batches",
             name = {"workload", "start", "create-accounts"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             group = Constants.WORKLOAD_COMMANDS,

@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.shell.core.command.completion.CompletionProposal;
@@ -28,8 +29,6 @@ import io.cockroachdb.ledger.shell.support.TableUtils;
 
 @Component
 public class WorkloadCommands extends AbstractShellCommand {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     @Autowired
     private WorkloadManager workloadManager;
 
@@ -65,7 +64,7 @@ public class WorkloadCommands extends AbstractShellCommand {
             name = {"workload", "delete"},
             completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void delete(@Option(description = "workload id", required = true, defaultValue = "-1",
+    public void delete(@Option(description = "workload id", defaultValue = "-1",
             longName = "id") Integer id) {
         if (id >= 0) {
             workloadManager.deleteWorkload(id);
@@ -78,8 +77,8 @@ public class WorkloadCommands extends AbstractShellCommand {
             name = {"workload", "list"},
             alias = "w",
             group = Constants.WORKLOAD_COMMANDS)
-    public void listWorkloads(@Option(description = "page size", defaultValue = "20",
-            longName = "pageSize") Integer pageSize) {
+    public void listWorkloads(@Option(description = "page size", defaultValue = "40",
+            longName = "pageSize") Integer pageSize, CommandContext commandContext) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("title", "Title");
@@ -97,7 +96,7 @@ public class WorkloadCommands extends AbstractShellCommand {
         while (page.isPaged()) {
             Page<Workload> workloadPage = workloadManager.getWorkloads(page, Workload::isRunning);
 
-            logger.info("\n" + TableUtils.prettyPrint(
+            commandContext.outputWriter().println( TableUtils.prettyPrint(
                     new BeanListTableModel<>(workloadPage.getContent(), header)));
 
             page = askForPage(workloadPage).orElseGet(Pageable::unpaged);
@@ -108,21 +107,32 @@ public class WorkloadCommands extends AbstractShellCommand {
             name = {"workload", "errors"},
             completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void listErrors(@Option(description = "workload id", required = true, longName = "id") Integer id) {
-        Workload workloadModel = workloadManager.getWorkloadById(id);
-        List<Problem> problems = workloadModel.getLastProblems();
+    public void listErrors(@Option(description = "workload id", longName = "id", defaultValue = "-1") Integer id,
+                           CommandContext commandContext) {
+        List<Problem> problems = new ArrayList<>();
+
+        if (id >= 0) {
+            Workload workloadModel = workloadManager.getWorkloadById(id);
+            problems.addAll(workloadModel.getLastProblems());
+        } else {
+            workloadManager.getWorkloads().forEach(workload -> {
+                problems.addAll(workload.getLastProblems());
+            });
+        }
 
         AtomicInteger idx = new AtomicInteger();
-        logger.info("\n" + TableUtils.prettyPrint(
-                new ListTableModel<>(problems,
-                        List.of("#", "Type", "Message", "Cause"), (object, column) -> {
-                    return switch (column) {
-                        case 0 -> idx.incrementAndGet();
-                        case 1 -> object.getClassName();
-                        case 2 -> object.getMessage();
-                        case 3 -> object.getStackTrace();
-                        default -> "??";
-                    };
-                })));
+        commandContext.outputWriter().println(
+                TableUtils.prettyPrint(
+                        new ListTableModel<>(problems,
+                                List.of("#", "Title", "Type", "Message", "Cause"), (object, column) -> {
+                            return switch (column) {
+                                case 0 -> idx.incrementAndGet();
+                                case 1 -> object.getTitle();
+                                case 2 -> object.getClassName();
+                                case 3 -> object.getMessage();
+                                case 4 -> object.getStackTrace();
+                                default -> "??";
+                            };
+                        })));
     }
 }

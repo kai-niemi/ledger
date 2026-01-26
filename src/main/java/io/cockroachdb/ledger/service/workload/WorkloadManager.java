@@ -69,8 +69,6 @@ public class WorkloadManager {
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
-    private int samplePeriodSeconds = 300;
-
     public <T> void submitWorkers(Worker<T> worker, WorkloadDescription description, int count) {
         IntStream.rangeClosed(1, count).forEach(value -> submitWorker(worker, description));
     }
@@ -98,7 +96,7 @@ public class WorkloadManager {
                 if (problems.size() >= 20) {
                     problems.removeLast();
                 }
-                problems.addFirst(Problem.from(ex));
+                problems.addFirst(Problem.from(description.displayValue(), ex));
 
                 Throwable cause = NestedExceptionUtils.getMostSpecificCause(ex);
                 if (cause instanceof SQLException) {
@@ -131,18 +129,12 @@ public class WorkloadManager {
 
         asyncTaskExecutor.submit(() -> {
             try {
-                logger.info("Started %s [%s]"
-                        .formatted(description.displayValue(), description.categoryValue()));
-
+                logger.debug("Started %s [%s]".formatted(description.displayValue(), description.categoryValue()));
                 workload.awaitCompletion();
-
-                logger.info("Finished %s [%s]"
-                        .formatted(description.displayValue(), description.categoryValue()));
+                logger.debug("Finished %s [%s]".formatted(description.displayValue(), description.categoryValue()));
             } catch (ExecutionException e) {
-                logger.warn("Finished with error: %s [%s]"
-                                .formatted(description.displayValue(), description.categoryValue()),
-                        e.getCause());
-                problems.addFirst(Problem.from(e.getCause()));
+                logger.warn("Finished with error: %s [%s]".formatted(description.displayValue(), description.categoryValue()), e.getCause());
+                problems.addFirst(Problem.from(description.displayValue(), e.getCause()));
             }
         });
 
@@ -253,6 +245,8 @@ public class WorkloadManager {
     }
 
     public void takeSnapshot() {
+        int samplePeriodSeconds = 300;
+
         Duration samplePeriod = Duration.ofSeconds(samplePeriodSeconds);
 
         // Purge old data points older than sample period

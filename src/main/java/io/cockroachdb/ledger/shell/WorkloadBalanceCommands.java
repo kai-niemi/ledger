@@ -24,7 +24,7 @@ import io.cockroachdb.ledger.util.Money;
 import io.cockroachdb.ledger.util.RandomData;
 
 @Component
-public class WorkloadReadBalanceCommands extends AbstractShellCommand {
+public class WorkloadBalanceCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 

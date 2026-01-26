@@ -31,17 +31,27 @@ public abstract class RandomData {
     }
 
     public static <E> E selectRandom(List<E> collection) {
+        if (collection.isEmpty()) {
+            throw new IllegalArgumentException("Empty collection");
+        }
         ThreadLocalRandom random = ThreadLocalRandom.current();
         return collection.get(random.nextInt(collection.size()));
     }
 
     public static <K> K selectRandom(Set<K> set) {
+        if (set.isEmpty()) {
+            throw new IllegalArgumentException("Empty collection");
+        }
         ThreadLocalRandom random = ThreadLocalRandom.current();
         Object[] keys = set.toArray();
         return (K) keys[random.nextInt(keys.length)];
     }
 
     public static <E> E selectRandom(E[] collection) {
+        if (collection.length == 0) {
+            throw new IllegalArgumentException("Empty collection");
+        }
+
         ThreadLocalRandom random = ThreadLocalRandom.current();
         return collection[random.nextInt(collection.length)];
     }

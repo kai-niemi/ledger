@@ -122,10 +122,10 @@ public class Workload {
             setCompletion(Instant.now(), Optional.empty());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            setCompletion(Instant.now(), Optional.of(Problem.from(e)));
+            setCompletion(Instant.now(), Optional.of(Problem.from(getTitle(), e)));
             throw new UndeclaredThrowableException(e);
         } catch (ExecutionException e) {
-            setCompletion(Instant.now(), Optional.of(Problem.from(e.getCause())));
+            setCompletion(Instant.now(), Optional.of(Problem.from(getTitle(), e.getCause())));
             throw e;
         }
     }
