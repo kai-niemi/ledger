@@ -48,14 +48,14 @@
                                 </button>
                             </div>
                             <div class="col-auto">
-                                <label for="workload-title" class="form-label">Title:</label>
+                                <label for="workload-category" class="form-label">Category:</label>
                             </div>
                             <div class="col-auto">
-                                <select th:field="*{title}" class="form-select" id="workload-title">
-                                    <option th:each="t : ${workloadTitles}"
-                                            th:value="${t}"
-                                            th:text="${t}"
-                                            th:selected="${t == form.title}"></option>
+                                <select th:field="*{category}" class="form-select" id="workload-category">
+                                    <option th:each="c : ${workloadCategories}"
+                                            th:value="${c}"
+                                            th:text="${c}"
+                                            th:selected="${c == form.category}"></option>
                                 </select>
                             </div>
                             <div class="col-auto">
@@ -93,7 +93,7 @@
                     <tbody>
                     <tr th:each="workload : ${workloadPage.content}" th:id="${'row-' + workload.id}">
                         <td>
-                            <a th:href="@{/workload/{id}(id=${workload.id})}" th:text="${workload.title}"></a>
+                            <a th:href="@{/workload/{id}(id=${workload.id})}" th:text="${workload.category}"></a>
                         </td>
                         <td th:text="${workload.category}"></td>
                         <td th:text="${workload.id}"></td>
@@ -139,7 +139,7 @@
                 </table>
 
                 <div th:if="${#lists.size(workloadPage.getContent()) > 0}">
-                    <nav th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage}, ${form.title})}"></nav>
+                    <nav th:replace="~{fragments/paging-banner :: paging-banner(${workloadPage}, ${form.category})}"></nav>
                 </div>
             </div>
         </div>

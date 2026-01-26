@@ -4,17 +4,17 @@ import jakarta.validation.constraints.NotNull;
 
 public class WorkloadForm {
     @NotNull
-    private String title;
+    private String category;
 
-    public WorkloadForm(String title) {
-        this.title = title;
+    public WorkloadForm(String category) {
+        this.category = category;
     }
 
-    public String getTitle() {
-        return title;
+    public String getCategory() {
+        return category;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

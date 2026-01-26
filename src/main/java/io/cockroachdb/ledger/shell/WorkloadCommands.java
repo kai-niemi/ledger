@@ -3,10 +3,9 @@ package io.cockroachdb.ledger.shell;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Component;
 import io.cockroachdb.ledger.service.workload.Problem;
 import io.cockroachdb.ledger.service.workload.Workload;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
+import io.cockroachdb.ledger.service.workload.WorkloadStatus;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.ListTableModel;
 import io.cockroachdb.ledger.shell.support.TableUtils;
@@ -60,7 +60,8 @@ public class WorkloadCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Delete workload(s)",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Delete workload(s)",
             name = {"workload", "delete"},
             completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
@@ -73,12 +74,54 @@ public class WorkloadCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List all workloads",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Print workload summary",
+            name = {"workload", "summary"},
+            alias = "y",
+            group = Constants.WORKLOAD_COMMANDS)
+    public void workloadSummary(CommandContext commandContext) {
+        final Map<String, List<Workload>> all = new LinkedHashMap<>();
+        final Map<WorkloadStatus, AtomicInteger> status = new LinkedHashMap<>();
+        final AtomicInteger total = new AtomicInteger();
+
+        workloadManager.getWorkloads().forEach(workload -> {
+            all.computeIfAbsent(workload.getCategory(), x -> new ArrayList<>()).add(workload);
+        });
+
+        if (all.isEmpty()) {
+            commandContext.outputWriter().println("No workloads");
+            return;
+        }
+
+        commandContext.outputWriter().println("Workload summary:");
+
+        all.forEach((category, workloads) -> {
+            commandContext.outputWriter().println("%s (%d)".formatted(category, workloads.size()));
+            total.addAndGet(workloads.size());
+
+            workloads.forEach(workload ->
+                    status.computeIfAbsent(workload.getStatus(), x -> new AtomicInteger()).incrementAndGet());
+        });
+
+        commandContext.outputWriter().println("Total workloads: %d".formatted(total.get()));
+
+        commandContext.outputWriter().println("Status summary:");
+        status.forEach((workloadStatus, x) -> {
+            commandContext.outputWriter().println("%s (%d)".formatted(workloadStatus, x.get()));
+        });
+    }
+
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List all workloads",
             name = {"workload", "list"},
             alias = "w",
+            completionProvider = "workloadStatusProvider",
             group = Constants.WORKLOAD_COMMANDS)
     public void listWorkloads(@Option(description = "page size", defaultValue = "40",
-            longName = "pageSize") Integer pageSize, CommandContext commandContext) {
+                                      longName = "pageSize") Integer pageSize,
+                              @Option(description = "workload status", defaultValue = "RUNNING",
+                                      longName = "status") WorkloadStatus status,
+                              CommandContext commandContext) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
         header.put("title", "Title");
@@ -94,9 +137,10 @@ public class WorkloadCommands extends AbstractShellCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            Page<Workload> workloadPage = workloadManager.getWorkloads(page, Workload::isRunning);
+            Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload ->
+                    workload.getStatus().equals(status));
 
-            commandContext.outputWriter().println( TableUtils.prettyPrint(
+            commandContext.outputWriter().println(TableUtils.prettyPrint(
                     new BeanListTableModel<>(workloadPage.getContent(), header)));
 
             page = askForPage(workloadPage).orElseGet(Pageable::unpaged);

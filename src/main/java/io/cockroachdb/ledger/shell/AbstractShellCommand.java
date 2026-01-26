@@ -32,6 +32,7 @@ import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.service.AccountServiceFacade;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.service.account.AccountPlanService;
+import io.cockroachdb.ledger.service.workload.WorkloadStatus;
 import io.cockroachdb.ledger.shell.support.RegionProvider;
 
 public abstract class AbstractShellCommand {
@@ -88,6 +89,11 @@ public abstract class AbstractShellCommand {
     @Bean
     public CompletionProvider tableNameProvider() {
         return new EnumCompletionProvider(TableName.class, "--tableName");
+    }
+
+    @Bean
+    public CompletionProvider workloadStatusProvider() {
+        return new EnumCompletionProvider(WorkloadStatus.class, "--status");
     }
 
     @Bean

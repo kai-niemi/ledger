@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.shell.core.command.CommandContext;
@@ -21,11 +22,15 @@ import ch.qos.logback.classic.Level;
 import io.cockroachdb.ledger.config.DataSourceConfig;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.util.DurationUtils;
+import io.cockroachdb.ledger.util.NetworkAddress;
 
 @Component
 public class AdminCommands extends AbstractShellCommand {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
+
+    @Value("${server.port:8080}")
+    private Integer serverPort;
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Toggle SQL trace logging",
             name = {"admin", "sql", "trace"},
@@ -65,6 +70,29 @@ public class AdminCommands extends AbstractShellCommand {
         long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
         commandContext.outputWriter()
                 .println(DurationUtils.millisecondsToDisplayString(uptime));
+    }
+
+    @Command(description = "Print local IP addresses",
+            name = {"admin", "ip"},
+            group = Constants.ADMIN_COMMANDS,
+            exitStatusExceptionMapper = "commandExceptionMapper")
+    public void printIP(CommandContext commandContext) {
+        commandContext.outputWriter().println(
+                """
+                        
+                                    Local IP: %s
+                                 External IP: %s
+                                    Hostname: %s
+                        Hostname (canonical): %s
+                              Local API root: %s
+                           External API root: %s""".formatted(
+                        NetworkAddress.getLocalIP(),
+                        NetworkAddress.getExternalIP(),
+                        NetworkAddress.getHostname(),
+                        NetworkAddress.getCanonicalHostName(),
+                        "http://%s:%d".formatted(NetworkAddress.getLocalIP(), serverPort),
+                        "http://%s:%d".formatted(NetworkAddress.getExternalIP(), serverPort)
+                ));
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print system information",

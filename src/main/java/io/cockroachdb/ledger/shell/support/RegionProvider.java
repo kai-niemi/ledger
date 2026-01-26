@@ -27,10 +27,10 @@ public class RegionProvider implements CompletionProvider {
     public List<CompletionProposal> apply(CompletionContext completionContext) {
         List<CompletionProposal> result = new ArrayList<>();
 
-        result.add(new CompletionProposal(RegionCategory.ALL.name()).description("all region cities"));
-        result.add(new CompletionProposal(RegionCategory.GATEWAY.name()).description("gateway node region cities"));
-        result.add(new CompletionProposal(RegionCategory.PRIMARY.name()).description("primary region cities"));
-        result.add(new CompletionProposal(RegionCategory.SECONDARY.name()).description("secondary region cities"));
+        result.add(new CompletionProposal(prefix + "=" + RegionCategory.ALL.name()).description("all region cities"));
+        result.add(new CompletionProposal(prefix + "=" + RegionCategory.GATEWAY.name()).description("gateway node region cities"));
+        result.add(new CompletionProposal(prefix + "=" + RegionCategory.PRIMARY.name()).description("primary region cities"));
+        result.add(new CompletionProposal(prefix + "=" + RegionCategory.SECONDARY.name()).description("secondary region cities"));
 
         Optional<Region> gateway = regionServiceFacade.getGatewayRegion();
         Optional<Region> primary = regionServiceFacade.getPrimaryRegion();

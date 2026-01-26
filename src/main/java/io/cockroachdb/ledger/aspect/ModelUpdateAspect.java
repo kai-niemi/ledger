@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import com.google.common.util.concurrent.RateLimiter;
-
 import io.cockroachdb.ledger.domain.AccountSummary;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferRequest;
@@ -25,6 +23,7 @@ import io.cockroachdb.ledger.repository.ReportingRepository;
 import io.cockroachdb.ledger.model.BalanceSheet;
 import io.cockroachdb.ledger.push.SimpMessagePublisher;
 import io.cockroachdb.ledger.push.TopicName;
+import io.cockroachdb.ledger.util.RateLimiter;
 
 @Aspect
 @Component
@@ -54,7 +53,7 @@ public class ModelUpdateAspect {
 
         // Throttle events by discarding
         RateLimiter rateLimiter = rateLimiterMap.computeIfAbsent(returnedValue.getCity(),
-                o -> RateLimiter.create(.25));
+                o -> new RateLimiter(4));
         if (rateLimiter.tryAcquire()) {
             // Defer queries and STOMP message
             asyncTaskExecutor.submitCompletable(() -> sendReport(transferRequest.getCity()));

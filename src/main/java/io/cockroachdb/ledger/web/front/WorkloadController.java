@@ -23,10 +23,10 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import io.cockroachdb.ledger.push.SimpMessagePublisher;
 import io.cockroachdb.ledger.push.TopicName;
-import io.cockroachdb.ledger.web.model.WorkloadForm;
 import io.cockroachdb.ledger.service.workload.Workload;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
 import io.cockroachdb.ledger.service.workload.WorkloadUpdatedEvent;
+import io.cockroachdb.ledger.web.model.WorkloadForm;
 
 @Controller
 @RequestMapping("/workload")
@@ -45,26 +45,26 @@ public class WorkloadController {
     @EventListener
     public void handle(WorkloadUpdatedEvent event) {
         messagePublisher.convertAndSendThrottled(TopicName.WORKLOAD_REFRESH_PAGE,
-                null, "workloads", .25); // every 4:th sec
+                null, "workloads", 4);
     }
 
     @GetMapping
     public Callable<String> listWorkloads(
-            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "category", required = false) String category,
             @PageableDefault(size = 10) Pageable page,
             Model model) {
         Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload -> {
-            return type == null || workload.getTitle().equalsIgnoreCase(type);
+            return category == null || category.equalsIgnoreCase(workload.getCategory());
         });
 
-        Set<String> allTitles = workloadManager.getWorkloads()
-                .stream().map(Workload::getTitle)
+        Set<String> allCategories = workloadManager.getWorkloads()
+                .stream()
+                .map(Workload::getCategory)
                 .collect(Collectors.toSet());
-        allTitles.add("");
 
         model.addAttribute("workloadPage", workloadPage);
-        model.addAttribute("form", new WorkloadForm(type));
-        model.addAttribute("workloadTitles", allTitles);
+        model.addAttribute("form", new WorkloadForm(category));
+        model.addAttribute("workloadCategories", allCategories);
         model.addAttribute("aggregatedMetrics", workloadManager.getMetricsAggregate(page));
 
         return () -> "workload";
@@ -76,16 +76,17 @@ public class WorkloadController {
                                             Model model) {
         return () -> {
             Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload -> {
-                return workload.getTitle().equalsIgnoreCase(form.getTitle());
+                return form.getCategory() == null || form.getCategory().equalsIgnoreCase(workload.getCategory());
             });
 
-            Set<String> allTitles = workloadManager.getWorkloads()
-                    .stream().map(Workload::getTitle).collect(Collectors.toSet());
-            allTitles.add("");
+            Set<String> allCategories = workloadManager.getWorkloads()
+                    .stream()
+                    .map(Workload::getCategory)
+                    .collect(Collectors.toSet());
 
             model.addAttribute("workloadPage", workloadPage);
             model.addAttribute("form", form);
-            model.addAttribute("workloadTitles", allTitles);
+            model.addAttribute("workloadCategories", allCategories);
             model.addAttribute("aggregatedMetrics", workloadManager.getMetricsAggregate(page));
 
             return "workload";
@@ -98,9 +99,7 @@ public class WorkloadController {
             Model model) {
         return () -> {
             Workload workload = workloadManager.getWorkloadById(id);
-
             model.addAttribute("form", workload);
-
             return "workload-detail";
         };
     }
@@ -128,12 +127,6 @@ public class WorkloadController {
     @GetMapping(value = "/delete/{id}")
     public RedirectView delete(@PathVariable("id") Integer id) {
         workloadManager.deleteWorkload(id);
-        return new RedirectView("/workload");
-    }
-
-    @GetMapping("/data-points/clear")
-    public RedirectView clearDataPoints() {
-        workloadManager.clearDataPoints();
         return new RedirectView("/workload");
     }
 }
