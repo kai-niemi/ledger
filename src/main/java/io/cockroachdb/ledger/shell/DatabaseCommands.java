@@ -8,10 +8,13 @@ import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.cockroachdb.ledger.model.AccountPlan;
 import io.cockroachdb.ledger.model.ApplicationProperties;
 import io.cockroachdb.ledger.repository.RegionRepository;
 import io.cockroachdb.ledger.shell.support.Constants;
+import io.cockroachdb.ledger.shell.support.JsonHelper;
 
 @Component
 public class DatabaseCommands extends AbstractShellCommand {
@@ -21,7 +24,12 @@ public class DatabaseCommands extends AbstractShellCommand {
     @Autowired
     private RegionRepository regionRepository;
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print database information",
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Command(
+            description = "Print database information",
+            exitStatusExceptionMapper = "commandExceptionMapper",
             name = {"db", "info"},
             group = Constants.DB_COMMANDS)
     public void databaseInfo(CommandContext commandContext) {
@@ -33,9 +41,11 @@ public class DatabaseCommands extends AbstractShellCommand {
         pw.println("Secondary region: " + regionRepository.getSecondaryRegion().orElse("n/a"));
         pw.println("Cluster regions: " + regionRepository.listClusterRegions());
         pw.println("Database regions: " + regionRepository.listDatabaseRegions());
+        pw.println("Cluster info: " + JsonHelper.toFormattedJSON(objectMapper, regionRepository.clusterInfo()));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show CREATE TABLE statement",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Show CREATE TABLE statement",
             name = {"db", "show", "table"},
             completionProvider = "tableNameProvider",
             group = Constants.DB_COMMANDS)
@@ -45,7 +55,8 @@ public class DatabaseCommands extends AbstractShellCommand {
                 .println(regionServiceFacade.showCreateTable(table.name()));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Build account plan",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Build account plan",
             name = {"db", "build", "accountplan"},
             availabilityProvider = ACCOUNT_PLAN_NOT_EXIST,
             group = Constants.DB_COMMANDS)
@@ -63,7 +74,8 @@ public class DatabaseCommands extends AbstractShellCommand {
         accountPlanService.buildAccountPlan(accountPlan);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Drop account plan",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Drop account plan",
             help = "Drop plan including all created accounts and transfers (destructive)",
             name = {"db", "drop", "accountplan"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,

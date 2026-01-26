@@ -1,7 +1,5 @@
 package io.cockroachdb.ledger.shell;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
@@ -14,18 +12,21 @@ import com.zaxxer.hikari.HikariConfigMXBean;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 
+import io.cockroachdb.ledger.domain.ClusterInfo;
+import io.cockroachdb.ledger.repository.RegionRepository;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.JsonHelper;
 
 @Component
 public class DatabasePoolCommands extends AbstractShellCommand {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     @Autowired
     private HikariDataSource hikariDataSource;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private RegionRepository regionRepository;
 
     private ConnectionPoolState getConnectionPoolSize() {
         return from(hikariDataSource.getHikariPoolMXBean());
@@ -35,16 +36,18 @@ public class DatabasePoolCommands extends AbstractShellCommand {
         return from(hikariDataSource.getHikariConfigMXBean());
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show connection pool status",
+    @Command(description = "Show connection pool status",
+            exitStatusExceptionMapper = "commandExceptionMapper",
             name = {"db", "show", "pool", "status"},
             group = Constants.DB_COMMANDS)
     public void showPoolSize(CommandContext commandContext) {
         commandContext.outputWriter().println(
-                "Connection pool state: %s"
+                "Connection pool status: %s"
                         .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show connection pool size",
+    @Command(description = "Show connection pool size",
+            exitStatusExceptionMapper = "commandExceptionMapper",
             name = {"db", "show", "pool", "size"},
             group = Constants.DB_COMMANDS)
     public void showPoolConfig(CommandContext commandContext) {
@@ -53,14 +56,23 @@ public class DatabasePoolCommands extends AbstractShellCommand {
                         .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Set connection pool size",
+    @Command(description = "Set connection pool size",
+            help = "Configure HikariCP pool size. Uses database metadata to infer the optimal pool size if default pool sizes are passed.",
+            exitStatusExceptionMapper = "commandExceptionMapper",
             name = {"db", "set", "pool", "size"},
+            alias = "sps",
             group = Constants.DB_COMMANDS)
-    public void setPoolSize(@Option(description = "max pool size", required = true,
+    public void setPoolSize(@Option(description = "max pool size, default value means auto-configuration to sum(vCPUs)x4.", defaultValue = "-1",
                                     longName = "maxSize") Integer maxSize,
-                            @Option(description = "min idle size (same as max if omitted)",
-                                    longName = "minIdle", required = true) Integer minIdle,
+                            @Option(description = "min idle size (same as max size if unspecified)", defaultValue = "-1",
+                                    longName = "minIdle") Integer minIdle,
                             CommandContext commandContext) {
+        if (maxSize <= 0 || minIdle <= 0) {
+            ClusterInfo clusterInfo = regionRepository.clusterInfo();
+            maxSize = clusterInfo.getNumVCPUs() * 4;
+            minIdle = maxSize;
+        }
+
         hikariDataSource.setMaximumPoolSize(maxSize);
         hikariDataSource.setMinimumIdle(minIdle);
 
