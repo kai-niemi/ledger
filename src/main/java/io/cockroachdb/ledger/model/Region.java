@@ -78,13 +78,16 @@ public class Region implements Comparable<Region> {
     }
 
     public String getDatabaseRegionSingleton() {
+        if (databaseRegions.isEmpty()) {
+            throw new IllegalStateException(
+                    "Expected single database region but found none");
+        }
         if (databaseRegions.size() != 1) {
             throw new IllegalStateException(
-                    "Expected singleton database region but got %d: %s - check region mappings"
-                            .formatted(databaseRegions.size(),
-                                    String.join(",", databaseRegions)));
+                    "Expected single database region but found %d: %s - check region mappings"
+                            .formatted(databaseRegions.size(), String.join(",", databaseRegions)));
         }
-        return databaseRegions.get(0);
+        return databaseRegions.getFirst();
     }
 
     public void addDatabaseRegion(String databaseRegion) {

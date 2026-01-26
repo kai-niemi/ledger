@@ -41,8 +41,8 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(description = "Transfer funds between non-negative balance asset accounts",
-            name = {"workload", "start", "transfer", "funds"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Transfer funds between non-negative balance asset accounts",
+            name = {"workload", "start", "transfer-funds"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "regionProvider",
             group = Constants.WORKLOAD_COMMANDS)
@@ -160,8 +160,8 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         return transferServiceFacade.createTransfer(builder.build());
     }
 
-    @Command(description = "Transfer grants from liability accounts to user accounts",
-            name = {"workload", "start", "transfer", "grants"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Transfer grants from liability accounts to user accounts",
+            name = {"workload", "start", "transfer-grants"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "accountTypeAndRegionCompletionProvider",
             group = Constants.WORKLOAD_COMMANDS)

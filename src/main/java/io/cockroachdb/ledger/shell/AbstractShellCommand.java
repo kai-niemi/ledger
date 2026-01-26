@@ -7,19 +7,24 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jline.terminal.Terminal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.shell.core.command.ExitStatus;
 import org.springframework.shell.core.command.availability.Availability;
 import org.springframework.shell.core.command.completion.CompletionProvider;
 import org.springframework.shell.core.command.completion.CompositeCompletionProvider;
 import org.springframework.shell.core.command.completion.EnumCompletionProvider;
+import org.springframework.shell.core.command.exit.ExitStatusExceptionMapper;
 import org.springframework.shell.jline.tui.component.SingleItemSelector;
 import org.springframework.shell.jline.tui.component.support.SelectorItem;
+import org.springframework.shell.jline.tui.style.TemplateExecutor;
 
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
@@ -30,16 +35,11 @@ import io.cockroachdb.ledger.service.AccountServiceFacade;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.service.account.AccountPlanService;
 import io.cockroachdb.ledger.shell.support.RegionProvider;
-import static org.jline.jansi.AnsiConsole.getTerminal;
 
 public abstract class AbstractShellCommand {
     protected static final String ACCOUNT_PLAN_EXIST = "accountPlanExist";
 
     protected static final String ACCOUNT_PLAN_NOT_EXIST = "accountPlanDoesNotExist";
-
-    protected static final String ACCOUNT_TYPE_PROVIDER = "accountTypeProvider";
-
-    protected static final String OPTION_EMPTY = "";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -52,9 +52,26 @@ public abstract class AbstractShellCommand {
     @Autowired
     protected RegionServiceFacade regionServiceFacade;
 
+    @Autowired
+    private Terminal terminal;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    @Autowired
+    private TemplateExecutor templateExecutor;
+
     @FunctionalInterface
-    protected interface AccountQuery {
+    public interface AccountQuery {
         List<AccountEntity> get(City city);
+    }
+
+    @Bean
+    public ExitStatusExceptionMapper commandExceptionMapper() {
+        return exception -> {
+            exception.printStackTrace(System.err);
+            return new ExitStatus(-2, "Command execution failed: " + exception.toString());
+        };
     }
 
     @Bean
@@ -70,6 +87,11 @@ public abstract class AbstractShellCommand {
     @Bean
     public CompletionProvider transferTypeProvider() {
         return new EnumCompletionProvider(TransferType.class, "--transferType");
+    }
+
+    @Bean
+    public CompletionProvider tableNameProvider() {
+        return new EnumCompletionProvider(TableName.class, "--tableName");
     }
 
     @Bean
@@ -115,7 +137,6 @@ public abstract class AbstractShellCommand {
         }
 
         List<SelectorItem<Pageable>> items = new ArrayList<>();
-
         items.add(SelectorItem.of("quit", Pageable.unpaged()));
 
         if (page.hasNext()) {
@@ -132,14 +153,13 @@ public abstract class AbstractShellCommand {
         }
 
         SingleItemSelector<Pageable, SelectorItem<Pageable>> component
-                = new SingleItemSelector<>(getTerminal(), items, "Select page", null);
-//        component.setResourceLoader(getResourceLoader());
-//        component.setTemplateExecutor(getTemplateExecutor());
+                = new SingleItemSelector<>(terminal, items, "Select page", null);
+        component.setResourceLoader(resourceLoader);
+        component.setTemplateExecutor(templateExecutor);
 
-        SingleItemSelector.SingleItemSelectorContext<Pageable, SelectorItem<Pageable>> context
-                = component.run(SingleItemSelector.SingleItemSelectorContext.empty());
-
-        return context.getResultItem()
+        return component.run(SingleItemSelector.SingleItemSelectorContext.empty())
+                .getResultItem()
                 .flatMap(si -> Optional.of(si.getItem()));
     }
+
 }

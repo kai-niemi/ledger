@@ -42,9 +42,9 @@ public class ReportingCommands extends AbstractShellCommand {
     @Autowired
     private TransferServiceFacade transferServiceFacade;
 
-    @Command(description = "Print balance sheets grouped by city",
-            name = {"report", "account", "balance"},
-            completionProvider = "regionCompletionProvider",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print balance sheets grouped by city",
+            name = {"report", "balance"},
+            completionProvider = "regionProvider",
             group = Constants.REPORTING_COMMANDS)
     public void printBalanceSheets(@Option(description = Constants.REGIONS_HELP,
             defaultValue = Constants.DEFAULT_REGION, required = true,
@@ -69,9 +69,9 @@ public class ReportingCommands extends AbstractShellCommand {
         logger.info("\n" + TableUtils.prettyPrint(new BeanListTableModel<>(balanceSheets, header)));
     }
 
-    @Command(description = "Run consistency check on all accounts and transfers",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Run consistency check on all accounts and transfers",
             name = {"report", "consistency"},
-            completionProvider = "regionCompletionProvider",
+            completionProvider = "regionProvider",
             group = Constants.REPORTING_COMMANDS)
     public void printConsistencyReport(@Option(description = Constants.REGIONS_HELP,
             defaultValue = Constants.DEFAULT_REGION, required = true,
@@ -108,8 +108,8 @@ public class ReportingCommands extends AbstractShellCommand {
     }
 
 
-    @Command(description = "List transfer transactions",
-            name = {"report", "transfer"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List transfer transactions",
+            name = {"report", "transfers"},
             completionProvider = "transferTypeProvider",
             group = Constants.REPORTING_COMMANDS)
     public void listTransfers(
@@ -127,11 +127,11 @@ public class ReportingCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(description = "List transfer transaction legs",
-            name = {"report", "transfer", "legs"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List transfer transaction legs",
+            name = {"report", "legs"},
             group = Constants.REPORTING_COMMANDS)
     public void listTransferItems(@Option(description = "transfer id", required = true,
-                                              longName = "id") UUID id,
+                                          longName = "id") UUID id,
                                   @Option(description = "page size", defaultValue = "10",
                                           longName = "pageSize") Integer pageSize) {
         Pageable page = PageRequest.ofSize(pageSize);

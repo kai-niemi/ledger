@@ -27,7 +27,7 @@ public class AdminCommands extends AbstractShellCommand {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
-    @Command(description = "Toggle SQL trace logging",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Toggle SQL trace logging",
             name = {"admin", "sql", "trace"},
             group = Constants.ADMIN_COMMANDS)
     public void toggleSqlTraceLogging(CommandContext commandContext) {
@@ -49,7 +49,7 @@ public class AdminCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(description = "Exit the shell",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Exit the shell",
             name = {"admin", "quit"},
             alias = "q",
             group = Constants.ADMIN_COMMANDS)
@@ -58,7 +58,7 @@ public class AdminCommands extends AbstractShellCommand {
         System.exit(0);
     }
 
-    @Command(description = "Print application uptime",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print application uptime",
             name = {"admin", "uptime"},
             group = Constants.ADMIN_COMMANDS)
     public void uptime(CommandContext commandContext) {
@@ -67,7 +67,7 @@ public class AdminCommands extends AbstractShellCommand {
                 .println(DurationUtils.millisecondsToDisplayString(uptime));
     }
 
-    @Command(description = "Print system information",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print system information",
             name = {"admin", "info"},
             group = Constants.ADMIN_COMMANDS)
     public void systemInfo(CommandContext commandContext) {
@@ -84,7 +84,7 @@ public class AdminCommands extends AbstractShellCommand {
         pw.println(" Pid: %s".formatted(r.getPid()));
         pw.println(" Uptime: %s".formatted(r.getUptime()));
         pw.println(" VM name: %s | Vendor: %s | Version: %s"
-                        .formatted(r.getVmName(), r.getVmVendor(), r.getVmVersion()));
+                .formatted(r.getVmName(), r.getVmVendor(), r.getVmVersion()));
 
         ThreadMXBean t = ManagementFactory.getThreadMXBean();
         pw.println(">> Runtime");

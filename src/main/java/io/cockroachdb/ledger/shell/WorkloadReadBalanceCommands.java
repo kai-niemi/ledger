@@ -27,7 +27,7 @@ public class WorkloadReadBalanceCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(description = "Account balance reads",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Account balance reads",
             help = "Start the account balance read workload.",
             name = {"workload", "start", "balance-read"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,

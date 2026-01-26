@@ -3,6 +3,7 @@ package io.cockroachdb.ledger.shell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.stereotype.Component;
@@ -34,33 +35,37 @@ public class DatabasePoolCommands extends AbstractShellCommand {
         return from(hikariDataSource.getHikariConfigMXBean());
     }
 
-    @Command(description = "Show connection pool config",
-            name = {"db", "pool", "config"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show connection pool status",
+            name = {"db", "show", "pool", "status"},
             group = Constants.DB_COMMANDS)
-    public void showPoolConfig() {
-        logger.info("Connection pool config:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
+    public void showPoolSize(CommandContext commandContext) {
+        commandContext.outputWriter().println(
+                "Connection pool state: %s"
+                        .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
     }
 
-    @Command(description = "Show connection pool status",
-            name = {"db", "pool", "status"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show connection pool size",
+            name = {"db", "show", "pool", "size"},
             group = Constants.DB_COMMANDS)
-    public void showPoolSize() {
-        logger.info("Connection pool state:\n%s"
-                .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolSize())));
+    public void showPoolConfig(CommandContext commandContext) {
+        commandContext.outputWriter().println(
+                "Connection pool config: %s"
+                        .formatted(JsonHelper.toFormattedJSON(objectMapper, getConnectionPoolConfig())));
     }
 
-    @Command(description = "Set connection pool size",
-            name = {"db", "pool", "size"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Set connection pool size",
+            name = {"db", "set", "pool", "size"},
             group = Constants.DB_COMMANDS)
     public void setPoolSize(@Option(description = "max pool size", required = true,
-                                        longName = "maxSize") Integer maxSize,
+                                    longName = "maxSize") Integer maxSize,
                             @Option(description = "min idle size (same as max if omitted)",
-                                    longName = "minIdle") Integer minIdle) {
+                                    longName = "minIdle", required = true) Integer minIdle,
+                            CommandContext commandContext) {
         hikariDataSource.setMaximumPoolSize(maxSize);
-        hikariDataSource.setMinimumIdle(minIdle != null ? minIdle : maxSize);
+        hikariDataSource.setMinimumIdle(minIdle);
 
-        logger.info("Set connection pool max size %d and min idle %d".formatted(maxSize, minIdle));
+        commandContext.outputWriter().println(
+                "Set connection pool max size: %d min idle: %d".formatted(maxSize, minIdle));
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

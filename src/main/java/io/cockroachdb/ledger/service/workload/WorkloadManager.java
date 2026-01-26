@@ -92,6 +92,11 @@ public class WorkloadManager {
             }
 
             @Override
+            public void interrupted(Duration callTime, Exception ex) {
+                logger.warn("Worker aborted: %s".formatted(description.displayValue()));
+            }
+
+            @Override
             public void failure(Duration callTime, Exception ex) {
                 if (problems.size() >= 20) {
                     problems.removeLast();
@@ -166,7 +171,7 @@ public class WorkloadManager {
                     lifecycle.success(Duration.between(callTime, Instant.now()));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    logger.warn("Thread interrupted - bailing out");
+                    lifecycle.interrupted(Duration.between(callTime, Instant.now()), e);
                     break;
                 } catch (Exception e) {
                     lifecycle.failure(Duration.between(callTime, Instant.now()), e);

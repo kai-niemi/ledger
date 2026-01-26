@@ -24,8 +24,8 @@ public class WorkloadFakeCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(description = "Start fake workload with random sleep durations",
-            name = {"workload","start", "fake"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Start fake workload with random sleep durations",
+            name = {"workload", "start", "fake"},
             group = Constants.WORKLOAD_COMMANDS)
     public void createFakeWorkloads(
             @Option(description = "number of workloads",

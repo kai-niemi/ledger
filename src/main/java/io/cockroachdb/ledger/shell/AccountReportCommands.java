@@ -18,7 +18,7 @@ import io.cockroachdb.ledger.shell.support.TableUtils;
 
 @Component
 public class AccountReportCommands extends AbstractShellCommand {
-    @Command(description = "List accounts",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List accounts",
             name = {"report", "accounts"},
             completionProvider = "accountTypeProvider",
             group = Constants.REPORTING_COMMANDS)

@@ -1,5 +1,6 @@
 package io.cockroachdb.ledger.shell;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -7,11 +8,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.shell.core.command.completion.CompletionContext;
+import org.springframework.shell.core.command.completion.CompletionProposal;
+import org.springframework.shell.core.command.completion.CompletionProvider;
 import org.springframework.shell.jline.tui.table.BeanListTableModel;
 import org.springframework.stereotype.Component;
 
@@ -29,38 +34,48 @@ public class WorkloadCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(description = "Cancel all workloads",
-            name = {"workload", "cancel", "all"},
+    @Bean
+    public CompletionProvider workloadProvider() {
+        return completionContext -> {
+            List<CompletionProposal> result = new ArrayList<>();
+
+            workloadManager.getWorkloads().forEach(workload -> {
+                CompletionProposal p = new CompletionProposal("--id=" + workload.getId())
+                        .description(workload.getTitle());
+                result.add(0, p);
+            });
+
+            return result;
+        };
+    }
+
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Cancel workload(s)",
+            name = {"workload", "cancel"},
             alias = "x",
+            completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void cancelAll() {
-        workloadManager.cancelWorkloads();
+    public void cancelAll(@Option(description = "workload id", longName = "id", defaultValue = "-1") Integer id) {
+        if (id >= 0) {
+            workloadManager.cancelWorkload(id);
+        } else {
+            workloadManager.cancelWorkloads();
+        }
     }
 
-    @Command(description = "Cancel one workload",
-            name = {"workload", "cancel", "one"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Delete workload(s)",
+            name = {"workload", "delete"},
+            completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void cancel(@Option(description = "workload id", required = true,
+    public void delete(@Option(description = "workload id", required = true, defaultValue = "-1",
             longName = "id") Integer id) {
-        workloadManager.cancelWorkload(id);
+        if (id >= 0) {
+            workloadManager.deleteWorkload(id);
+        } else {
+            workloadManager.deleteWorkloads();
+        }
     }
 
-    @Command(description = "Delete all non-running workloads",
-            name = {"workload", "delete", "all"},
-            group = Constants.WORKLOAD_COMMANDS)
-    public void deleteWorkloads() {
-        workloadManager.deleteWorkloads();
-    }
-
-    @Command(description = "Delete one workload",
-            name = {"workload", "delete", "one"},
-            group = Constants.WORKLOAD_COMMANDS)
-    public void delete(@Option(description = "workload id", required = true,
-            longName = "id") Integer id) {
-        workloadManager.deleteWorkload(id);
-    }
-
-    @Command(description = "List all running workloads",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List all workloads",
             name = {"workload", "list"},
             group = Constants.WORKLOAD_COMMANDS)
     public void listWorkloads(@Option(description = "page size", defaultValue = "20",
@@ -89,11 +104,11 @@ public class WorkloadCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(description = "List workload errors",
-            name = {"workload", "list", "errors"},
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List all errors",
+            name = {"workload", "errors"},
+            completionProvider = "workloadProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void listErrors(@Option(description = "workload id", required = true,
-            longName = "id") Integer id) {
+    public void listErrors(@Option(description = "workload id", required = true, longName = "id") Integer id) {
         Workload workloadModel = workloadManager.getWorkloadById(id);
         List<Problem> problems = workloadModel.getLastProblems();
 

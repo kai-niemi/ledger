@@ -5,9 +5,11 @@ public abstract class Constants {
 
     public static final String DB_COMMANDS = "2) Database Commands";
 
-    public static final String REPORTING_COMMANDS = "3) Reporting Commands";
+    public static final String REGION_COMMANDS = "3) Region Commands";
 
-    public static final String WORKLOAD_COMMANDS = "4) Workload Commands";
+    public static final String REPORTING_COMMANDS = "4) Reporting Commands";
+
+    public static final String WORKLOAD_COMMANDS = "5) Workload Commands";
 
     public static final String DEFAULT_DURATION = "120m";
 
