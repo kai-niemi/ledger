@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.jline.terminal.Terminal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ResourceLoader;
@@ -40,8 +38,6 @@ public abstract class AbstractShellCommand {
     protected static final String ACCOUNT_PLAN_EXIST = "accountPlanExist";
 
     protected static final String ACCOUNT_PLAN_NOT_EXIST = "accountPlanDoesNotExist";
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     protected AccountPlanService accountPlanService;

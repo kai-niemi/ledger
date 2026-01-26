@@ -70,12 +70,14 @@ public class DatabaseCommands extends AbstractShellCommand {
             group = Constants.DB_COMMANDS)
     public void dropAccountPlan(@Option(description = "confirm dropping accounts and transfers",
             required = true,
-            longName = "confirm") boolean confirm) {
+            longName = "confirm") boolean confirm,
+                                CommandContext commandContext) {
         if (confirm) {
             AccountPlan accountPlan = applicationModel.getAccountPlan();
             accountPlanService.dropAccountPlan(accountPlan);
         } else {
-            logger.warn("You need to confirm this operation!");
+            commandContext.outputWriter().println(
+                    "You need to confirm this operation!");
         }
     }
 }

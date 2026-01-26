@@ -73,7 +73,7 @@ public class WorkloadFakeCommands extends AbstractShellCommand {
                     }, new WorkloadDescription() {
                         @Override
                         public String displayValue() {
-                            return "Sleeper #" + n;
+                            return "Fake #" + n;
                         }
 
                         @Override

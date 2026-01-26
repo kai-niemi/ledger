@@ -62,7 +62,7 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
                         @Override
                         public Void call() {
                             AccountBatchRequest batch = new AccountBatchRequest();
-                            batch.setCity(city.getName());
+                            batch.setCity(city);
                             batch.setBatchSize(batchSize);
                             batch.setAccountType(accountType);
 

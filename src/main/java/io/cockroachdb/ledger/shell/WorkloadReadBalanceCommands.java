@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,8 @@ public class WorkloadReadBalanceCommands extends AbstractShellCommand {
                     longName = "concurrency") int concurrency,
             @Option(description = "enable stale, historical follower reads",
                     defaultValue = "false",
-                    longName = "stale") boolean stale
+                    longName = "stale") boolean stale,
+            CommandContext commandContext
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
             return accountServiceFacade.findAccounts(city,
@@ -58,7 +60,8 @@ public class WorkloadReadBalanceCommands extends AbstractShellCommand {
         });
 
         if (accountIdsPerCity.isEmpty()) {
-            logger.warn("No cities found matching region '%s'".formatted(region));
+            commandContext.outputWriter()
+                    .println("No cities found matching region '%s'".formatted(region));
             return;
         }
 

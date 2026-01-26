@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -72,13 +71,11 @@ public class WorkloadManager {
 
     private int samplePeriodSeconds = 300;
 
-    public <T> List<Workload> submitWorkers(Worker<T> worker, WorkloadDescription description, int count) {
-        List<Workload> workers = new ArrayList<>();
-        IntStream.rangeClosed(1,count).forEach(value -> workers.add(submitWorker(worker, description)));
-        return workers;
+    public <T> void submitWorkers(Worker<T> worker, WorkloadDescription description, int count) {
+        IntStream.rangeClosed(1, count).forEach(value -> submitWorker(worker, description));
     }
 
-    public <T> Workload submitWorker(Worker<T> worker, WorkloadDescription description) {
+    private <T> void submitWorker(Worker<T> worker, WorkloadDescription description) {
         final Metrics metrics = Metrics.empty();
 
         final LinkedList<Problem> problems = new LinkedList<>();
@@ -117,7 +114,8 @@ public class WorkloadManager {
                 } else if (ex instanceof TransientDataAccessException) {
                     logger.warn("Transient data access exception: [%s]".formatted(ex));
                     metrics.markFail(callTime, true);
-                } else if (ex instanceof NonTransientDataAccessException || ex instanceof TransactionException || ex instanceof BusinessException) {
+                } else if (ex instanceof NonTransientDataAccessException || ex instanceof TransactionException
+                           || ex instanceof BusinessException) {
                     logger.error("Non-transient exception: [%s]".formatted(ex));
                     metrics.markFail(callTime, false);
                 } else {
@@ -151,8 +149,6 @@ public class WorkloadManager {
         workloads.add(workload);
 
         applicationEventPublisher.publishEvent(new WorkloadUpdatedEvent(this));
-
-        return workload;
     }
 
     private <T> Future<T> submit(Worker<T> task, WorkerLifecycle lifecycle) {

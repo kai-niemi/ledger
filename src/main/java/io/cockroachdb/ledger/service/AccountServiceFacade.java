@@ -39,9 +39,9 @@ public class AccountServiceFacade {
     public List<UUID> createAccountBatch(AccountBatchRequest form) {
         return accountService.createAccountBatch(() -> AccountEntity.builder()
                         .withId(UUID.randomUUID())
-                        .withCity(form.getCity())
+                        .withCity(form.getCity().getName())
+                        .withBalance(Money.zero(form.getCity().getCurrencyInstance()))
                         .withAccountType(form.getAccountType())
-                        .withBalance(Money.zero(form.getCurrency()))
                         .withAllowNegative(false)
                         .withName(String.format("user:%05d", monotonicBatchSequence.incrementAndGet()))
                         .withDescription(CockroachFacts.nextFact(256))

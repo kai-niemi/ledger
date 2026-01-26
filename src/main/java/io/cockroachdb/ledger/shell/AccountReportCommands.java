@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.shell.jline.tui.table.BeanListTableModel;
@@ -26,12 +27,13 @@ public class AccountReportCommands extends AbstractShellCommand {
                                      defaultValue = "LIABILITY",
                                      longName = "accountType") AccountType accountType,
                              @Option(description = "page size", defaultValue = "10",
-                                     longName = "pageSize") Integer pageSize) {
+                                     longName = "pageSize") Integer pageSize,
+                             CommandContext commandContext) {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
             final Page<AccountEntity> accountPage = accountServiceFacade.findAccounts(accountType, page);
-            logger.info("\n" + printAccountTable(accountPage.getContent()));
+            commandContext.outputWriter().println(printAccountTable(accountPage.getContent()));
             page = askForPage(accountPage).orElseGet(Pageable::unpaged);
         }
     }

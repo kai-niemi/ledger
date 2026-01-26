@@ -8,14 +8,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
 
+import io.cockroachdb.ledger.model.City;
+
 @Validated
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountBatchRequest {
     @NotNull
-    private String city;
-
-    @NotNull
-    private Currency currency;
+    private City city;
 
     @NotNull
     private String prefix;
@@ -34,20 +33,12 @@ public class AccountBatchRequest {
         this.accountType = accountType;
     }
 
-    public String getCity() {
+    public City getCity() {
         return city;
     }
 
-    public void setCity(String city) {
+    public void setCity(City city) {
         this.city = city;
-    }
-
-    public Currency getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(Currency currency) {
-        this.currency = currency;
     }
 
     public String getPrefix() {

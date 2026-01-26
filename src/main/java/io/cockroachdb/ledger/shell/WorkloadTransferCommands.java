@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.shell.core.command.CommandContext;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.stereotype.Component;
@@ -76,10 +77,11 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                     longName = "duration") String duration,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency
+                    longName = "concurrency") int concurrency,
+            CommandContext commandContext
     ) {
         if (legs < 2) {
-            logger.info("Number of legs must be >= 2");
+            commandContext.outputWriter().println("Number of legs must be >= 2");
             return;
         }
 
@@ -91,7 +93,8 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         });
 
         if (accountIdsPerCity.isEmpty()) {
-            logger.warn("No cities found in region '%s' (region mapping may be needed)".formatted(region));
+            commandContext.outputWriter().println(
+                    "No cities found in region '%s' (region mapping may be needed)".formatted(region));
             return;
         }
 
@@ -186,7 +189,8 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                     longName = "region") String region,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency
+                    longName = "concurrency") int concurrency,
+            CommandContext commandContext
     ) {
         if (accountType.equals(AccountType.LIABILITY)) {
             throw new IllegalArgumentException("You are not allowed to target accounts of this type!");
@@ -200,7 +204,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         });
 
         if (accountIdsPerCity.isEmpty()) {
-            logger.warn("No liability accounts found matching criteria");
+            commandContext.outputWriter().println("No liability accounts found matching criteria");
             return;
         }
 
@@ -212,10 +216,6 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                         @Override
                         public TransferEntity call() {
                             Assert.notNull(accountEntityPage, "accountPage is null");
-                            if (logger.isTraceEnabled()) {
-                                logger.trace("Processing %,d asset accounts for city '%s'"
-                                        .formatted(accountEntityPage.size(), city));
-                            }
                             List<UUID> assetAccounts = accountEntityPage.stream().map(AccountEntity::getId).toList();
                             return grantFunds(city, liabilityAccounts, assetAccounts, BigDecimal.valueOf(amount));
                         }

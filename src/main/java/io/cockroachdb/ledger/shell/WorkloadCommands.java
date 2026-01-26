@@ -14,7 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.shell.core.command.annotation.Command;
 import org.springframework.shell.core.command.annotation.Option;
-import org.springframework.shell.core.command.completion.CompletionContext;
 import org.springframework.shell.core.command.completion.CompletionProposal;
 import org.springframework.shell.core.command.completion.CompletionProvider;
 import org.springframework.shell.jline.tui.table.BeanListTableModel;
@@ -77,6 +76,7 @@ public class WorkloadCommands extends AbstractShellCommand {
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List all workloads",
             name = {"workload", "list"},
+            alias = "w",
             group = Constants.WORKLOAD_COMMANDS)
     public void listWorkloads(@Option(description = "page size", defaultValue = "20",
             longName = "pageSize") Integer pageSize) {
