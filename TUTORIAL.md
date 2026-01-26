@@ -73,11 +73,11 @@ Start the server and build the account plan:
 
     ssh <client-host-10>
     java -jar ledger.jar
-    :$ build-account-plan
+    :$ db build account-plan
 
 Enable multi-region features in one go:
 
-    :$ apply-multi-region
+    :$ region apply multi-region
 
 This will add database regions, set the survival goal to `REGION` and also set
 table localities to `regional-by-row`. It will make the home region of a table
@@ -90,8 +90,8 @@ You can observe this activity in the DB Console.
 
 After things have settled, start a few workloads for the first region, for example:
 
-    :$ transfer-funds 
-    :$ read-balance
+    :$ workload start transfer-funds 
+    :$ workload start read-balance
 
 You should notice that it picks the cities for the local region, in this case `us-east-1`.
 As a later exercise, you can change the survival goal back to `zone` (the default) 
@@ -103,8 +103,8 @@ Start the server shell and some workloads:
                    
     ssh <client-host-11>
     java -jar ledger.jar 
-    :$ transfer-funds 
-    :$ read-balance
+    :$ workload start transfer-funds 
+    :$ workload start read-balance
 
 You should notice that it picks the cities of the local region (eu-central-1).
 
@@ -114,8 +114,8 @@ Start the server shell and some workloads:
                         
     ssh <client-host-12>
     java -jar ledger.jar 
-    :$ transfer-funds 
-    :$ read-balance
+    :$ workload start transfer-funds 
+    :$ workload start read-balance
 
 You should notice that it picks the cities of the local region (eu-north-1).
 

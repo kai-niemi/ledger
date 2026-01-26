@@ -6,7 +6,7 @@
 
 title="CockroachDB single-region EU deployment"
 # CRDB release version
-releaseversion="v25.4.0"
+releaseversion="v25.4.3"
 # Number of node instances in total including clients
 nodes="4"
 # Nodes hosting CRDB

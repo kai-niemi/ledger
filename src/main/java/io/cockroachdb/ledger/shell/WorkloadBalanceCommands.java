@@ -30,7 +30,7 @@ public class WorkloadBalanceCommands extends AbstractShellCommand {
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Account balance reads",
             help = "Start the account balance read workload.",
-            name = {"workload", "start", "balance-read"},
+            name = {"workload", "start", "read-balance"},
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "regionProvider",
             group = Constants.WORKLOAD_COMMANDS)

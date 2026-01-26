@@ -25,7 +25,7 @@ import io.cockroachdb.ledger.annotations.Retryable;
  * pessimistic and optimistic locking failures.
  * <p>
  * Concurrency related failures are more common for databases running in higher isolation
- * levels such as 1SR when a workload is contended (interleaved RW, WR or WW operations
+ * levels such as serializable when a workload is contended (interleaved RW, WR or WW operations
  * that don't serialize).
  * <p>
  * This aspect is separate from {@link TransactionDecoratorAspect} which allows it to

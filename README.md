@@ -183,8 +183,8 @@ Now you can access the application via http://localhost:9090.
 Add the shell commands you would like to run into a plain text file:
 
     echo "version" > cmd.txt
-    echo "transfer-funds" >> cmd.txt
-    echo "read-balance" >> cmd.txt
+    echo "workload start transfer-funds" >> cmd.txt
+    echo "workload start read-balance" >> cmd.txt
 
 Start the server in the background by passing a command file name 
 as argument with a `@` prefix:
@@ -299,7 +299,7 @@ negative value.
 
 This command will create one _liability_ account and 5,000 _asset_ accounts per city, by default:
 
-    build-account-plan
+    db build accountplan
 
 The account plan is organized in such a way that the total balance of all accounts for a given 
 city and currency amounts to zero. Thus, if a non-zero total balance is ever observed it means 
@@ -312,7 +312,7 @@ lost updates with non-zero balance sums as a result.
 
 This is a read-write intensive workload that transfer funds between accounts picked by random.
 
-    transfer-funds
+    workload start transfer-funds
 
 One transfer `leg` equals to one account balance update, thus the minimum number of 
 transfer legs is two. A balance update can hold a positive or negative value for simplicity, 
@@ -320,13 +320,13 @@ rather than a _credit_ or _debit_ in real accounting. By default, all workloads 
 in the gateway node's region (local region to the client). You can however pick any region, 
 or all of them, affectively starting a transfer workload for every city, like:
 
-    transfer-funds --region all
+    workload start transfer-funds --region all
 
 ## Read balance
 
 This is a purely read-only command that executes point lookups on accounts to retrieve the current balance.
 
-    read-balance
+    workload start read-balance
 
 Another variant is to use historical follower reads, which, if you are familiar with CockroachDB, means 
 that any node receiving a request hosting a range replica for the requested key can service the request, 
@@ -334,17 +334,17 @@ at the expense of the returned value being potentially stale with up to ~5s
 (called a _bounded staleness read_). Normally only the lease holder replica can service reads which
 are authoritative.
 
-    read-balance-historical
+    workload start read-balance --stale true
 
 ## Create accounts
 
 This is a write-only command to create new asset accounts in batches. It can be used to 
 populate the database with more accounts than included in the account plan.
 
-    create-accounts
+    workload start create-accounts
 
 Notice that these accounts will have a zero balance and are not allowed to go negative. 
-To fund these accounts, you need to run the `transfer-grants` command to grant funds 
+To fund these accounts, you need to run the `workload start transfer-grants` command to grant funds 
 from liability accounts.
 
 ## Transfer grants
@@ -353,7 +353,7 @@ This command will move money from **liability** accounts to **asset** accounts w
 a specified balance range. It's useful to run this after creating new accounts to allow 
 these to become part of workload selections.
 
-    transfer-grants
+    workload start transfer-grants
   
 ## Workload Overview
 
