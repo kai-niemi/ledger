@@ -32,7 +32,8 @@ public class AdminCommands extends AbstractShellCommand {
     @Value("${server.port:8080}")
     private Integer serverPort;
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Toggle SQL trace logging",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Toggle SQL trace logging",
             name = {"admin", "sql", "trace"},
             group = Constants.ADMIN_COMMANDS)
     public void toggleSqlTraceLogging(CommandContext commandContext) {
@@ -54,7 +55,8 @@ public class AdminCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Exit the shell",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Exit the shell",
             name = {"admin", "quit"},
             alias = "q",
             group = Constants.ADMIN_COMMANDS)
@@ -63,7 +65,8 @@ public class AdminCommands extends AbstractShellCommand {
         System.exit(0);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print application uptime",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Print application uptime",
             name = {"admin", "uptime"},
             group = Constants.ADMIN_COMMANDS)
     public void uptime(CommandContext commandContext) {
@@ -95,7 +98,8 @@ public class AdminCommands extends AbstractShellCommand {
                 ));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print system information",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Print system information",
             name = {"admin", "info"},
             group = Constants.ADMIN_COMMANDS)
     public void systemInfo(CommandContext commandContext) {

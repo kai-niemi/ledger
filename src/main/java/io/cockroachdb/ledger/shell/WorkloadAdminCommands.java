@@ -28,7 +28,7 @@ import io.cockroachdb.ledger.shell.support.ListTableModel;
 import io.cockroachdb.ledger.shell.support.TableUtils;
 
 @Component
-public class WorkloadCommands extends AbstractShellCommand {
+public class WorkloadAdminCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
@@ -117,7 +117,7 @@ public class WorkloadCommands extends AbstractShellCommand {
             alias = "w",
             completionProvider = "workloadStatusProvider",
             group = Constants.WORKLOAD_COMMANDS)
-    public void listWorkloads(@Option(description = "page size", defaultValue = "40",
+    public void listWorkloads(@Option(description = "page size", defaultValue = "20",
                                       longName = "pageSize") Integer pageSize,
                               @Option(description = "workload status", defaultValue = "RUNNING",
                                       longName = "status") WorkloadStatus status,

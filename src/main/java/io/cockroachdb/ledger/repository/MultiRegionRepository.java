@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.cockroachdb.ledger.domain.SurvivalGoal;
-import io.cockroachdb.ledger.model.Region;
+import io.cockroachdb.ledger.domain.Region;
 
 public interface MultiRegionRepository {
     void addDatabaseRegions(List<Region> regions);

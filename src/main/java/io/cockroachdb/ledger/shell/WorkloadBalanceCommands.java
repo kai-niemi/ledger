@@ -14,7 +14,7 @@ import org.springframework.shell.core.command.annotation.Option;
 import org.springframework.stereotype.Component;
 
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.workload.Worker;
 import io.cockroachdb.ledger.service.workload.WorkloadDescription;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
@@ -31,13 +31,14 @@ public class WorkloadBalanceCommands extends AbstractShellCommand {
     @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Account balance reads",
             help = "Start the account balance read workload.",
             name = {"workload", "start", "read-balance"},
+            alias = "rb",
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "regionProvider",
             group = Constants.WORKLOAD_COMMANDS)
     public void readBalance(
             @Option(description = Constants.ACCOUNT_LIMIT_HELP,
                     defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT,
-                    longName = "limit") int limit,
+                    longName = "limit") Integer limit,
             @Option(description = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
                     longName = "region") String region,
@@ -46,10 +47,10 @@ public class WorkloadBalanceCommands extends AbstractShellCommand {
                     longName = "duration") String duration,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency,
+                    longName = "concurrency") Integer concurrency,
             @Option(description = "enable stale, historical follower reads",
                     defaultValue = "false",
-                    longName = "stale") boolean stale,
+                    longName = "stale") Boolean stale,
             CommandContext commandContext
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {

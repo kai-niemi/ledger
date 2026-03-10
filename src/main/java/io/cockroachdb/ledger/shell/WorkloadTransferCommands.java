@@ -23,7 +23,7 @@ import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.TransferServiceFacade;
 import io.cockroachdb.ledger.service.workload.Worker;
 import io.cockroachdb.ledger.service.workload.WorkloadDescription;
@@ -42,33 +42,35 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
     @Autowired
     private WorkloadManager workloadManager;
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Transfer funds between non-negative balance asset accounts",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Transfer funds between non-negative balance asset accounts",
             name = {"workload", "start", "transfer-funds"},
+            alias = "tf",
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "regionProvider",
             group = Constants.WORKLOAD_COMMANDS)
     public void transferFunds(
             @Option(description = "minimum transfer amount in account currency",
                     defaultValue = "0.05",
-                    longName = "min") final double min,
+                    longName = "min") final Double min,
             @Option(description = "maximum transfer amount in account currency",
                     defaultValue = "10.00",
-                    longName = "max") final double max,
+                    longName = "max") final Double max,
             @Option(description = "number of legs per transfer (must be at least 2)",
                     defaultValue = "2",
-                    longName = "legs") final int legs,
+                    longName = "legs") final Integer legs,
             @Option(description = "additional number of legs per transfer",
                     defaultValue = "0",
-                    longName = "variance") final int variance,
+                    longName = "variance") final Integer variance,
             @Option(description = "minimum account balance for inclusion",
                     defaultValue = "100.00",
-                    longName = "minBalance") final double minBalance,
+                    longName = "minBalance") final Double minBalance,
             @Option(description = "maximum account balance for inclusion",
                     defaultValue = "999999999.00",
-                    longName = "maxBalance") final double maxBalance,
+                    longName = "maxBalance") final Double maxBalance,
             @Option(description = Constants.ACCOUNT_LIMIT_HELP,
                     defaultValue = Constants.DEFAULT_ACCOUNT_LIMIT,
-                    longName = "limit") int limit,
+                    longName = "limit") Integer limit,
             @Option(description = Constants.REGIONS_HELP,
                     defaultValue = Constants.DEFAULT_REGION,
                     longName = "region") String region,
@@ -77,7 +79,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                     longName = "duration") String duration,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency,
+                    longName = "concurrency") Integer concurrency,
             CommandContext commandContext
     ) {
         if (legs < 2) {
@@ -163,24 +165,26 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         return transferServiceFacade.createTransfer(builder.build());
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Transfer grants from liability accounts to user accounts",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Transfer grants from liability accounts to user accounts",
             name = {"workload", "start", "transfer-grants"},
+            alias = "tg",
             availabilityProvider = ACCOUNT_PLAN_EXIST,
             completionProvider = "accountTypeAndRegionCompletionProvider",
             group = Constants.WORKLOAD_COMMANDS)
     public void transferGrants(
             @Option(description = "transfer amount debited liability accounts and credited asset accounts",
                     defaultValue = "500.00",
-                    longName = "amount") final double amount,
+                    longName = "amount") final Double amount,
             @Option(description = "minimum asset account balance for inclusion",
                     defaultValue = "0.00",
-                    longName = "minBalance") final double minBalance,
+                    longName = "minBalance") final Double minBalance,
             @Option(description = "maximum asset account balance for inclusion",
                     defaultValue = "50.00",
-                    longName = "maxBalance") final double maxBalance,
+                    longName = "maxBalance") final Double maxBalance,
             @Option(description = "max number of transfer legs per batch",
                     defaultValue = "128",
-                    longName = "legs") final int legs,
+                    longName = "legs") final Integer legs,
             @Option(description = "target account type (any but LIABILITY)",
                     defaultValue = "ASSET",
                     longName = "accountType") AccountType accountType,
@@ -189,7 +193,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                     longName = "region") String region,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency,
+                    longName = "concurrency") Integer concurrency,
             CommandContext commandContext
     ) {
         if (accountType.equals(AccountType.LIABILITY)) {

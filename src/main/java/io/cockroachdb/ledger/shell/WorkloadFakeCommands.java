@@ -30,22 +30,22 @@ public class WorkloadFakeCommands extends AbstractShellCommand {
     public void createFakeWorkloads(
             @Option(description = "number of workloads",
                     defaultValue = "5",
-                    longName = "count") int count,
+                    longName = "count") Integer count,
             @Option(description = "min sleep time in ms",
                     defaultValue = "10",
-                    longName = "min") int min,
+                    longName = "min") Integer min,
             @Option(description = "max sleep time in ms",
                     defaultValue = "150",
-                    longName = "max") int max,
+                    longName = "max") Integer max,
             @Option(description = "error probability (0-1)",
                     defaultValue = "0.0",
-                    longName = "probability") double probability,
+                    longName = "probability") Double probability,
             @Option(description = Constants.DURATION_HELP,
                     defaultValue = Constants.DEFAULT_DURATION,
                     longName = "duration") String duration,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency
+                    longName = "concurrency") Integer concurrency
     ) {
         final Instant stopTime = Instant.now().plus(DurationUtils.parseDuration(duration));
 

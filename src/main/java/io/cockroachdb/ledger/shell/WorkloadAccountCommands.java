@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import io.cockroachdb.ledger.domain.AccountBatchRequest;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.workload.Worker;
 import io.cockroachdb.ledger.service.workload.WorkloadDescription;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
@@ -31,7 +31,7 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
     public void createAccounts(
             @Option(description = "batch size",
                     defaultValue = "128",
-                    longName = "batchSize") int batchSize,
+                    longName = "batchSize") Integer batchSize,
             @Option(description = "account type (any but LIABILITY)",
                     defaultValue = "ASSET",
                     longName = "accountType") AccountType accountType,
@@ -43,10 +43,10 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
                     longName = "duration") String duration,
             @Option(description = Constants.ITERATIONS_HELP,
                     defaultValue = "-1",
-                    longName = "iterations") int iterations,
+                    longName = "iterations") Integer iterations,
             @Option(description = "concurrency level, i.e. number of threads to start per city",
                     defaultValue = "1",
-                    longName = "concurrency") int concurrency
+                    longName = "concurrency") Integer concurrency
     ) {
         if (accountType.equals(AccountType.LIABILITY)) {
             throw new IllegalArgumentException("You are not allowed to create accounts of this type!");

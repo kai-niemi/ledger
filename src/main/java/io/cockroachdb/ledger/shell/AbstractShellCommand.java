@@ -28,7 +28,7 @@ import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.domain.TransferType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.AccountServiceFacade;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.service.account.AccountPlanService;
@@ -134,7 +134,7 @@ public abstract class AbstractShellCommand {
     }
 
     protected Optional<Pageable> askForPage(Page<?> page) {
-        if (page.isEmpty()) {
+        if (page.isEmpty() || page.getTotalPages() <= 1) {
             return Pageable.unpaged().toOptional();
         }
 

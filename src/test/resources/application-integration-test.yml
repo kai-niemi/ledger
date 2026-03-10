@@ -3,6 +3,6 @@ spring:
 #    allow-bean-definition-overriding: true
     banner-mode: off
   datasource:
-    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable&allow_unsafe_internals=true
     username: root
     password:

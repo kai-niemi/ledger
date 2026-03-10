@@ -14,7 +14,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import io.cockroachdb.ledger.ProfileNames;
-import io.cockroachdb.ledger.annotations.ControlService;
+import io.cockroachdb.ledger.annotation.ControlService;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.repository.AccountRepository;

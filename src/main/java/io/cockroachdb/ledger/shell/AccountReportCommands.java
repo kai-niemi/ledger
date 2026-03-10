@@ -19,14 +19,15 @@ import io.cockroachdb.ledger.shell.support.TableUtils;
 
 @Component
 public class AccountReportCommands extends AbstractShellCommand {
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List accounts",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List accounts",
             name = {"report", "accounts"},
             completionProvider = "accountTypeProvider",
             group = Constants.REPORTING_COMMANDS)
     public void listAccounts(@Option(description = "account type",
                                      defaultValue = "LIABILITY",
                                      longName = "accountType") AccountType accountType,
-                             @Option(description = "page size", defaultValue = "10",
+                             @Option(description = "page size", defaultValue = "20",
                                      longName = "pageSize") Integer pageSize,
                              CommandContext commandContext) {
         Pageable page = PageRequest.ofSize(pageSize);

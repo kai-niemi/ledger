@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.cockroachdb.ledger.model.AccountPlan;
-import io.cockroachdb.ledger.model.ApplicationProperties;
+import io.cockroachdb.ledger.domain.AccountPlan;
+import io.cockroachdb.ledger.domain.ApplicationProperties;
 import io.cockroachdb.ledger.repository.RegionRepository;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.JsonHelper;

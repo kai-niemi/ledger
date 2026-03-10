@@ -2,7 +2,6 @@ package io.cockroachdb.ledger.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.util.Money;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

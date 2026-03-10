@@ -22,14 +22,14 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.cockroachdb.ledger.annotations.ControlService;
+import io.cockroachdb.ledger.annotation.ControlService;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountItem;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferItemEntity;
 import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferType;
-import io.cockroachdb.ledger.model.ApplicationProperties;
+import io.cockroachdb.ledger.domain.ApplicationProperties;
 import io.cockroachdb.ledger.repository.AccountRepository;
 import io.cockroachdb.ledger.repository.TransferRepository;
 import io.cockroachdb.ledger.service.BadRequestException;

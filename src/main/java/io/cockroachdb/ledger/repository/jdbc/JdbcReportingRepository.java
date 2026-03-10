@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
 import io.cockroachdb.ledger.ProfileNames;
 import io.cockroachdb.ledger.domain.AccountSummary;
 import io.cockroachdb.ledger.domain.TransferSummary;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.repository.ReportingRepository;
 import io.cockroachdb.ledger.util.MetadataUtils;
 import io.cockroachdb.ledger.util.Money;

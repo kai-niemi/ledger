@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.aspect;
+package io.cockroachdb.ledger.annotation;
 
 import java.sql.SQLException;
 import java.time.Duration;

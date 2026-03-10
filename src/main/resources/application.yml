@@ -48,6 +48,9 @@ spring:
     connect-retries: 15
     baseline-on-migrate: true
     clean-disabled: false
+    init-sqls:
+      "set allow_unsafe_internals = true"
+
   #############################
   jpa:
     open-in-view: false
@@ -71,7 +74,7 @@ spring:
   #############################
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable&allow_unsafe_internals=true
     username: root
     password:
     name: Ledger

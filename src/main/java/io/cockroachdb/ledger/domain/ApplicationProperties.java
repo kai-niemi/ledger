@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.model;
+package io.cockroachdb.ledger.domain;
 
 import java.util.ArrayList;
 import java.util.Collections;

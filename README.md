@@ -54,7 +54,7 @@ design, improved UI and leverages JDK21 features such as virtual threads for bet
 
 - CockroachDB v23.2+
 - PostgreSQL 9+
-- MacOS (main platform)
+- macOS (main platform)
 - Linux
 - JDK 21
 
@@ -155,7 +155,7 @@ You can also override all parameters through the command line, which is the easi
 For example:
 
     java -jar ledger.jar \
-    --spring.datasource.url="jdbc:postgresql://localhost:26257/ledger?ssl=true&sslmode=require" \
+    --spring.datasource.url="jdbc:postgresql://localhost:26257/ledger?ssl=true&sslmode=require&allow_unsafe_internals=true" \
     --spring.datasource.username=craig \
     --spring.datasource.password=cockroach \
     --spring.profiles.active="default"

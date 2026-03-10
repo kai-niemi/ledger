@@ -8,7 +8,7 @@ import org.springframework.hateoas.RepresentationModel;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import io.cockroachdb.ledger.model.BalanceSheet;
+import io.cockroachdb.ledger.domain.BalanceSheet;
 
 @JsonPropertyOrder({"links", "embedded", "templates"})
 @JsonInclude(JsonInclude.Include.NON_NULL)

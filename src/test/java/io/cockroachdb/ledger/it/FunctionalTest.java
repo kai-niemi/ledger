@@ -10,7 +10,7 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 
-import io.cockroachdb.ledger.annotations.TransactionExplicit;
+import io.cockroachdb.ledger.annotation.TransactionExplicit;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferType;

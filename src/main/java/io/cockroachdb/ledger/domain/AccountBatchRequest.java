@@ -1,14 +1,10 @@
 package io.cockroachdb.ledger.domain;
 
-import java.util.Currency;
-
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotNull;
-
-import io.cockroachdb.ledger.model.City;
 
 @Validated
 @JsonInclude(JsonInclude.Include.NON_NULL)

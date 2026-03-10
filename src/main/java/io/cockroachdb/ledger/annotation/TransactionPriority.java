@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.annotations;
+package io.cockroachdb.ledger.annotation;
 
 /**
  * Enumeration of transaction priorities.

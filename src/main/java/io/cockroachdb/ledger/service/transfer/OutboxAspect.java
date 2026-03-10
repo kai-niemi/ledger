@@ -1,12 +1,14 @@
-package io.cockroachdb.ledger.aspect;
+package io.cockroachdb.ledger.service.transfer;
 
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.core.annotation.Order;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import io.cockroachdb.ledger.annotations.ResponseOutboxEvent;
+import io.cockroachdb.ledger.annotation.AdvisorOrder;
+import io.cockroachdb.ledger.annotation.ResponseOutboxEvent;
 import io.cockroachdb.ledger.repository.OutboxRepository;
 
 @Aspect
@@ -20,7 +22,15 @@ public class OutboxAspect {
         this.outboxRepository = outboxRepository;
     }
 
-    @AfterReturning(pointcut = "io.cockroachdb.ledger.aspect.Pointcuts.anyOutboxEventOperation(responseOutboxEvent)",
+    /**
+     * Pointcut expression matching all outbox event operations.
+     */
+    @Pointcut("execution(public * *(..)) "
+              + "&& @annotation(outboxPayload)")
+    public void anyOutboxEventOperation(ResponseOutboxEvent outboxPayload) {
+    }
+
+    @AfterReturning(pointcut = "anyOutboxEventOperation(responseOutboxEvent)",
             returning = "returnValue", argNames = "returnValue,responseOutboxEvent")
     public void doAfterOutboxOperation(Object returnValue, ResponseOutboxEvent responseOutboxEvent) {
         Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(),

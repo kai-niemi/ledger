@@ -21,7 +21,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import io.cockroachdb.ledger.Application;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.account.AccountService;
 import io.cockroachdb.ledger.service.transfer.TransferService;
 import io.cockroachdb.ledger.util.Money;

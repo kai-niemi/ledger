@@ -29,9 +29,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.AccountPlan;
-import io.cockroachdb.ledger.model.ApplicationProperties;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.AccountPlan;
+import io.cockroachdb.ledger.domain.ApplicationProperties;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.util.Money;
 

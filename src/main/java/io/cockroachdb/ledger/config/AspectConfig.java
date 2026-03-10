@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Profile;
 
 import io.cockroachdb.ledger.ProfileNames;
 import io.cockroachdb.ledger.aspect.ExponentialBackoffRetryHandler;
-import io.cockroachdb.ledger.aspect.OutboxAspect;
-import io.cockroachdb.ledger.aspect.RetryHandler;
+import io.cockroachdb.ledger.service.transfer.OutboxAspect;
+import io.cockroachdb.ledger.annotation.RetryHandler;
 import io.cockroachdb.ledger.aspect.TransactionDecoratorAspect;
 import io.cockroachdb.ledger.aspect.TransactionRetryAspect;
 import io.cockroachdb.ledger.repository.OutboxRepository;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-db_url="jdbc:postgresql://localhost:26257/ledger?sslmode=disable"
+db_url="jdbc:postgresql://localhost:26257/ledger?sslmode=disable&allow_unsafe_internals=true"
 db_user=root
 db_password=
 spring_profile="default"

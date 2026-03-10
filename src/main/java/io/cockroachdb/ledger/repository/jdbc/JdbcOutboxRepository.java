@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 
-import io.cockroachdb.ledger.annotations.EventAggregate;
+import io.cockroachdb.ledger.annotation.EventAggregate;
 import io.cockroachdb.ledger.repository.OutboxRepository;
 
 @Repository

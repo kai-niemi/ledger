@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.service.ReportingServiceFacade;
-import io.cockroachdb.ledger.model.BalanceSheet;
+import io.cockroachdb.ledger.domain.BalanceSheet;
 import io.cockroachdb.ledger.web.model.RegionModel;
 
 @Controller

@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.model;
+package io.cockroachdb.ledger.domain;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

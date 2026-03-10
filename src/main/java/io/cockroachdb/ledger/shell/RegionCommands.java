@@ -11,15 +11,16 @@ import org.springframework.shell.jline.tui.table.BeanListTableModel;
 import org.springframework.stereotype.Component;
 
 import io.cockroachdb.ledger.domain.SurvivalGoal;
-import io.cockroachdb.ledger.model.City;
-import io.cockroachdb.ledger.model.Region;
+import io.cockroachdb.ledger.domain.City;
+import io.cockroachdb.ledger.domain.Region;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.ListTableModel;
 import io.cockroachdb.ledger.shell.support.TableUtils;
 
 @Component
 public class RegionCommands extends AbstractShellCommand {
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Set primary database region",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Set primary database region",
             name = {"region", "set", "primary"},
             completionProvider = "regionProvider",
             group = Constants.REGION_COMMANDS)
@@ -28,7 +29,8 @@ public class RegionCommands extends AbstractShellCommand {
         regionServiceFacade.setPrimaryRegion(region);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show primary region",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Show primary region",
             name = {"region", "show", "primary"},
             group = Constants.REGION_COMMANDS)
     public void showPrimaryRegion(CommandContext commandContext) {
@@ -39,7 +41,8 @@ public class RegionCommands extends AbstractShellCommand {
         });
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Set secondary database region",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Set secondary database region",
             name = {"region", "set", "secondary"},
             completionProvider = "regionProvider",
             group = Constants.REGION_COMMANDS)
@@ -48,7 +51,8 @@ public class RegionCommands extends AbstractShellCommand {
         regionServiceFacade.setSecondaryRegion(region);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show secondary region",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Show secondary region",
             name = {"region", "show", "secondary"},
             group = Constants.REGION_COMMANDS)
     public void showSecondaryRegion(CommandContext commandContext) {
@@ -59,28 +63,32 @@ public class RegionCommands extends AbstractShellCommand {
         });
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Drop secondary region, if any",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Drop secondary region, if any",
             name = {"region", "drop", "secondary"},
             group = Constants.REGION_COMMANDS)
     public void dropSecondaryRegion() {
         regionServiceFacade.dropSecondaryRegion();
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Add configured database regions",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Add configured database regions",
             name = {"region", "add"},
             group = Constants.REGION_COMMANDS)
     public void addRegions() {
         regionServiceFacade.addDatabaseRegions();
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Drop existing database regions",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Drop existing database regions",
             name = {"region", "drop", "all"},
             group = Constants.REGION_COMMANDS)
     public void dropRegions() {
         regionServiceFacade.dropDatabaseRegions();
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Set database survival goal",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Set database survival goal",
             name = {"region", "set", "survival"},
             completionProvider = "survivalGoalProvider",
             group = Constants.REGION_COMMANDS)
@@ -89,14 +97,16 @@ public class RegionCommands extends AbstractShellCommand {
         regionServiceFacade.setSurvivalGaol(goal);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show survival goal",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Show survival goal",
             name = {"region", "show", "survival"},
             group = Constants.REGION_COMMANDS)
     public void showSurvivalGoal(CommandContext commandContext) {
         commandContext.outputWriter().println(regionServiceFacade.getSurvivalGoal());
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Apply multi-region configurations (regions, localities and survival goals)",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Apply multi-region configurations (regions, localities and survival goals)",
             name = {"region", "apply", "multi-region"},
             completionProvider = "survivalGoalProvider",
             group = Constants.REGION_COMMANDS)
@@ -105,14 +115,16 @@ public class RegionCommands extends AbstractShellCommand {
         regionServiceFacade.applyMultiRegion(goal);
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Revert multi-region configurations (regions, localities and survival goals)",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Revert multi-region configurations (regions, localities and survival goals)",
             name = {"region", "revert", "multi-region"},
             group = Constants.REGION_COMMANDS)
     public void revertMultiRegion() {
         regionServiceFacade.revertMultiRegion();
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List all regions",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List all regions",
             name = {"region", "list"},
             group = Constants.REGION_COMMANDS)
     public void listRegions(CommandContext commandContext) {
@@ -120,7 +132,8 @@ public class RegionCommands extends AbstractShellCommand {
                 .println(printRegionTable(regionServiceFacade.listAllRegions()));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List region cities",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List region cities",
             name = {"region", "list", "city"},
             completionProvider = "regionProvider",
             group = Constants.REGION_COMMANDS)
@@ -134,7 +147,8 @@ public class RegionCommands extends AbstractShellCommand {
                         cities, List.of("Name"), (object, column) -> column == 0 ? object : "??")));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Show gateway region",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Show gateway region",
             name = {"region", "show", "gateway"},
             group = Constants.REGION_COMMANDS)
     public void showGatewayRegion(CommandContext commandContext) {

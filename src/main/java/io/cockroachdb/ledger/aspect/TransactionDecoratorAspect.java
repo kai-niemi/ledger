@@ -10,10 +10,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import io.cockroachdb.ledger.annotations.TimeTravel;
-import io.cockroachdb.ledger.annotations.TimeTravelMode;
-import io.cockroachdb.ledger.annotations.TransactionExplicit;
-import io.cockroachdb.ledger.annotations.TransactionPriority;
+import io.cockroachdb.ledger.annotation.AdvisorOrder;
+import io.cockroachdb.ledger.annotation.TimeTravel;
+import io.cockroachdb.ledger.annotation.TimeTravelMode;
+import io.cockroachdb.ledger.annotation.TransactionExplicit;
+import io.cockroachdb.ledger.annotation.TransactionPriority;
 import io.cockroachdb.ledger.util.MetadataUtils;
 
 /**
@@ -48,7 +49,7 @@ public class TransactionDecoratorAspect {
     }
 
     @Around(value = "io.cockroachdb.ledger.aspect.Pointcuts.anyTransactionBoundaryOperation(transactionExplicit)",
-            argNames = "pjp,transactionBoundary")
+            argNames = "pjp,transactionExplicit")
     public Object doInTransaction(ProceedingJoinPoint pjp, TransactionExplicit transactionExplicit)
             throws Throwable {
         Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(),

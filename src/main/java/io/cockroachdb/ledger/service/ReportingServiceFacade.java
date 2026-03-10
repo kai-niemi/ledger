@@ -3,20 +3,19 @@ package io.cockroachdb.ledger.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.AsyncTaskExecutor;
 
-import io.cockroachdb.ledger.annotations.ServiceFacade;
-import io.cockroachdb.ledger.annotations.TransactionImplicit;
+import io.cockroachdb.ledger.annotation.ServiceFacade;
+import io.cockroachdb.ledger.annotation.TransactionImplicit;
 import io.cockroachdb.ledger.domain.AccountSummary;
 import io.cockroachdb.ledger.domain.TransferSummary;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.repository.ReportingRepository;
-import io.cockroachdb.ledger.model.BalanceSheet;
+import io.cockroachdb.ledger.domain.BalanceSheet;
 
 @ServiceFacade
 public class ReportingServiceFacade {

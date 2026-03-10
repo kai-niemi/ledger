@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.annotations;
+package io.cockroachdb.ledger.annotation;
 
 public interface EventAggregate<ID> {
     ID getEventId();

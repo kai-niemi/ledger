@@ -9,8 +9,8 @@ import org.springframework.shell.core.command.completion.CompletionProposal;
 import org.springframework.shell.core.command.completion.CompletionProvider;
 
 import io.cockroachdb.ledger.domain.RegionCategory;
-import io.cockroachdb.ledger.model.City;
-import io.cockroachdb.ledger.model.Region;
+import io.cockroachdb.ledger.domain.City;
+import io.cockroachdb.ledger.domain.Region;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 
 public class RegionProvider implements CompletionProvider {

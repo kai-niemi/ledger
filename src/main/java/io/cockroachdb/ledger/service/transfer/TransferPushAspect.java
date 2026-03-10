@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.aspect;
+package io.cockroachdb.ledger.service.transfer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,21 +14,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
+import io.cockroachdb.ledger.annotation.AdvisorOrder;
 import io.cockroachdb.ledger.domain.AccountSummary;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferSummary;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.repository.ReportingRepository;
-import io.cockroachdb.ledger.model.BalanceSheet;
+import io.cockroachdb.ledger.domain.BalanceSheet;
 import io.cockroachdb.ledger.push.SimpMessagePublisher;
 import io.cockroachdb.ledger.push.TopicName;
 import io.cockroachdb.ledger.util.RateLimiter;
 
 @Aspect
 @Component
-@Order(ModelUpdateAspect.PRECEDENCE)
-public class ModelUpdateAspect {
+@Order(TransferPushAspect.PRECEDENCE)
+public class TransferPushAspect {
     public static final int PRECEDENCE = AdvisorOrder.CHANGE_FEED_ADVISOR;
 
     @Autowired

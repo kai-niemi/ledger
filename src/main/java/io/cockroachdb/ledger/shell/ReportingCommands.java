@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferItemEntity;
 import io.cockroachdb.ledger.domain.TransferType;
-import io.cockroachdb.ledger.model.BalanceSheet;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.BalanceSheet;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.service.ReportingServiceFacade;
 import io.cockroachdb.ledger.service.TransferServiceFacade;
@@ -42,7 +42,8 @@ public class ReportingCommands extends AbstractShellCommand {
     @Autowired
     private TransferServiceFacade transferServiceFacade;
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Print balance sheets grouped by city",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Print balance sheets grouped by city",
             name = {"report", "balance"},
             completionProvider = "regionProvider",
             group = Constants.REPORTING_COMMANDS)
@@ -69,7 +70,8 @@ public class ReportingCommands extends AbstractShellCommand {
         logger.info("\n" + TableUtils.prettyPrint(new BeanListTableModel<>(balanceSheets, header)));
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "Run consistency check on all accounts and transfers",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "Run consistency check on all accounts and transfers",
             name = {"report", "consistency"},
             completionProvider = "regionProvider",
             group = Constants.REPORTING_COMMANDS)
@@ -107,15 +109,15 @@ public class ReportingCommands extends AbstractShellCommand {
         }
     }
 
-
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List transfer transactions",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List transfer transactions",
             name = {"report", "transfers"},
             completionProvider = "transferTypeProvider",
             group = Constants.REPORTING_COMMANDS)
     public void listTransfers(
             @Option(description = "transfer type", defaultValue = "BANK", required = true,
                     longName = "transferType") TransferType transferType,
-            @Option(description = "page size", defaultValue = "10",
+            @Option(description = "page size", defaultValue = "20",
                     longName = "pageSize") Integer pageSize) {
 
         Pageable page = PageRequest.ofSize(pageSize);
@@ -127,12 +129,13 @@ public class ReportingCommands extends AbstractShellCommand {
         }
     }
 
-    @Command(exitStatusExceptionMapper = "commandExceptionMapper", description = "List transfer transaction legs",
+    @Command(exitStatusExceptionMapper = "commandExceptionMapper",
+            description = "List transfer transaction legs",
             name = {"report", "legs"},
             group = Constants.REPORTING_COMMANDS)
     public void listTransferItems(@Option(description = "transfer id", required = true,
                                           longName = "id") UUID id,
-                                  @Option(description = "page size", defaultValue = "10",
+                                  @Option(description = "page size", defaultValue = "20",
                                           longName = "pageSize") Integer pageSize) {
         Pageable page = PageRequest.ofSize(pageSize);
 

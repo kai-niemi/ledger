@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.model;
+package io.cockroachdb.ledger.domain;
 
 import org.springframework.validation.annotation.Validated;
 

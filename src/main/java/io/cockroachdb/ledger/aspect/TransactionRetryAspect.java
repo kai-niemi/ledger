@@ -16,7 +16,9 @@ import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import io.cockroachdb.ledger.annotations.Retryable;
+import io.cockroachdb.ledger.annotation.AdvisorOrder;
+import io.cockroachdb.ledger.annotation.RetryHandler;
+import io.cockroachdb.ledger.annotation.Retryable;
 
 /**
  * AOP aspect that automatically retries operations that throw transient SQL exceptions

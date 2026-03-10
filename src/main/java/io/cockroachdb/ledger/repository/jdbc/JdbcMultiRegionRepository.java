@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.cockroachdb.ledger.domain.SurvivalGoal;
-import io.cockroachdb.ledger.model.City;
-import io.cockroachdb.ledger.model.Region;
+import io.cockroachdb.ledger.domain.City;
+import io.cockroachdb.ledger.domain.Region;
 import io.cockroachdb.ledger.repository.MultiRegionRepository;
 
 @Repository

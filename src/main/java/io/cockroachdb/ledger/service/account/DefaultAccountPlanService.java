@@ -15,12 +15,12 @@ import org.springframework.context.ApplicationContextException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.Assert;
 
-import io.cockroachdb.ledger.annotations.ControlService;
+import io.cockroachdb.ledger.annotation.ControlService;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.AccountPlan;
-import io.cockroachdb.ledger.model.City;
-import io.cockroachdb.ledger.model.Region;
+import io.cockroachdb.ledger.domain.AccountPlan;
+import io.cockroachdb.ledger.domain.City;
+import io.cockroachdb.ledger.domain.Region;
 import io.cockroachdb.ledger.service.AccountServiceFacade;
 import io.cockroachdb.ledger.service.RegionServiceFacade;
 import io.cockroachdb.ledger.shell.support.AnsiConsole;

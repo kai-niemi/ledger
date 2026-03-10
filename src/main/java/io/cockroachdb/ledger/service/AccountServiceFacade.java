@@ -13,12 +13,12 @@ import org.springframework.data.util.Pair;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import io.cockroachdb.ledger.annotations.ServiceFacade;
-import io.cockroachdb.ledger.annotations.TransactionImplicit;
+import io.cockroachdb.ledger.annotation.ServiceFacade;
+import io.cockroachdb.ledger.annotation.TransactionImplicit;
 import io.cockroachdb.ledger.domain.AccountBatchRequest;
 import io.cockroachdb.ledger.domain.AccountEntity;
 import io.cockroachdb.ledger.domain.AccountType;
-import io.cockroachdb.ledger.model.City;
+import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.service.account.AccountService;
 import io.cockroachdb.ledger.util.CockroachFacts;
 import io.cockroachdb.ledger.util.Money;

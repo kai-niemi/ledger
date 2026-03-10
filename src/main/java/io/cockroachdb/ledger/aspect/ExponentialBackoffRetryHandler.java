@@ -9,6 +9,8 @@ import org.aspectj.lang.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.cockroachdb.ledger.annotation.RetryHandler;
+
 public class ExponentialBackoffRetryHandler implements RetryHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

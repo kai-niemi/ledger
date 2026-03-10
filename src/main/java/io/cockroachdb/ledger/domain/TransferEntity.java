@@ -6,11 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.hibernate.annotations.DynamicInsert;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -23,7 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import io.cockroachdb.ledger.annotations.EventAggregate;
+import io.cockroachdb.ledger.annotation.EventAggregate;
 
 /**
  * Represents a monetary transaction labelled 'transfer' to separate

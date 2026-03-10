@@ -13,7 +13,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import io.cockroachdb.ledger.Application;
 import io.cockroachdb.ledger.ProfileNames;
-import io.cockroachdb.ledger.aspect.AdvisorOrder;
+import io.cockroachdb.ledger.annotation.AdvisorOrder;
 
 @Configuration
 @EnableTransactionManagement(order = AdvisorOrder.TRANSACTION_MANAGER_ADVISOR, proxyTargetClass = true)

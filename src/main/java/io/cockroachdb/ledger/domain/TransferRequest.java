@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import io.cockroachdb.ledger.model.City;
 import io.cockroachdb.ledger.util.Money;
 
 /**

@@ -5,9 +5,9 @@
 ############################################################################################
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable
-#    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require
-#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require
+    url: jdbc:postgresql://localhost:26257/ledger?sslmode=disable&allow_unsafe_internals=true
+#    url: jdbc:postgresql://localhost:26257/ledger?sslmode=require&allow_unsafe_internals=true
+#    url: jdbc:postgresql://valhalla-qzx.aws-eu-north-1.cockroachlabs.cloud:26257/ledger?sslmode=require&allow_unsafe_internals=true
     username: root
     password:
     hikari:

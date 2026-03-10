@@ -1,4 +1,4 @@
-package io.cockroachdb.ledger.shell;
+package io.cockroachdb.ledger.shell.support;
 
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
