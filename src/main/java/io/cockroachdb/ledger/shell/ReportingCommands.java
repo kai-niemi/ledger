@@ -22,9 +22,9 @@ import io.cockroachdb.ledger.domain.TransferItemEntity;
 import io.cockroachdb.ledger.domain.TransferType;
 import io.cockroachdb.ledger.domain.BalanceSheet;
 import io.cockroachdb.ledger.domain.City;
-import io.cockroachdb.ledger.service.RegionServiceFacade;
-import io.cockroachdb.ledger.service.ReportingServiceFacade;
-import io.cockroachdb.ledger.service.TransferServiceFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
+import io.cockroachdb.ledger.service.ReportingFacade;
+import io.cockroachdb.ledger.service.TransferFacade;
 import io.cockroachdb.ledger.shell.support.Constants;
 import io.cockroachdb.ledger.shell.support.TableUtils;
 import io.cockroachdb.ledger.util.AsciiArt;
@@ -34,13 +34,13 @@ public class ReportingCommands extends AbstractShellCommand {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    private ReportingServiceFacade reportingServiceFacade;
+    private ReportingFacade reportingFacade;
 
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    private RegionAdminFacade regionAdminFacade;
 
     @Autowired
-    private TransferServiceFacade transferServiceFacade;
+    private TransferFacade transferFacade;
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
             description = "Print balance sheets grouped by city",
@@ -51,9 +51,9 @@ public class ReportingCommands extends AbstractShellCommand {
             defaultValue = Constants.DEFAULT_REGION, required = true,
             longName = "region") String region
     ) {
-        Set<City> cities = regionServiceFacade.listCities(region);
+        Set<City> cities = regionAdminFacade.listCities(region);
 
-        List<BalanceSheet> balanceSheets = reportingServiceFacade.getBalanceSheets(cities);
+        List<BalanceSheet> balanceSheets = reportingFacade.getBalanceSheets(cities);
 
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("city.name", "City");
@@ -79,8 +79,8 @@ public class ReportingCommands extends AbstractShellCommand {
             defaultValue = Constants.DEFAULT_REGION, required = true,
             longName = "region") String region
     ) {
-        Set<City> cities = regionServiceFacade.listCities(region);
-        List<BalanceSheet> balanceSheets = reportingServiceFacade.getBalanceSheets(cities);
+        Set<City> cities = regionAdminFacade.listCities(region);
+        List<BalanceSheet> balanceSheets = reportingFacade.getBalanceSheets(cities);
 
         List<String> anomalies = new ArrayList<>();
 
@@ -97,8 +97,8 @@ public class ReportingCommands extends AbstractShellCommand {
             }
         });
 
-        logger.info("Database version: " + regionServiceFacade.getDatabaseVersion());
-        logger.info("Transaction isolation: " + regionServiceFacade.getDatabaseIsolation());
+        logger.info("Database version: " + regionAdminFacade.getDatabaseVersion());
+        logger.info("Transaction isolation: " + regionAdminFacade.getDatabaseIsolation());
 
         if (anomalies.isEmpty()) {
             logger.info("No anomalies detected! " + AsciiArt.happy());
@@ -123,7 +123,7 @@ public class ReportingCommands extends AbstractShellCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<TransferEntity> transferPage = transferServiceFacade.findTransfers(transferType, page);
+            final Page<TransferEntity> transferPage = transferFacade.findTransfers(transferType, page);
             logger.info("\n" + printTransferTable(transferPage.getContent()));
             page = askForPage(transferPage).orElseGet(Pageable::unpaged);
         }
@@ -140,7 +140,7 @@ public class ReportingCommands extends AbstractShellCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<TransferItemEntity> transferItemPage = transferServiceFacade.findTransferItems(id, page);
+            final Page<TransferItemEntity> transferItemPage = transferFacade.findTransferItems(id, page);
             logger.info("\n" + printTransferItemsTable(transferItemPage.getContent()));
             page = askForPage(transferItemPage).orElseGet(Pageable::unpaged);
         }

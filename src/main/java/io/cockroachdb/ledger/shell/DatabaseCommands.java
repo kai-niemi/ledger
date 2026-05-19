@@ -52,7 +52,7 @@ public class DatabaseCommands extends AbstractShellCommand {
     public void showCreateTable(@Option(description = "table name", longName = "tableName", required = true) TableName table,
                                 CommandContext commandContext) {
         commandContext.outputWriter()
-                .println(regionServiceFacade.showCreateTable(table.name()));
+                .println(regionAdminFacade.showCreateTable(table.name()));
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",

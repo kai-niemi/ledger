@@ -18,7 +18,7 @@ import io.cockroachdb.ledger.repository.ReportingRepository;
 import io.cockroachdb.ledger.domain.BalanceSheet;
 
 @ServiceFacade
-public class ReportingServiceFacade {
+public class ReportingFacade {
     @Autowired
     private ReportingRepository reportingRepository;
 

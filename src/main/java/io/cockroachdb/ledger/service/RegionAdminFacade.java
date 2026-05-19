@@ -21,16 +21,16 @@ import jakarta.annotation.PostConstruct;
 
 import io.cockroachdb.ledger.annotation.ServiceFacade;
 import io.cockroachdb.ledger.annotation.TransactionImplicit;
-import io.cockroachdb.ledger.domain.RegionCategory;
-import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.domain.ApplicationProperties;
 import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.domain.Region;
+import io.cockroachdb.ledger.domain.RegionCategory;
+import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.repository.MultiRegionRepository;
 import io.cockroachdb.ledger.repository.RegionRepository;
 
 @ServiceFacade
-public class RegionServiceFacade {
+public class RegionAdminFacade {
     private static final List<String> PARTITION_TABLES = List.of(
             "account",
             "transfer",

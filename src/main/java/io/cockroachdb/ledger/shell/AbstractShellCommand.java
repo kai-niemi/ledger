@@ -29,8 +29,8 @@ import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.domain.TransferType;
 import io.cockroachdb.ledger.domain.City;
-import io.cockroachdb.ledger.service.AccountServiceFacade;
-import io.cockroachdb.ledger.service.RegionServiceFacade;
+import io.cockroachdb.ledger.service.AccountFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
 import io.cockroachdb.ledger.service.account.AccountPlanService;
 import io.cockroachdb.ledger.service.workload.WorkloadStatus;
 import io.cockroachdb.ledger.shell.support.RegionProvider;
@@ -44,10 +44,10 @@ public abstract class AbstractShellCommand {
     protected AccountPlanService accountPlanService;
 
     @Autowired
-    protected AccountServiceFacade accountServiceFacade;
+    protected AccountFacade accountFacade;
 
     @Autowired
-    protected RegionServiceFacade regionServiceFacade;
+    protected RegionAdminFacade regionAdminFacade;
 
     @Autowired
     private Terminal terminal;
@@ -98,7 +98,7 @@ public abstract class AbstractShellCommand {
 
     @Bean
     public CompletionProvider regionProvider() {
-        return new RegionProvider(regionServiceFacade, "--region");
+        return new RegionProvider(regionAdminFacade, "--region");
     }
 
     @Bean
@@ -123,7 +123,7 @@ public abstract class AbstractShellCommand {
     protected Map<City, List<UUID>> findCityAccountIDs(String region, AccountQuery accountQuery) {
         Map<City, List<UUID>> regionAccountIDs = new HashMap<>();
 
-        regionServiceFacade.listCities(region).forEach(city -> {
+        regionAdminFacade.listCities(region).forEach(city -> {
             regionAccountIDs.put(city,
                     accountQuery.get(city).stream()
                             .map(AccountEntity::getId)

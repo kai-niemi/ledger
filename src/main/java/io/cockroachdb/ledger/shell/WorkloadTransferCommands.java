@@ -24,7 +24,7 @@ import io.cockroachdb.ledger.domain.TransferEntity;
 import io.cockroachdb.ledger.domain.TransferRequest;
 import io.cockroachdb.ledger.domain.TransferType;
 import io.cockroachdb.ledger.domain.City;
-import io.cockroachdb.ledger.service.TransferServiceFacade;
+import io.cockroachdb.ledger.service.TransferFacade;
 import io.cockroachdb.ledger.service.workload.Worker;
 import io.cockroachdb.ledger.service.workload.WorkloadDescription;
 import io.cockroachdb.ledger.service.workload.WorkloadManager;
@@ -37,7 +37,7 @@ import io.cockroachdb.ledger.util.RandomData;
 @Component
 public class WorkloadTransferCommands extends AbstractShellCommand {
     @Autowired
-    private TransferServiceFacade transferServiceFacade;
+    private TransferFacade transferFacade;
 
     @Autowired
     private WorkloadManager workloadManager;
@@ -88,7 +88,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         }
 
         final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
-            return accountServiceFacade.findAccounts(city,
+            return accountFacade.findAccounts(city,
                     AccountType.ASSET,
                     Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)),
                     limit);
@@ -96,7 +96,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
 
         if (accountIdsPerCity.isEmpty()) {
             commandContext.outputWriter().println(
-                    "No cities found in region '%s' (region mapping may be needed)".formatted(region));
+                    "No cities found in region '%s' (region mapping missing?)".formatted(region));
             return;
         }
 
@@ -162,7 +162,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                         .withNote(CockroachFacts.nextFact())
                         .then());
 
-        return transferServiceFacade.createTransfer(builder.build());
+        return transferFacade.createTransfer(builder.build());
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -201,7 +201,7 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         }
 
         final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
-            return accountServiceFacade.findAccounts(city,
+            return accountFacade.findAccounts(city,
                     AccountType.LIABILITY,
                     Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
                     8192);
@@ -215,20 +215,20 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
         accountIdsPerCity.forEach((city, liabilityAccounts) -> {
             workloadManager.submitWorkers(
                     new Worker<TransferEntity>() {
-                        List<AccountEntity> accountEntityPage;
+                        List<AccountEntity> accounts;
 
                         @Override
                         public TransferEntity call() {
-                            Assert.notNull(accountEntityPage, "accountPage is null");
-                            List<UUID> assetAccounts = accountEntityPage.stream().map(AccountEntity::getId).toList();
+                            Assert.notNull(accounts, "accounts is null");
+                            List<UUID> assetAccounts = accounts.stream().map(AccountEntity::getId).toList();
                             return grantFunds(city, liabilityAccounts, assetAccounts, BigDecimal.valueOf(amount));
                         }
 
                         @Override
                         public boolean test(Integer x) {
-                            accountEntityPage = accountServiceFacade.findAccounts(city, accountType,
+                            accounts = accountFacade.findAccounts(city, accountType,
                                     Pair.of(BigDecimal.valueOf(minBalance), BigDecimal.valueOf(maxBalance)), legs);
-                            return !accountEntityPage.isEmpty();
+                            return !accounts.isEmpty();
                         }
                     }, new WorkloadDescription() {
                         @Override
@@ -275,6 +275,6 @@ public class WorkloadTransferCommands extends AbstractShellCommand {
                     .then();
         });
 
-        return transferServiceFacade.createTransfer(builder.build());
+        return transferFacade.createTransfer(builder.build());
     }
 }

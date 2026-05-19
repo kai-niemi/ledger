@@ -53,7 +53,7 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
         }
 
         // List of cities in potentially different countries and corresponding currencies
-        Set<City> cities = regionServiceFacade.listCities(region);
+        Set<City> cities = regionAdminFacade.listCities(region);
 
         final Instant stopTime = Instant.now().plus(DurationUtils.parseDuration(duration));
 
@@ -67,7 +67,7 @@ public class WorkloadAccountCommands extends AbstractShellCommand {
                             batch.setBatchSize(batchSize);
                             batch.setAccountType(accountType);
 
-                            accountServiceFacade.createAccountBatch(batch);
+                            accountFacade.createAccountBatch(batch);
 
                             return null;
                         }

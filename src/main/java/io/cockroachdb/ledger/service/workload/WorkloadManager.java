@@ -82,17 +82,23 @@ public class WorkloadManager {
             private final AtomicInteger retries = new AtomicInteger();
 
             @Override
-            public void success(Duration callTime) {
-                metrics.markSuccess(callTime);
-            }
-
-            @Override
             public void interrupted(Duration callTime, Exception ex) {
                 logger.warn("Worker aborted: %s".formatted(description.displayValue()));
             }
 
             @Override
-            public void failure(Duration callTime, Exception ex) {
+            public void completed(Duration duration) {
+                logger.info("Worker completed in %s: %s"
+                        .formatted(duration, description.displayValue()));
+            }
+
+            @Override
+            public void callSuccess(Duration callTime) {
+                metrics.markSuccess(callTime);
+            }
+
+            @Override
+            public void callFailure(Duration callTime, Exception ex) {
                 if (problems.size() >= 20) {
                     problems.removeLast();
                 }
@@ -147,6 +153,8 @@ public class WorkloadManager {
         return asyncTaskExecutor.submit(() -> {
             int calls = 1;
 
+            final Instant startTime = Instant.now();
+
             while (task.test(calls++)) {
                 if (Thread.interrupted()) {
                     break;
@@ -156,15 +164,17 @@ public class WorkloadManager {
 
                 try {
                     task.call();
-                    lifecycle.success(Duration.between(callTime, Instant.now()));
+                    lifecycle.callSuccess(Duration.between(callTime, Instant.now()));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     lifecycle.interrupted(Duration.between(callTime, Instant.now()), e);
                     break;
                 } catch (Exception e) {
-                    lifecycle.failure(Duration.between(callTime, Instant.now()), e);
+                    lifecycle.callFailure(Duration.between(callTime, Instant.now()), e);
                 }
             }
+
+            lifecycle.completed(Duration.between(startTime, Instant.now()));
 
             return null;
         });

@@ -21,8 +21,8 @@ import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.domain.AccountPlan;
 import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.domain.Region;
-import io.cockroachdb.ledger.service.AccountServiceFacade;
-import io.cockroachdb.ledger.service.RegionServiceFacade;
+import io.cockroachdb.ledger.service.AccountFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
 import io.cockroachdb.ledger.shell.support.AnsiConsole;
 import io.cockroachdb.ledger.util.AsciiArt;
 import io.cockroachdb.ledger.util.Money;
@@ -35,10 +35,10 @@ public class DefaultAccountPlanService implements AccountPlanService {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    private RegionAdminFacade regionAdminFacade;
 
     @Autowired
-    private AccountServiceFacade accountServiceFacade;
+    private AccountFacade accountFacade;
 
     @Autowired
     private AnsiConsole ansiConsole;
@@ -57,7 +57,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
 
         jdbcTemplate.update("insert into account_plan(name) values (?)", "default");
 
-        final Set<City> cities = Region.joinCities(regionServiceFacade.listAllRegions());
+        final Set<City> cities = Region.joinCities(regionAdminFacade.listAllRegions());
 
         final AtomicInteger total = new AtomicInteger(cities.size() * accountPlan.getAccountsPerCityNum());
         final AtomicInteger current = new AtomicInteger();
@@ -78,7 +78,7 @@ public class DefaultAccountPlanService implements AccountPlanService {
                     // Compute total balance for all accounts in this city
                     final Money totalBalance = initialBalance.multiply(accountPlan.getAccountsPerCityNum()).negate();
 
-                    accountServiceFacade.createAccount(
+                    accountFacade.createAccount(
                             AccountEntity.builder()
                                     .withGeneratedId()
                                     .withCity(city.getName())

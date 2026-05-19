@@ -32,7 +32,7 @@ import io.cockroachdb.ledger.domain.AccountType;
 import io.cockroachdb.ledger.domain.AccountPlan;
 import io.cockroachdb.ledger.domain.ApplicationProperties;
 import io.cockroachdb.ledger.domain.City;
-import io.cockroachdb.ledger.service.RegionServiceFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
 import io.cockroachdb.ledger.util.Money;
 
 @RestController
@@ -41,7 +41,7 @@ public class ImportController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    private RegionAdminFacade regionAdminFacade;
 
     @Autowired
     private ApplicationProperties applicationProperties;
@@ -65,7 +65,7 @@ public class ImportController {
         int accountsPerCity = Integer.parseInt(allParams.getOrDefault("accountsPerCity",
                 "" + accountPlan.getAccountsPerCityNum()));
 
-        Set<City> cities = regionServiceFacade.listCities(region);
+        Set<City> cities = regionAdminFacade.listCities(region);
 
         logger.info("""
                 >> Received account import request <<

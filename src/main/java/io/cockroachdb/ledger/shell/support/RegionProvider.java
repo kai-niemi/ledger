@@ -11,15 +11,15 @@ import org.springframework.shell.core.command.completion.CompletionProvider;
 import io.cockroachdb.ledger.domain.RegionCategory;
 import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.domain.Region;
-import io.cockroachdb.ledger.service.RegionServiceFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
 
 public class RegionProvider implements CompletionProvider {
-    private final RegionServiceFacade regionServiceFacade;
+    private final RegionAdminFacade regionAdminFacade;
 
     private final String prefix;
 
-    public RegionProvider(RegionServiceFacade regionServiceFacade, String prefix) {
-        this.regionServiceFacade = regionServiceFacade;
+    public RegionProvider(RegionAdminFacade regionAdminFacade, String prefix) {
+        this.regionAdminFacade = regionAdminFacade;
         this.prefix = prefix;
     }
 
@@ -32,10 +32,10 @@ public class RegionProvider implements CompletionProvider {
         result.add(new CompletionProposal(prefix + "=" + RegionCategory.PRIMARY.name()).description("primary region cities"));
         result.add(new CompletionProposal(prefix + "=" + RegionCategory.SECONDARY.name()).description("secondary region cities"));
 
-        Optional<Region> gateway = regionServiceFacade.getGatewayRegion();
-        Optional<Region> primary = regionServiceFacade.getPrimaryRegion();
+        Optional<Region> gateway = regionAdminFacade.getGatewayRegion();
+        Optional<Region> primary = regionAdminFacade.getPrimaryRegion();
 
-        for (Region r : regionServiceFacade.listAllRegions()) {
+        for (Region r : regionAdminFacade.listAllRegions()) {
             String desc = String.join(",", r.getCities().stream().map(City::getName).toList());
             CompletionProposal p = new CompletionProposal(prefix + "=" + r.getName())
                     .description(desc);

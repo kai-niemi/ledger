@@ -12,18 +12,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import io.cockroachdb.ledger.service.RegionServiceFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
 
 @Controller
 @RequestMapping("/")
 public class HomeController {
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    private RegionAdminFacade regionAdminFacade;
 
     @GetMapping("/")
     public Callable<String> homePage(Model model) {
-        model.addAttribute("databaseVersion", regionServiceFacade.getDatabaseVersion());
-        model.addAttribute("databaseIsolation", regionServiceFacade.getDatabaseIsolation());
+        model.addAttribute("databaseVersion", regionAdminFacade.getDatabaseVersion());
+        model.addAttribute("databaseIsolation", regionAdminFacade.getDatabaseIsolation());
         return () -> "home";
     }
 

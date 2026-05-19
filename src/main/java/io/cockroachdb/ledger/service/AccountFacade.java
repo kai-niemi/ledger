@@ -24,7 +24,7 @@ import io.cockroachdb.ledger.util.CockroachFacts;
 import io.cockroachdb.ledger.util.Money;
 
 @ServiceFacade
-public class AccountServiceFacade {
+public class AccountFacade {
     private static final AtomicInteger monotonicBatchSequence = new AtomicInteger(1);
 
     @Autowired
@@ -53,25 +53,6 @@ public class AccountServiceFacade {
     public Page<AccountEntity> findAccounts(AccountType accountType, Pageable pageable) {
         return accountService.findAll(accountType, pageable);
     }
-
-//    @TransactionImplicit(readOnly = true)
-//    public List<AccountEntity> findAccounts(Set<String> cities,
-//                                            AccountType accountType,
-//                                            Pair<BigDecimal, BigDecimal> range,
-//                                            int limit) {
-//        Assert.isTrue(!TransactionSynchronizationManager.isActualTransactionActive(),
-//                "Expecting no active transaction");
-//
-//        List<Callable<List<AccountEntity>>> tasks = new ArrayList<>();
-//        tasks.add(() -> accountService.findByCriteria(cities, accountType, range, limit));
-//
-//        List<AccountEntity> accountEntities = new ArrayList<>();
-//
-//        ConcurrencyUtils.runConcurrentlyAndWait(tasks,
-//                ConcurrencyUtils.UNBOUNDED_CONCURRENCY, accountEntities::addAll);
-//
-//        return accountEntities;
-//    }
 
     @TransactionImplicit(readOnly = true)
     public List<AccountEntity> findAccounts(City city, AccountType accountType,

@@ -52,7 +52,7 @@ design, improved UI and leverages JDK21 features such as virtual threads for bet
 
 ## Compatibility
 
-- CockroachDB v23.2+
+- CockroachDB v25.4+
 - PostgreSQL 9+
 - macOS (main platform)
 - Linux
@@ -76,7 +76,7 @@ Things you need to build and run Ledger locally.
     - https://www.oracle.com/java/technologies/downloads/#java21
 - Git
     - https://git-scm.com/downloads/mac
-- CockroachDB Cloud or self-hosted 23.2+
+- CockroachDB Cloud or [self-hosted](https://www.cockroachlabs.com/docs/releases) 25.4+
 - PostgreSQL 9+ (optional)
 
 ## Install the JDK

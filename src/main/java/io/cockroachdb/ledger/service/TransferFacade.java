@@ -22,7 +22,7 @@ import io.cockroachdb.ledger.domain.TransferType;
 import io.cockroachdb.ledger.service.transfer.TransferService;
 
 @ServiceFacade
-public class TransferServiceFacade {
+public class TransferFacade {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired

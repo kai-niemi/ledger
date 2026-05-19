@@ -54,7 +54,7 @@ public class WorkloadBalanceCommands extends AbstractShellCommand {
             CommandContext commandContext
     ) {
         final Map<City, List<UUID>> accountIdsPerCity = findCityAccountIDs(region, city -> {
-            return accountServiceFacade.findAccounts(city,
+            return accountFacade.findAccounts(city,
                     AccountType.ASSET,
                     Pair.of(BigDecimal.ZERO, BigDecimal.ZERO),
                     limit);
@@ -74,9 +74,9 @@ public class WorkloadBalanceCommands extends AbstractShellCommand {
                         @Override
                         public Money call() {
                             if (stale) {
-                                return accountServiceFacade.getAccountBalanceSnapshot(RandomData.selectRandom(uuids));
+                                return accountFacade.getAccountBalanceSnapshot(RandomData.selectRandom(uuids));
                             }
-                            return accountServiceFacade.getAccountBalance(RandomData.selectRandom(uuids));
+                            return accountFacade.getAccountBalance(RandomData.selectRandom(uuids));
                         }
 
                         @Override

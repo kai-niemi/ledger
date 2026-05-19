@@ -33,7 +33,7 @@ public class AccountReportCommands extends AbstractShellCommand {
         Pageable page = PageRequest.ofSize(pageSize);
 
         while (page.isPaged()) {
-            final Page<AccountEntity> accountPage = accountServiceFacade.findAccounts(accountType, page);
+            final Page<AccountEntity> accountPage = accountFacade.findAccounts(accountType, page);
             commandContext.outputWriter().println(printAccountTable(accountPage.getContent()));
             page = askForPage(accountPage).orElseGet(Pageable::unpaged);
         }

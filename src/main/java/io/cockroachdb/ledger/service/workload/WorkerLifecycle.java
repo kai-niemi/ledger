@@ -9,12 +9,14 @@ public interface WorkerLifecycle {
     /**
      * Invoked after a successful worker call.
      */
-    void success(Duration callTime);
+    void callSuccess(Duration callTime);
 
     /**
      * Invoked after a failed worker call.
      */
-    void failure(Duration callTime, Exception ex);
+    void callFailure(Duration callTime, Exception ex);
 
     void interrupted(Duration callTime, Exception ex);
+
+    void completed(Duration callTime);
 }

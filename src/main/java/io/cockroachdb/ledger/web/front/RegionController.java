@@ -13,8 +13,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import io.cockroachdb.ledger.service.RegionServiceFacade;
-import io.cockroachdb.ledger.service.ReportingServiceFacade;
+import io.cockroachdb.ledger.service.RegionAdminFacade;
+import io.cockroachdb.ledger.service.ReportingFacade;
 import io.cockroachdb.ledger.domain.BalanceSheet;
 import io.cockroachdb.ledger.web.model.RegionModel;
 
@@ -24,33 +24,33 @@ public class RegionController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    private ReportingServiceFacade reportingServiceFacade;
+    private ReportingFacade reportingFacade;
 
     @Autowired
-    private RegionServiceFacade regionServiceFacade;
+    private RegionAdminFacade regionAdminFacade;
 
     @GetMapping
     public Callable<String> indexPage(Model model) {
         List<RegionModel> regions = new ArrayList<>();
 
-        regionServiceFacade.getGatewayRegion().ifPresent(region -> {
+        regionAdminFacade.getGatewayRegion().ifPresent(region -> {
             model.addAttribute("gatewayRegion", region.getName());
         });
-        regionServiceFacade.getPrimaryRegion().ifPresent(region -> {
+        regionAdminFacade.getPrimaryRegion().ifPresent(region -> {
             model.addAttribute("primaryRegion", region.getName());
         });
-        regionServiceFacade.getSecondaryRegion().ifPresent(region -> {
+        regionAdminFacade.getSecondaryRegion().ifPresent(region -> {
             model.addAttribute("secondaryRegion", region.getName());
         });
 
-        regionServiceFacade
+        regionAdminFacade
                 .listAllRegions()
                 .forEach(region -> {
                     RegionModel regionModel = new RegionModel();
                     regionModel.setName(region.getName());
                     regionModel.setDatabaseRegions(region.getDatabaseRegions());
 
-                    List<BalanceSheet> balanceSheets = reportingServiceFacade.getBalanceSheets(region.getCities())
+                    List<BalanceSheet> balanceSheets = reportingFacade.getBalanceSheets(region.getCities())
                             .stream().sorted(Comparator.comparing(BalanceSheet::getCity)).toList();
 
                     regionModel.setBalanceSheets(balanceSheets);

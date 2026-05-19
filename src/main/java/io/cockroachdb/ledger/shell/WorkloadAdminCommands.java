@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,9 +116,14 @@ public class WorkloadAdminCommands extends AbstractShellCommand {
         });
     }
 
+    private final ScheduledExecutorService executorService
+            = Executors.newScheduledThreadPool(1);
+
+    private ScheduledFuture<?> metricsFuture;
+
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
-            description = "List all workloads",
-            name = {"workload", "list"},
+            description = "Print workload metrics",
+            name = {"workload", "metrics"},
             alias = "w",
             completionProvider = "workloadStatusProvider",
             group = Constants.WORKLOAD_COMMANDS)
@@ -121,6 +131,8 @@ public class WorkloadAdminCommands extends AbstractShellCommand {
                                       longName = "pageSize") Integer pageSize,
                               @Option(description = "workload status", defaultValue = "RUNNING",
                                       longName = "status") WorkloadStatus status,
+                              @Option(description = "periodic update interval in seconds", defaultValue = "-1",
+                                      longName = "interval") Integer updateInterval,
                               CommandContext commandContext) {
         LinkedHashMap<String, Object> header = new LinkedHashMap<>();
         header.put("id", "Id");
@@ -133,17 +145,39 @@ public class WorkloadAdminCommands extends AbstractShellCommand {
         header.put("metrics.success", "Success");
         header.put("metrics.transientFail", "Transient");
         header.put("metrics.nonTransientFail", "Non-Transient");
+        header.put("status", "Status");
 
-        Pageable page = PageRequest.ofSize(pageSize);
+        if (Objects.nonNull(metricsFuture)) {
+            metricsFuture.cancel(true);
+            metricsFuture = null;;
+            commandContext.outputWriter().println("Stopped periodic metrics printer");
+            return;
+        }
 
-        while (page.isPaged()) {
-            Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload ->
-                    workload.getStatus().equals(status));
+        if (updateInterval > 0) {
+            commandContext.outputWriter().println(
+                    "Started periodic metrics printer (%d seconds)".formatted(updateInterval));
 
-            commandContext.outputWriter().println(TableUtils.prettyPrint(
-                    new BeanListTableModel<>(workloadPage.getContent(), header)));
+            metricsFuture = executorService.scheduleAtFixedRate(() -> {
+                Page<Workload> workloadPage = workloadManager.getWorkloads(PageRequest.ofSize(pageSize),
+                        workload -> workload.getStatus().equals(status));
+                commandContext.outputWriter().println(TableUtils.prettyPrint(
+                        new BeanListTableModel<>(workloadPage.getContent(), header)));
+                commandContext.outputWriter().flush();
+            }, 0, updateInterval, TimeUnit.SECONDS);
+        } else {
+            Pageable page = PageRequest.ofSize(pageSize);
 
-            page = askForPage(workloadPage).orElseGet(Pageable::unpaged);
+            while (page.isPaged()) {
+                Page<Workload> workloadPage = workloadManager.getWorkloads(page, workload ->
+                        workload.getStatus().equals(status));
+
+                commandContext.outputWriter().println(TableUtils.prettyPrint(
+                        new BeanListTableModel<>(workloadPage.getContent(), header)));
+                commandContext.outputWriter().flush();
+
+                page = askForPage(workloadPage).orElseGet(Pageable::unpaged);
+            }
         }
     }
 

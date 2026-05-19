@@ -26,7 +26,7 @@ public class RegionCommands extends AbstractShellCommand {
             group = Constants.REGION_COMMANDS)
     public void setPrimaryRegion(@Option(description = "region name", required = true,
             longName = "region") String region) {
-        regionServiceFacade.setPrimaryRegion(region);
+        regionAdminFacade.setPrimaryRegion(region);
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -34,7 +34,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "show", "primary"},
             group = Constants.REGION_COMMANDS)
     public void showPrimaryRegion(CommandContext commandContext) {
-        regionServiceFacade.getPrimaryRegion().ifPresentOrElse(region -> {
+        regionAdminFacade.getPrimaryRegion().ifPresentOrElse(region -> {
             commandContext.outputWriter().println(printRegionTable(List.of(region)));
         }, () -> {
             commandContext.outputWriter().println("No primary region found");
@@ -48,7 +48,7 @@ public class RegionCommands extends AbstractShellCommand {
             group = Constants.REGION_COMMANDS)
     public void secondaryRegion(@Option(description = "region name", required = true,
             longName = "region") String region) {
-        regionServiceFacade.setSecondaryRegion(region);
+        regionAdminFacade.setSecondaryRegion(region);
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -56,7 +56,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "show", "secondary"},
             group = Constants.REGION_COMMANDS)
     public void showSecondaryRegion(CommandContext commandContext) {
-        regionServiceFacade.getSecondaryRegion().ifPresentOrElse(region -> {
+        regionAdminFacade.getSecondaryRegion().ifPresentOrElse(region -> {
             commandContext.outputWriter().println(printRegionTable(List.of(region)));
         }, () -> {
             commandContext.outputWriter().println("No secondary region found");
@@ -68,7 +68,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "drop", "secondary"},
             group = Constants.REGION_COMMANDS)
     public void dropSecondaryRegion() {
-        regionServiceFacade.dropSecondaryRegion();
+        regionAdminFacade.dropSecondaryRegion();
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -76,7 +76,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "add"},
             group = Constants.REGION_COMMANDS)
     public void addRegions() {
-        regionServiceFacade.addDatabaseRegions();
+        regionAdminFacade.addDatabaseRegions();
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -84,7 +84,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "drop", "all"},
             group = Constants.REGION_COMMANDS)
     public void dropRegions() {
-        regionServiceFacade.dropDatabaseRegions();
+        regionAdminFacade.dropDatabaseRegions();
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -94,7 +94,7 @@ public class RegionCommands extends AbstractShellCommand {
             group = Constants.REGION_COMMANDS)
     public void setSurvivalGoal(@Option(description = "survival goal",
             longName = "goal") SurvivalGoal goal) {
-        regionServiceFacade.setSurvivalGaol(goal);
+        regionAdminFacade.setSurvivalGaol(goal);
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -102,7 +102,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "show", "survival"},
             group = Constants.REGION_COMMANDS)
     public void showSurvivalGoal(CommandContext commandContext) {
-        commandContext.outputWriter().println(regionServiceFacade.getSurvivalGoal());
+        commandContext.outputWriter().println(regionAdminFacade.getSurvivalGoal());
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -112,7 +112,7 @@ public class RegionCommands extends AbstractShellCommand {
             group = Constants.REGION_COMMANDS)
     public void applyMultiRegion(@Option(description = "survival goal", defaultValue = "ZONE",
             longName = "goal") SurvivalGoal goal) {
-        regionServiceFacade.applyMultiRegion(goal);
+        regionAdminFacade.applyMultiRegion(goal);
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -120,7 +120,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "revert", "multi-region"},
             group = Constants.REGION_COMMANDS)
     public void revertMultiRegion() {
-        regionServiceFacade.revertMultiRegion();
+        regionAdminFacade.revertMultiRegion();
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -129,7 +129,7 @@ public class RegionCommands extends AbstractShellCommand {
             group = Constants.REGION_COMMANDS)
     public void listRegions(CommandContext commandContext) {
         commandContext.outputWriter()
-                .println(printRegionTable(regionServiceFacade.listAllRegions()));
+                .println(printRegionTable(regionAdminFacade.listAllRegions()));
     }
 
     @Command(exitStatusExceptionMapper = "commandExceptionMapper",
@@ -141,7 +141,7 @@ public class RegionCommands extends AbstractShellCommand {
             @Option(description = "region name (gateway region if empty)",
                     defaultValue = "gateway", longName = "region") String region,
             CommandContext commandContext) {
-        Set<City> cities = regionServiceFacade.listCities(region);
+        Set<City> cities = regionAdminFacade.listCities(region);
         commandContext.outputWriter()
                 .println(TableUtils.prettyPrint(new ListTableModel<>(
                         cities, List.of("Name"), (object, column) -> column == 0 ? object : "??")));
@@ -152,7 +152,7 @@ public class RegionCommands extends AbstractShellCommand {
             name = {"region", "show", "gateway"},
             group = Constants.REGION_COMMANDS)
     public void showGatewayRegion(CommandContext commandContext) {
-        regionServiceFacade.getGatewayRegion()
+        regionAdminFacade.getGatewayRegion()
                 .ifPresentOrElse(region -> commandContext.outputWriter()
                                 .println(printRegionTable(List.of(region))),
                         () -> commandContext.outputWriter().println("No gateway region found"));

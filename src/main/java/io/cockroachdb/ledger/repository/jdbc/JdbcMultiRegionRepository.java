@@ -19,9 +19,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.domain.City;
 import io.cockroachdb.ledger.domain.Region;
+import io.cockroachdb.ledger.domain.SurvivalGoal;
 import io.cockroachdb.ledger.repository.MultiRegionRepository;
 
 @Repository
@@ -142,24 +142,29 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
     }
 
     @Override
-    public void setGlobalTable(String table) {
-        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET locality GLOBAL", table));
-    }
-
-    @Override
     public void setRegionalByTable(String table) {
+        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET (schema_locked = false)", table));
         jdbcTemplate.update(formatSQL("ALTER TABLE %s SET locality REGIONAL BY TABLE IN PRIMARY REGION",
                 table));
     }
 
     @Override
     public void dropRegionColumn(String table) {
+        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET (schema_locked = false)", table));
         jdbcTemplate.update(formatSQL("ALTER TABLE %s DROP COLUMN IF EXISTS region",
                 table));
     }
 
     @Override
+    public void setGlobalTable(String table) {
+        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET (schema_locked = false)", table));
+        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET locality GLOBAL", table));
+    }
+
+    @Override
     public void setRegionalByRowTable(List<Region> regions, String table) {
+        jdbcTemplate.update(formatSQL("ALTER TABLE %s SET (schema_locked = false)", table));
+
         final StringBuilder sb = new StringBuilder()
                 .append("ALTER TABLE ")
                 .append(table)
@@ -167,8 +172,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
 
         Deque<Region> primary = new ArrayDeque<>();
 
-        regions
-                .stream()
+        regions.stream()
                 .filter(region -> !region.getDatabaseRegions().isEmpty())
                 .forEach(region -> {
                     if (region.isPrimary()) {
@@ -204,6 +208,7 @@ public class JdbcMultiRegionRepository implements MultiRegionRepository {
 
             jdbcTemplate.execute(sb.toString());
 
+            jdbcTemplate.update(formatSQL("ALTER TABLE %s SET (schema_locked = false)", table));
             jdbcTemplate.update(formatSQL("ALTER TABLE %s SET LOCALITY REGIONAL BY ROW AS region", table));
         } else {
             throw new IllegalStateException("No primary region defined");
