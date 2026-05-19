@@ -1,5 +1,5 @@
 [![Java CI](https://github.com/kai-niemi/ledger/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/kai-niemi/ledger/actions/workflows/maven.yml)
-
+ 
 <!-- TOC -->
 * [Ledger](#ledger)
   * [Compatibility](#compatibility)
